@@ -1,0 +1,368 @@
+openapi: 3.1.0
+info:
+  title: GeoJSON Compatible API
+  description: |
+    # GeoJSON対応API
+    
+    地図、測位、地理空間情報を扱うAPIです。
+    世界標準フォーマット互換でAPI連携を行います。
+    
+    ## 学習ポイント
+    - 位置情報API（Mapbox, PostGIS）は**必ず GeoJSON 構造**
+    - `enum` で地物種別（Point/LineString/Polygon）を明確化
+    - 地理座標系（WGS84）の標準化
+  version: 1.0.0
+  contact:
+    name: GeoAPI Support
+    email: geo-support@example.com
+
+servers:
+  - url: https://geo-api.example.com/v1
+    description: Production server
+  - url: http://localhost:8080/v1
+    description: Development server
+
+paths:
+  /features:
+    get:
+      summary: Get geographic features
+      description: 地理的特徴をGeoJSON形式で取得します
+      operationId: getFeatures
+      tags:
+        - Features
+      parameters:
+        - name: bbox
+          in: query
+          description: バウンディングボックス（西,南,東,北）
+          required: false
+          schema:
+            type: string
+            pattern: "^[-+]?[0-9]*\.?[0-9]+,[-+]?[0-9]*\.?[0-9]+,[-+]?[0-9]*\.?[0-9]+,[-+]?[0-9]*\.?[0-9]+$"
+            example: "139.6917,35.6895,139.6918,35.6896"
+        - name: type
+          in: query
+          description: 地物タイプ
+          required: false
+          schema:
+            type: string
+            enum: [Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon]
+            example: Point
+        - name: limit
+          in: query
+          description: 取得件数上限
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        "200":
+          description: GeoJSON FeatureCollection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeoJSONFeatureCollection"
+              examples:
+                tokyo_stations:
+                  summary: 東京の駅データ
+                  value:
+                    type: "FeatureCollection"
+                    features:
+                      - type: "Feature"
+                        geometry:
+                          type: "Point"
+                          coordinates: [139.6917, 35.6895]
+                        properties:
+                          name: "Tokyo Station"
+                          type: "railway_station"
+                          lines: ["JR Yamanote", "JR Chuo"]
+
+    post:
+      summary: Create a geographic feature
+      description: 新しい地理的特徴を作成します
+      operationId: createFeature
+      tags:
+        - Features
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeoJSONFeature"
+            examples:
+              point:
+                summary: ポイント地物
+                value:
+                  type: "Feature"
+                  geometry:
+                    type: "Point"
+                    coordinates: [139.6917, 35.6895]
+                  properties:
+                    name: "Tokyo Station"
+                    type: "railway_station"
+              polygon:
+                summary: ポリゴン地物
+                value:
+                  type: "Feature"
+                  geometry:
+                    type: "Polygon"
+                    coordinates:
+                      - [[139.6917, 35.6895], [139.6918, 35.6895], [139.6918, 35.6896], [139.6917, 35.6896], [139.6917, 35.6895]]
+                  properties:
+                    name: "Tokyo Station Area"
+                    type: "administrative_area"
+      responses:
+        "201":
+          description: 地物が作成されました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeoJSONFeature"
+        "400":
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /features/{id}:
+    get:
+      summary: Get a specific feature
+      description: 指定されたIDの地理的特徴を取得します
+      operationId: getFeatureById
+      tags:
+        - Features
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 地物のID
+          schema:
+            type: string
+            example: "feature_001"
+      responses:
+        "200":
+          description: GeoJSON Feature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeoJSONFeature"
+        "404":
+          description: 地物が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /distance:
+    post:
+      summary: Calculate distance between points
+      description: 2点間の距離を計算します
+      operationId: calculateDistance
+      tags:
+        - Calculations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - point1
+                - point2
+              properties:
+                point1:
+                  $ref: "#/components/schemas/GeoJSONPoint"
+                point2:
+                  $ref: "#/components/schemas/GeoJSONPoint"
+                unit:
+                  type: string
+                  enum: [meters, kilometers, miles, feet]
+                  default: meters
+            examples:
+              tokyo_to_osaka:
+                summary: 東京から大阪までの距離
+                value:
+                  point1:
+                    type: "Point"
+                    coordinates: [139.6917, 35.6895]
+                  point2:
+                    type: "Point"
+                    coordinates: [135.5023, 34.6937]
+                  unit: "kilometers"
+      responses:
+        "200":
+          description: 距離計算結果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  distance:
+                    type: number
+                    description: 距離
+                    example: 397.5
+                  unit:
+                    type: string
+                    description: 単位
+                    example: "kilometers"
+                  bearing:
+                    type: number
+                    description: 方位角（度）
+                    example: 245.2
+
+components:
+  schemas:
+    GeoJSONPoint:
+      type: object
+      description: GeoJSON Point geometry
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Point]
+          description: ジオメトリタイプ
+          example: Point
+        coordinates:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 3
+          description: 座標配列 [経度, 緯度, 高度]
+          example: [139.6917, 35.6895]
+
+    GeoJSONLineString:
+      type: object
+      description: GeoJSON LineString geometry
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [LineString]
+          description: ジオメトリタイプ
+          example: LineString
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+            minItems: 2
+            maxItems: 3
+          minItems: 2
+          description: 座標配列の配列
+          example: [[139.6917, 35.6895], [139.6918, 35.6896]]
+
+    GeoJSONPolygon:
+      type: object
+      description: GeoJSON Polygon geometry
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Polygon]
+          description: ジオメトリタイプ
+          example: Polygon
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: number
+              minItems: 2
+              maxItems: 3
+          description: リング配列（外輪+内輪）
+          example:
+            - [[139.6917, 35.6895], [139.6918, 35.6895], [139.6918, 35.6896], [139.6917, 35.6896], [139.6917, 35.6895]]
+
+    GeoJSONGeometry:
+      type: object
+      description: GeoJSON Geometry
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon]
+          description: ジオメトリタイプ
+        coordinates:
+          type: array
+          description: 座標データ
+
+    GeoJSONFeature:
+      type: object
+      description: GeoJSON Feature
+      required: [type, geometry, properties]
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+          description: GeoJSONオブジェクトタイプ
+          example: Feature
+        geometry:
+          $ref: "#/components/schemas/GeoJSONGeometry"
+        properties:
+          type: object
+          description: 地物の属性
+          additionalProperties: true
+          example:
+            name: "Tokyo Station"
+            type: "railway_station"
+            lines: ["JR Yamanote", "JR Chuo"]
+        id:
+          type: string
+          description: 地物のID
+          example: "feature_001"
+
+    GeoJSONFeatureCollection:
+      type: object
+      description: GeoJSON FeatureCollection
+      required: [type, features]
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+          description: GeoJSONオブジェクトタイプ
+          example: FeatureCollection
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeoJSONFeature"
+          description: 地物の配列
+        bbox:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 6
+          description: バウンディングボックス [西,南,東,北,最低高度,最高高度]
+          example: [139.6917, 35.6895, 139.6918, 35.6896]
+
+    ErrorResponse:
+      type: object
+      description: エラーレスポンス
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: エラーコード
+          example: "INVALID_COORDINATES"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "Invalid coordinate format. Expected [longitude, latitude]"
+        details:
+          type: object
+          description: エラー詳細
+          additionalProperties: true
+
+tags:
+  - name: Features
+    description: 地理的特徴の管理
+  - name: Calculations
+    description: 地理的計算

@@ -1,0 +1,394 @@
+openapi: 3.1.0
+info:
+  title: Dimension Line Detection API
+  description: |
+    # 寸法線検出API
+    
+    建築図面やCADデータから寸法線を自動検出し、構造化された座標データを返すAPIです。
+    
+    ## 主な機能
+    - 画像ファイル（PNG, JPEG, PDF）のアップロード
+    - 寸法線の自動検出と座標抽出
+    - 構造化されたJSONレスポンス
+    - 複数の寸法線の同時処理
+    
+    ## 対応フォーマット
+    - 入力: PNG, JPEG, PDF
+    - 出力: JSON (GeoJSON互換)
+    
+    ## 使用例
+    ```bash
+    curl -X POST "https://api.example.com/v1/analyze" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -F "file=@floorplan.png" \
+      -F "options={\"detection_threshold\": 0.8}"
+    ```
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+    url: https://example.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://example.com/terms
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+  - url: http://localhost:8000/v1
+    description: Development server
+
+paths:
+  /analyze:
+    post:
+      summary: Analyze floorplan and extract dimension lines
+      description: |
+        建築図面を解析し、寸法線を検出して座標データを抽出します。
+        
+        ## 処理フロー
+        1. 画像ファイルのアップロード
+        2. 前処理（ノイズ除去、二値化）
+        3. 寸法線検出（Hough変換、エッジ検出）
+        4. 座標抽出と構造化
+        5. JSONレスポンス生成
+        
+        ## パフォーマンス
+        - 処理時間: 通常2-5秒
+        - 対応画像サイズ: 最大10MB
+        - 同時処理: 最大100リクエスト/分
+      operationId: analyzeFloorplan
+      tags:
+        - Analysis
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 解析対象の画像ファイル（PNG, JPEG, PDF）
+                options:
+                  type: string
+                  description: JSON形式の解析オプション
+                  example: '{"detection_threshold": 0.8, "min_line_length": 50}'
+                metadata:
+                  type: string
+                  description: メタデータ（プロジェクト名、作成者など）
+                  example: '{"project": "Office Building A", "author": "John Doe"}'
+      responses:
+        "200":
+          description: 解析成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+              examples:
+                success:
+                  summary: 成功例
+                  value:
+                    success: true
+                    message: "Analysis completed successfully"
+                    data:
+                      segmentsByLine:
+                        "1":
+                          - q1: {x: 100, y: 200, unit: "px"}
+                            q2: {x: 300, y: 200, unit: "px"}
+                            line_length: 200
+                        "2":
+                          - q1: {x: 150, y: 250, unit: "px"}
+                            q2: {x: 150, y: 400, unit: "px"}
+                            line_length: 150
+                    metadata:
+                      processing_time_ms: 2340
+                      image_size: {width: 1920, height: 1080}
+                      detected_lines: 2
+        "400":
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid_file:
+                  summary: 無効なファイル
+                  value:
+                    success: false
+                    error: "INVALID_FILE_FORMAT"
+                    message: "Unsupported file format. Please use PNG, JPEG, or PDF."
+                    details: {supported_formats: ["png", "jpeg", "pdf"]}
+                file_too_large:
+                  summary: ファイルサイズ超過
+                  value:
+                    success: false
+                    error: "FILE_TOO_LARGE"
+                    message: "File size exceeds maximum limit of 10MB"
+                    details: {max_size_mb: 10, actual_size_mb: 15.2}
+        "401":
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: レート制限エラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health:
+    get:
+      summary: Health check
+      description: APIの稼働状況を確認します
+      operationId: healthCheck
+      tags:
+        - System
+      responses:
+        "200":
+          description: 正常稼働
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  uptime_seconds:
+                    type: integer
+
+components:
+  schemas:
+    Point:
+      type: object
+      description: 2D座標点
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: number
+          description: X座標
+          example: 100.5
+        y:
+          type: number
+          description: Y座標
+          example: 200.3
+        unit:
+          type: string
+          description: 座標の単位
+          enum: [px, mm, cm, m, inch]
+          default: px
+          example: px
+        confidence:
+          type: number
+          description: 検出信頼度（0.0-1.0）
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.95
+
+    Segment:
+      type: object
+      description: 寸法線セグメント
+      required:
+        - q1
+        - q2
+        - line_length
+      properties:
+        q1:
+          $ref: "#/components/schemas/Point"
+        q2:
+          $ref: "#/components/schemas/Point"
+        line_length:
+          type: number
+          description: 線の長さ
+          minimum: 0
+          example: 200.5
+        angle:
+          type: number
+          description: 線の角度（度）
+          minimum: 0
+          maximum: 360
+          example: 45.0
+        thickness:
+          type: number
+          description: 線の太さ
+          minimum: 0
+          example: 2.5
+        color:
+          type: string
+          description: 線の色（HEX形式）
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          example: "#000000"
+
+    AnalysisResult:
+      type: object
+      description: 解析結果
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          description: 処理成功フラグ
+          example: true
+        message:
+          type: string
+          description: 処理結果メッセージ
+          example: "Analysis completed successfully"
+        data:
+          type: object
+          description: 解析データ
+          required:
+            - segmentsByLine
+          properties:
+            segmentsByLine:
+              type: object
+              description: 寸法線ごとのセグメントデータ
+              additionalProperties:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Segment"
+              example:
+                "1":
+                  - q1: {x: 100, y: 200, unit: "px"}
+                    q2: {x: 300, y: 200, unit: "px"}
+                    line_length: 200
+                "2":
+                  - q1: {x: 150, y: 250, unit: "px"}
+                    q2: {x: 150, y: 400, unit: "px"}
+                    line_length: 150
+            boundingBox:
+              type: object
+              description: 検出領域の境界ボックス
+              properties:
+                minX:
+                  type: number
+                minY:
+                  type: number
+                maxX:
+                  type: number
+                maxY:
+                  type: number
+        metadata:
+          type: object
+          description: 処理メタデータ
+          properties:
+            processing_time_ms:
+              type: integer
+              description: 処理時間（ミリ秒）
+              example: 2340
+            image_size:
+              type: object
+              properties:
+                width:
+                  type: integer
+                height:
+                  type: integer
+            detected_lines:
+              type: integer
+              description: 検出された寸法線数
+              example: 2
+            algorithm_version:
+              type: string
+              description: 使用したアルゴリズムのバージョン
+              example: "v2.1.0"
+
+    ErrorResponse:
+      type: object
+      description: エラーレスポンス
+      required:
+        - success
+        - error
+        - message
+      properties:
+        success:
+          type: boolean
+          description: 処理成功フラグ
+          example: false
+        error:
+          type: string
+          description: エラーコード
+          enum:
+            - INVALID_FILE_FORMAT
+            - FILE_TOO_LARGE
+            - PROCESSING_FAILED
+            - UNAUTHORIZED
+            - RATE_LIMIT_EXCEEDED
+            - INTERNAL_ERROR
+          example: INVALID_FILE_FORMAT
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "Unsupported file format. Please use PNG, JPEG, or PDF."
+        details:
+          type: object
+          description: エラー詳細情報
+          additionalProperties: true
+          example:
+            supported_formats: ["png", "jpeg", "pdf"]
+            max_size_mb: 10
+        timestamp:
+          type: string
+          format: date-time
+          description: エラー発生時刻
+          example: "2024-10-14T10:30:00Z"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Bearer Token認証
+        
+        ## トークン取得方法
+        1. ユーザー登録・ログイン
+        2. `/auth/login` エンドポイントでトークン取得
+        3. `Authorization: Bearer <token>` ヘッダーでAPI呼び出し
+        
+        ## スコープ
+        - `read:analysis` - 解析結果の読み取り
+        - `write:analysis` - 解析の実行
+        - `admin:system` - システム管理
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API Key認証（開発・テスト用）
+        
+        ## 使用方法
+        ```
+        curl -H "X-API-Key: your-api-key" https://api.example.com/v1/analyze
+        ```
+
+security:
+  - BearerAuth: [read:analysis, write:analysis]
+  - ApiKeyAuth: []
+
+tags:
+  - name: Analysis
+    description: 画像解析・寸法線検出関連のエンドポイント
+  - name: System
+    description: システム管理・監視関連のエンドポイント

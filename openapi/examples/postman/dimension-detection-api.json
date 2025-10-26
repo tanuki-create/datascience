@@ -1,0 +1,73 @@
+{
+  "info": {
+    "name": "Dimension Detection API Collection",
+    "description": "Postman collection for Dimension Detection API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Analyze Floorplan",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "floorplan.png"
+            },
+            {
+              "key": "options",
+              "value": "{\"detection_threshold\": 0.8, \"min_line_length\": 50}",
+              "type": "text"
+            },
+            {
+              "key": "metadata",
+              "value": "{\"project\": \"Office Building A\", \"author\": \"John Doe\"}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["analyze"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.example.com/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "your-access-token-here",
+      "type": "string"
+    }
+  ]
+}

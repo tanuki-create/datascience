@@ -1,0 +1,546 @@
+openapi: 3.1.0
+info:
+  title: AI Model Inference API
+  description: |
+    # AIモデル推論API
+    
+    LLM / VisionモデルのREST APIです。
+    推論入力・出力を明確に定義し、AI関連APIの標準的な構造を示します。
+    
+    ## 学習ポイント
+    - AI関連APIでは **統計/ログ/metadata** を Schema に入れるのが通例
+    - 推論パラメータ（temperature, max_tokens等）の標準化
+    - レスポンス時間・トークン使用量の可視化
+  version: 1.0.0
+  contact:
+    name: AI API Support
+    email: ai-support@example.com
+
+servers:
+  - url: https://ai-api.example.com/v1
+    description: Production server
+  - url: http://localhost:8000/v1
+    description: Development server
+
+paths:
+  /chat/completions:
+    post:
+      summary: Generate chat completion
+      description: |
+        LLMを使用してチャット補完を生成します。
+        
+        ## 対応モデル
+        - gpt-4: GPT-4モデル
+        - gpt-3.5-turbo: GPT-3.5 Turboモデル
+        - claude-3: Claude 3モデル
+        
+        ## レート制限
+        - 1分間に60リクエスト
+        - 1日あたり10,000トークン
+      operationId: createChatCompletion
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatCompletionRequest"
+            examples:
+              simple_chat:
+                summary: シンプルなチャット
+                value:
+                  model: "gpt-3.5-turbo"
+                  messages:
+                    - role: "user"
+                      content: "Hello, how are you?"
+                  max_tokens: 100
+                  temperature: 0.7
+              complex_chat:
+                summary: 複雑なチャット
+                value:
+                  model: "gpt-4"
+                  messages:
+                    - role: "system"
+                      content: "You are a helpful assistant."
+                    - role: "user"
+                      content: "Explain quantum computing in simple terms."
+                  max_tokens: 500
+                  temperature: 0.3
+                  top_p: 0.9
+                  presence_penalty: 0.1
+                  frequency_penalty: 0.1
+      responses:
+        "200":
+          description: チャット補完が生成されました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatCompletionResponse"
+              examples:
+                success:
+                  summary: 成功レスポンス
+                  value:
+                    id: "chatcmpl-123"
+                    object: "chat.completion"
+                    created: 1677652288
+                    model: "gpt-3.5-turbo"
+                    choices:
+                      - index: 0
+                        message:
+                          role: "assistant"
+                          content: "Hello! I'm doing well, thank you for asking. How can I help you today?"
+                        finish_reason: "stop"
+                    usage:
+                      prompt_tokens: 9
+                      completion_tokens: 12
+                      total_tokens: 21
+                    metadata:
+                      latency_ms: 1250
+                      model_version: "gpt-3.5-turbo-0613"
+        "400":
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: レート制限エラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /images/generations:
+    post:
+      summary: Generate images
+      description: |
+        AIを使用して画像を生成します。
+        
+        ## 対応モデル
+        - dall-e-3: DALL-E 3モデル
+        - dall-e-2: DALL-E 2モデル
+        - midjourney: Midjourneyモデル
+      operationId: createImage
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImageGenerationRequest"
+            examples:
+              simple_image:
+                summary: シンプルな画像生成
+                value:
+                  model: "dall-e-3"
+                  prompt: "A cute cat sitting on a rainbow"
+                  n: 1
+                  size: "1024x1024"
+                  quality: "standard"
+              detailed_image:
+                summary: 詳細な画像生成
+                value:
+                  model: "dall-e-3"
+                  prompt: "A futuristic cityscape at sunset, cyberpunk style, high detail"
+                  n: 2
+                  size: "1792x1024"
+                  quality: "hd"
+                  style: "vivid"
+      responses:
+        "200":
+          description: 画像が生成されました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageGenerationResponse"
+
+  /embeddings:
+    post:
+      summary: Create embeddings
+      description: |
+        テキストの埋め込みベクトルを生成します。
+        
+        ## 用途
+        - テキスト類似度計算
+        - セマンティック検索
+        - クラスタリング
+      operationId: createEmbedding
+      tags:
+        - Embeddings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmbeddingRequest"
+      responses:
+        "200":
+          description: 埋め込みベクトルが生成されました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmbeddingResponse"
+
+components:
+  schemas:
+    ChatCompletionRequest:
+      type: object
+      description: チャット補完リクエスト
+      required:
+        - model
+        - messages
+      properties:
+        model:
+          type: string
+          description: 使用するモデル
+          enum: [gpt-4, gpt-3.5-turbo, claude-3]
+          example: gpt-3.5-turbo
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+          description: チャットメッセージの配列
+          minItems: 1
+        max_tokens:
+          type: integer
+          description: 生成する最大トークン数
+          minimum: 1
+          maximum: 4096
+          default: 100
+          example: 100
+        temperature:
+          type: number
+          description: 生成のランダム性（0.0-2.0）
+          minimum: 0.0
+          maximum: 2.0
+          default: 0.7
+          example: 0.7
+        top_p:
+          type: number
+          description: 核サンプリングパラメータ（0.0-1.0）
+          minimum: 0.0
+          maximum: 1.0
+          default: 1.0
+          example: 0.9
+        presence_penalty:
+          type: number
+          description: 存在ペナルティ（-2.0-2.0）
+          minimum: -2.0
+          maximum: 2.0
+          default: 0.0
+          example: 0.1
+        frequency_penalty:
+          type: number
+          description: 頻度ペナルティ（-2.0-2.0）
+          minimum: -2.0
+          maximum: 2.0
+          default: 0.0
+          example: 0.1
+        stream:
+          type: boolean
+          description: ストリーミングレスポンス
+          default: false
+          example: false
+
+    ChatMessage:
+      type: object
+      description: チャットメッセージ
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          description: メッセージの役割
+          enum: [system, user, assistant]
+          example: user
+        content:
+          type: string
+          description: メッセージの内容
+          maxLength: 10000
+          example: "Hello, how are you?"
+        name:
+          type: string
+          description: メッセージの送信者名
+          example: "John"
+
+    ChatCompletionResponse:
+      type: object
+      description: チャット補完レスポンス
+      required:
+        - id
+        - object
+        - created
+        - model
+        - choices
+        - usage
+      properties:
+        id:
+          type: string
+          description: 補完のID
+          example: chatcmpl-123
+        object:
+          type: string
+          description: オブジェクトタイプ
+          enum: [chat.completion]
+          example: chat.completion
+        created:
+          type: integer
+          description: 作成時刻（Unix timestamp）
+          example: 1677652288
+        model:
+          type: string
+          description: 使用したモデル
+          example: gpt-3.5-turbo
+        choices:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatChoice"
+          description: 生成された選択肢
+        usage:
+          $ref: "#/components/schemas/TokenUsage"
+        metadata:
+          $ref: "#/components/schemas/ModelMetadata"
+
+    ChatChoice:
+      type: object
+      description: チャット選択肢
+      required:
+        - index
+        - message
+        - finish_reason
+      properties:
+        index:
+          type: integer
+          description: 選択肢のインデックス
+          example: 0
+        message:
+          $ref: "#/components/schemas/ChatMessage"
+        finish_reason:
+          type: string
+          description: 終了理由
+          enum: [stop, length, content_filter, null]
+          example: stop
+
+    TokenUsage:
+      type: object
+      description: トークン使用量
+      required:
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
+      properties:
+        prompt_tokens:
+          type: integer
+          description: プロンプトトークン数
+          example: 9
+        completion_tokens:
+          type: integer
+          description: 補完トークン数
+          example: 12
+        total_tokens:
+          type: integer
+          description: 総トークン数
+          example: 21
+
+    ModelMetadata:
+      type: object
+      description: モデルメタデータ
+      properties:
+        latency_ms:
+          type: integer
+          description: 処理時間（ミリ秒）
+          example: 1250
+        model_version:
+          type: string
+          description: モデルバージョン
+          example: gpt-3.5-turbo-0613
+        request_id:
+          type: string
+          description: リクエストID
+          example: req_123456789
+
+    ImageGenerationRequest:
+      type: object
+      description: 画像生成リクエスト
+      required:
+        - model
+        - prompt
+      properties:
+        model:
+          type: string
+          description: 使用するモデル
+          enum: [dall-e-3, dall-e-2, midjourney]
+          example: dall-e-3
+        prompt:
+          type: string
+          description: 画像生成のプロンプト
+          maxLength: 1000
+          example: "A cute cat sitting on a rainbow"
+        n:
+          type: integer
+          description: 生成する画像数
+          minimum: 1
+          maximum: 4
+          default: 1
+          example: 1
+        size:
+          type: string
+          description: 画像サイズ
+          enum: [256x256, 512x512, 1024x1024, 1792x1024, 1024x1792]
+          default: 1024x1024
+          example: 1024x1024
+        quality:
+          type: string
+          description: 画像品質
+          enum: [standard, hd]
+          default: standard
+          example: standard
+        style:
+          type: string
+          description: 画像スタイル
+          enum: [vivid, natural]
+          default: vivid
+          example: vivid
+
+    ImageGenerationResponse:
+      type: object
+      description: 画像生成レスポンス
+      required:
+        - created
+        - data
+      properties:
+        created:
+          type: integer
+          description: 作成時刻（Unix timestamp）
+          example: 1677652288
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageData"
+          description: 生成された画像データ
+
+    ImageData:
+      type: object
+      description: 画像データ
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          description: 画像のURL
+          example: https://oaidalleapiprodscus.blob.core.windows.net/private/...
+        b64_json:
+          type: string
+          description: Base64エンコードされた画像データ
+        revised_prompt:
+          type: string
+          description: 修正されたプロンプト
+          example: "A cute cat sitting on a rainbow, digital art style"
+
+    EmbeddingRequest:
+      type: object
+      description: 埋め込みリクエスト
+      required:
+        - model
+        - input
+      properties:
+        model:
+          type: string
+          description: 使用するモデル
+          enum: [text-embedding-ada-002, text-embedding-3-small, text-embedding-3-large]
+          example: text-embedding-ada-002
+        input:
+          oneOf:
+            - type: string
+              description: 単一のテキスト
+            - type: array
+              items:
+                type: string
+              description: テキストの配列
+          example: "The quick brown fox jumps over the lazy dog"
+
+    EmbeddingResponse:
+      type: object
+      description: 埋め込みレスポンス
+      required:
+        - object
+        - data
+        - model
+        - usage
+      properties:
+        object:
+          type: string
+          enum: [list]
+          example: list
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmbeddingData"
+          description: 埋め込みデータの配列
+        model:
+          type: string
+          description: 使用したモデル
+          example: text-embedding-ada-002
+        usage:
+          $ref: "#/components/schemas/TokenUsage"
+
+    EmbeddingData:
+      type: object
+      description: 埋め込みデータ
+      required:
+        - object
+        - embedding
+        - index
+      properties:
+        object:
+          type: string
+          enum: [embedding]
+          example: embedding
+        embedding:
+          type: array
+          items:
+            type: number
+          description: 埋め込みベクトル
+          example: [0.0023064255, -0.009327292, -0.0028842222]
+        index:
+          type: integer
+          description: 埋め込みのインデックス
+          example: 0
+
+    ErrorResponse:
+      type: object
+      description: エラーレスポンス
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - message
+            - type
+            - code
+          properties:
+            message:
+              type: string
+              description: エラーメッセージ
+              example: "Invalid model specified"
+            type:
+              type: string
+              description: エラータイプ
+              example: "invalid_request_error"
+            code:
+              type: string
+              description: エラーコード
+              example: "invalid_model"
+
+tags:
+  - name: Chat
+    description: チャット補完機能
+  - name: Images
+    description: 画像生成機能
+  - name: Embeddings
+    description: 埋め込みベクトル生成機能

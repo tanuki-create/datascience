@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: Simple Todo API
+  description: |
+    # シンプルなCRUD API
+    
+    典型的なRESTベースアプリケーションの例です。
+    Entityの一覧・登録・更新・削除を自動生成できる最小構成を示しています。
+    
+    ## 学習ポイント
+    - `#/components/schemas/` は JSON Schema 構文
+    - OpenAPI は **モデル定義を分離再利用**できる
+    - Swagger UI や Postman で即テスト可能
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: http://localhost:3000/v1
+    description: Development server
+
+paths:
+  /todos:
+    get:
+      summary: Get all todos
+      description: 全てのTodoアイテムを取得します
+      operationId: getAllTodos
+      tags:
+        - Todos
+      parameters:
+        - name: limit
+          in: query
+          description: 取得件数の上限
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: 取得開始位置
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          description: フィルタリング条件
+          required: false
+          schema:
+            type: string
+            enum: [all, active, completed]
+            default: all
+      responses:
+        "200":
+          description: Todoアイテムのリスト
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Todo"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      summary: Create a new todo
+      description: 新しいTodoアイテムを作成します
+      operationId: createTodo
+      tags:
+        - Todos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoCreate"
+            examples:
+              basic:
+                summary: 基本的なTodo作成
+                value:
+                  title: "Buy groceries"
+                  description: "Get milk, bread, and eggs"
+                  priority: "medium"
+              urgent:
+                summary: 緊急のTodo作成
+                value:
+                  title: "Fix critical bug"
+                  description: "Fix the login issue in production"
+                  priority: "high"
+                  due_date: "2024-10-15T18:00:00Z"
+      responses:
+        "201":
+          description: Todoアイテムが作成されました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "400":
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /todos/{id}:
+    get:
+      summary: Get a specific todo
+      description: 指定されたIDのTodoアイテムを取得します
+      operationId: getTodoById
+      tags:
+        - Todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: TodoアイテムのID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Todoアイテムの詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "404":
+          description: Todoアイテムが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      summary: Update a todo
+      description: 指定されたIDのTodoアイテムを更新します
+      operationId: updateTodo
+      tags:
+        - Todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: TodoアイテムのID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoUpdate"
+      responses:
+        "200":
+          description: Todoアイテムが更新されました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "404":
+          description: Todoアイテムが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: Delete a todo
+      description: 指定されたIDのTodoアイテムを削除します
+      operationId: deleteTodo
+      tags:
+        - Todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: TodoアイテムのID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "204":
+          description: Todoアイテムが削除されました
+        "404":
+          description: Todoアイテムが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    Todo:
+      type: object
+      description: Todoアイテム
+      required:
+        - id
+        - title
+        - done
+        - created_at
+      properties:
+        id:
+          type: integer
+          description: ユニークID
+          example: 1
+        title:
+          type: string
+          description: Todoのタイトル
+          maxLength: 255
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Todoの詳細説明
+          maxLength: 1000
+          example: "Get milk, bread, and eggs from the supermarket"
+        done:
+          type: boolean
+          description: 完了フラグ
+          example: false
+        priority:
+          type: string
+          description: 優先度
+          enum: [low, medium, high]
+          default: medium
+          example: medium
+        due_date:
+          type: string
+          format: date-time
+          description: 期限日時
+          example: "2024-10-15T18:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2024-10-14T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2024-10-14T15:45:00Z"
+
+    TodoCreate:
+      type: object
+      description: Todo作成リクエスト
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: Todoのタイトル
+          maxLength: 255
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Todoの詳細説明
+          maxLength: 1000
+          example: "Get milk, bread, and eggs"
+        priority:
+          type: string
+          description: 優先度
+          enum: [low, medium, high]
+          default: medium
+          example: medium
+        due_date:
+          type: string
+          format: date-time
+          description: 期限日時
+          example: "2024-10-15T18:00:00Z"
+
+    TodoUpdate:
+      type: object
+      description: Todo更新リクエスト
+      properties:
+        title:
+          type: string
+          description: Todoのタイトル
+          maxLength: 255
+          example: "Buy groceries (updated)"
+        description:
+          type: string
+          description: Todoの詳細説明
+          maxLength: 1000
+          example: "Get milk, bread, eggs, and cheese"
+        done:
+          type: boolean
+          description: 完了フラグ
+          example: true
+        priority:
+          type: string
+          description: 優先度
+          enum: [low, medium, high]
+          example: high
+        due_date:
+          type: string
+          format: date-time
+          description: 期限日時
+          example: "2024-10-16T18:00:00Z"
+
+    Pagination:
+      type: object
+      description: ページネーション情報
+      properties:
+        limit:
+          type: integer
+          description: 取得件数
+          example: 20
+        offset:
+          type: integer
+          description: 取得開始位置
+          example: 0
+        total:
+          type: integer
+          description: 総件数
+          example: 150
+        has_next:
+          type: boolean
+          description: 次のページが存在するか
+          example: true
+        has_prev:
+          type: boolean
+          description: 前のページが存在するか
+          example: false
+
+    ErrorResponse:
+      type: object
+      description: エラーレスポンス
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: エラーコード
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "Title is required and must be less than 255 characters"
+        details:
+          type: object
+          description: エラー詳細
+          additionalProperties: true
+          example:
+            field: "title"
+            code: "required"
+
+tags:
+  - name: Todos
+    description: Todoアイテムの管理
