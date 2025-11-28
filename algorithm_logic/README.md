@@ -44,16 +44,17 @@ algorithm_logic/
 2. **[二ポインタ](02_two_pointers/README.md)** - 配列や文字列を効率的に処理
    - Valid Palindrome
    - Container With Most Water
-   - 3Sum
+   - [3Sum](02_two_pointers/3sum_logic.md)
 
 3. **[スライディングウィンドウ](03_sliding_window/README.md)** - 連続する部分列の問題に最適
    - Longest Substring Without Repeating Characters
-   - Minimum Window Substring
+   - [Minimum Window Substring](03_sliding_window/minimum_window_substring_logic.md)
 
 ### Phase 2: データ構造
 
 4. **[スタック・キュー](04_stack_queue/README.md)** - LIFO/FIFOの特性を活かす
 5. **[二分探索](05_binary_search/README.md)** - ソート済み配列での高速検索
+6. **[ソート](06_sorting/README.md)** - データの並び替え
 
 ### Phase 3: 高度なアルゴリズム
 
@@ -64,9 +65,12 @@ algorithm_logic/
 ### Phase 4: 専門テクニック
 
 9. **[グラフアルゴリズム](10_graph_algorithms/README.md)** - ネットワーク構造の処理
+   - [Number of Islands](10_graph_algorithms/number_of_islands_logic.md)
 10. **[文字列処理](11_string_manipulation/README.md)** - 高度な文字列マッチング
+   - [Longest Common Prefix](11_string_manipulation/longest_common_prefix_logic.md)
 11. **[ビット操作](12_bit_manipulation/README.md)** - メモリ効率的な処理
 12. **[数学的アルゴリズム](13_mathematical/README.md)** - 数論と組み合わせ論
+   - [Power of Two](13_mathematical/power_of_two_logic.md)
 
 ## 各テクニックの構成
 
