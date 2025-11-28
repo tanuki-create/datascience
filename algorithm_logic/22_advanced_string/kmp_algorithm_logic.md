@@ -1,4 +1,4 @@
-git add# KMP Algorithm - ロジック解説
+# KMP Algorithm - ロジック解説
 
 ## 問題概要
 
