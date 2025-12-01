@@ -9,6 +9,8 @@
 - **[Steam](steam_design.md)** - PCゲームプラットフォーム
 - **[Epic Games](epic_games_design.md)** - ゲームストアとエンジン
 - **[PlayStation Network](playstation_network_design.md)** - コンソールゲームプラットフォーム
+- **[Xbox Live](xbox_live_design.md)** - Microsoftコンソールゲームプラットフォーム
+- **[Nintendo Switch Online](nintendo_switch_online_design.md)** - 任天堂コンソールゲームプラットフォーム
 
 ## 共通の設計課題
 

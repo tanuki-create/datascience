@@ -10,6 +10,8 @@
 - **[Stripe](stripe_design.md)** - 決済APIプラットフォーム
 - **[Venmo](venmo_design.md)** - P2P決済サービス
 - **[Square](square_design.md)** - 決済処理プラットフォーム
+- **[Apple Pay](apple_pay_design.md)** - Appleモバイル決済システム
+- **[Google Pay](google_pay_design.md)** - Googleモバイル決済システム
 
 ## 共通の設計課題
 

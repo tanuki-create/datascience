@@ -12,6 +12,16 @@
 - **[Message Queues](message_queues.md)** - メッセージキュー
 - **[Rate Limiting](rate_limiting.md)** - レート制限
 - **[Monitoring & Logging](monitoring_logging.md)** - モニタリングとログ
+- **[Circuit Breaker](circuit_breaker.md)** - サーキットブレーカー
+- **[API Gateway](api_gateway.md)** - APIゲートウェイ
+- **[Service Mesh](service_mesh.md)** - サービスメッシュ
+- **[Event Sourcing](event_sourcing.md)** - イベントソーシング
+- **[CQRS](cqrs.md)** - コマンドクエリ責任分離
+- **[Saga Pattern](saga_pattern.md)** - 分散トランザクション管理
+- **[Bulkhead Pattern](bulkhead_pattern.md)** - リソース分離
+- **[Retry Pattern](retry_pattern.md)** - リトライパターン
+- **[Idempotency](idempotency.md)** - べき等性
+- **[Data Replication](data_replication.md)** - データレプリケーション
 
 ## 各パターンの適用場面
 

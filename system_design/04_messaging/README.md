@@ -11,6 +11,7 @@
 - **[Telegram](telegram_design.md)** - セキュアメッセージング
 - **[Slack](slack_design.md)** - ビジネス向けメッセージング
 - **[Discord](discord_design.md)** - コミュニティ向けメッセージング
+- **[LINE](line_design.md)** - 日本・アジアで人気のメッセージングアプリ
 
 ## 共通の設計課題
 

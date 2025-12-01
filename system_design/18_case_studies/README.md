@@ -9,6 +9,10 @@
 - **[Scaling Challenges](scaling_challenges.md)** - スケーリングの課題と解決策
 - **[Performance Optimization](performance_optimization.md)** - パフォーマンス最適化の事例
 - **[Cost Optimization](cost_optimization.md)** - コスト最適化の事例
+- **[Disaster Recovery](disaster_recovery.md)** - 災害復旧の事例
+- **[Security Incidents](security_incidents.md)** - セキュリティインシデント対応の事例
+- **[Migration Challenges](migration_challenges.md)** - システム移行の課題
+- **[Multi-Region Deployment](multi_region_deployment.md)** - マルチリージョン展開の事例
 
 ## 各ケーススタディの内容
 

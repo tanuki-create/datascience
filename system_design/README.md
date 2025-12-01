@@ -23,7 +23,9 @@ system_design/
 │   ├── facebook_design.md
 │   ├── instagram_design.md
 │   ├── linkedin_design.md
-│   └── tiktok_design.md
+│   ├── tiktok_design.md
+│   ├── snapchat_design.md
+│   └── pinterest_design.md
 ├── 02_video_streaming/                # 動画配信
 │   ├── README.md
 │   ├── youtube_design.md
@@ -42,7 +44,8 @@ system_design/
 │   ├── wechat_design.md
 │   ├── telegram_design.md
 │   ├── slack_design.md
-│   └── discord_design.md
+│   ├── discord_design.md
+│   └── line_design.md
 ├── 05_search_engines/                 # 検索エンジン
 │   ├── README.md
 │   ├── google_search_design.md
@@ -79,13 +82,17 @@ system_design/
 │   ├── README.md
 │   ├── steam_design.md
 │   ├── epic_games_design.md
-│   └── playstation_network_design.md
+│   ├── playstation_network_design.md
+│   ├── xbox_live_design.md
+│   └── nintendo_switch_online_design.md
 ├── 12_payment_finance/                # 金融・決済
 │   ├── README.md
 │   ├── paypal_design.md
 │   ├── stripe_design.md
 │   ├── venmo_design.md
-│   └── square_design.md
+│   ├── square_design.md
+│   ├── apple_pay_design.md
+│   └── google_pay_design.md
 ├── 13_cloud_services/                  # クラウドサービス
 │   ├── README.md
 │   ├── aws_design.md
@@ -113,12 +120,31 @@ system_design/
 │   ├── database_sharding.md
 │   ├── message_queues.md
 │   ├── rate_limiting.md
-│   └── monitoring_logging.md
-└── 18_case_studies/                   # ケーススタディ
+│   ├── monitoring_logging.md
+│   ├── circuit_breaker.md
+│   ├── api_gateway.md
+│   ├── service_mesh.md
+│   ├── event_sourcing.md
+│   ├── cqrs.md
+│   ├── saga_pattern.md
+│   ├── bulkhead_pattern.md
+│   ├── retry_pattern.md
+│   ├── idempotency.md
+│   └── data_replication.md
+├── 18_case_studies/                   # ケーススタディ
+│   ├── README.md
+│   ├── scaling_challenges.md
+│   ├── performance_optimization.md
+│   ├── cost_optimization.md
+│   ├── disaster_recovery.md
+│   ├── security_incidents.md
+│   ├── migration_challenges.md
+│   └── multi_region_deployment.md
+└── 19_developer_tools/                # 開発者ツール
     ├── README.md
-    ├── scaling_challenges.md
-    ├── performance_optimization.md
-    └── cost_optimization.md
+    ├── github_design.md
+    ├── gitlab_design.md
+    └── bitbucket_design.md
 ```
 
 ## 学習の進め方
@@ -206,6 +232,39 @@ system_design/
 - **[Performance Optimization](18_case_studies/performance_optimization.md)** - パフォーマンス最適化の事例
 - **[Cost Optimization](18_case_studies/cost_optimization.md)** - コスト最適化の事例
 
+### Phase 5: 追加システム
+
+58. **[Xbox Live](11_gaming/xbox_live_design.md)** - Microsoftコンソールゲームプラットフォーム
+59. **[Nintendo Switch Online](11_gaming/nintendo_switch_online_design.md)** - 任天堂コンソールゲームプラットフォーム
+60. **[Apple Pay](12_payment_finance/apple_pay_design.md)** - Appleモバイル決済システム
+61. **[Google Pay](12_payment_finance/google_pay_design.md)** - Googleモバイル決済システム
+62. **[LINE](04_messaging/line_design.md)** - 日本・アジアで人気のメッセージングアプリ
+63. **[Snapchat](01_social_media/snapchat_design.md)** - エフェメラルメッセージングプラットフォーム
+64. **[Pinterest](01_social_media/pinterest_design.md)** - 画像共有・ピン留めプラットフォーム
+65. **[GitHub](19_developer_tools/github_design.md)** - コードホスティング・バージョン管理プラットフォーム
+66. **[GitLab](19_developer_tools/gitlab_design.md)** - DevOpsプラットフォーム
+67. **[Bitbucket](19_developer_tools/bitbucket_design.md)** - コードホスティングプラットフォーム
+
+### Phase 6: 追加共通パターン
+
+- **[Circuit Breaker](17_common_patterns/circuit_breaker.md)** - サーキットブレーカーパターン
+- **[API Gateway](17_common_patterns/api_gateway.md)** - APIゲートウェイパターン
+- **[Service Mesh](17_common_patterns/service_mesh.md)** - サービスメッシュパターン
+- **[Event Sourcing](17_common_patterns/event_sourcing.md)** - イベントソーシングパターン
+- **[CQRS](17_common_patterns/cqrs.md)** - コマンドクエリ責任分離パターン
+- **[Saga Pattern](17_common_patterns/saga_pattern.md)** - 分散トランザクション管理パターン
+- **[Bulkhead Pattern](17_common_patterns/bulkhead_pattern.md)** - リソース分離パターン
+- **[Retry Pattern](17_common_patterns/retry_pattern.md)** - リトライパターン
+- **[Idempotency](17_common_patterns/idempotency.md)** - べき等性パターン
+- **[Data Replication](17_common_patterns/data_replication.md)** - データレプリケーションパターン
+
+### Phase 7: 追加ケーススタディ
+
+- **[Disaster Recovery](18_case_studies/disaster_recovery.md)** - 災害復旧の事例
+- **[Security Incidents](18_case_studies/security_incidents.md)** - セキュリティインシデント対応の事例
+- **[Migration Challenges](18_case_studies/migration_challenges.md)** - システム移行の課題
+- **[Multi-Region Deployment](18_case_studies/multi_region_deployment.md)** - マルチリージョン展開の事例
+
 ## 各システム設計ドキュメントの構成
 
 各システム設計ドキュメントは以下のセクションで構成されています：
@@ -263,6 +322,16 @@ system_design/
 - 2024: Phase 4（共通パターンとケーススタディ）を追加
   - 共通パターン: Load Balancing, Caching Strategies, Database Sharding, Message Queues, Rate Limiting, Monitoring & Logging
   - ケーススタディ: Scaling Challenges, Performance Optimization, Cost Optimization
+- 2024: Phase 5（追加10システム）を追加
+  - Xbox Live, Nintendo Switch Online
+  - Apple Pay, Google Pay
+  - LINE, Snapchat, Pinterest
+  - GitHub, GitLab, Bitbucket
+- 2024: Phase 6（追加共通パターン10個）を追加
+  - Circuit Breaker, API Gateway, Service Mesh, Event Sourcing, CQRS
+  - Saga Pattern, Bulkhead Pattern, Retry Pattern, Idempotency, Data Replication
+- 2024: Phase 7（追加ケーススタディ4個）を追加
+  - Disaster Recovery, Security Incidents, Migration Challenges, Multi-Region Deployment
 
 ---
 

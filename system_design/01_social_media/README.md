@@ -11,6 +11,8 @@
 - **[Instagram](instagram_design.md)** - 写真共有プラットフォーム
 - **[LinkedIn](linkedin_design.md)** - プロフェッショナルネットワーク
 - **[TikTok](tiktok_design.md)** - ショート動画プラットフォーム
+- **[Snapchat](snapchat_design.md)** - エフェメラルメッセージングプラットフォーム
+- **[Pinterest](pinterest_design.md)** - 画像共有・ピン留めプラットフォーム
 
 ## 共通の設計課題
 
