@@ -141,6 +141,71 @@ system_design/
 14. **[PayPal](12_payment_finance/paypal_design.md)** - 決済システム
 15. **[AWS](13_cloud_services/aws_design.md)** - クラウドインフラ
 
+### Phase 2: 重要システム
+
+16. **[LinkedIn](01_social_media/linkedin_design.md)** - プロフェッショナルネットワーク
+17. **[TikTok](01_social_media/tiktok_design.md)** - ショート動画プラットフォーム
+18. **[Twitch](02_video_streaming/twitch_design.md)** - ライブストリーミング
+19. **[Hulu](02_video_streaming/hulu_design.md)** - 動画配信サービス
+20. **[eBay](03_ecommerce/ebay_design.md)** - オークション・マーケットプレイス
+21. **[Shopify](03_ecommerce/shopify_design.md)** - Eコマースプラットフォーム
+22. **[Alibaba](03_ecommerce/alibaba_design.md)** - 中国最大のEコマース
+23. **[WeChat](04_messaging/wechat_design.md)** - スーパーアプリ
+24. **[Telegram](04_messaging/telegram_design.md)** - セキュアメッセージング
+25. **[Slack](04_messaging/slack_design.md)** - ビジネスコミュニケーション
+26. **[Discord](04_messaging/discord_design.md)** - ゲーミングコミュニティ
+27. **[Bing](05_search_engines/bing_design.md)** - Microsoft検索エンジン
+28. **[DuckDuckGo](05_search_engines/duckduckgo_design.md)** - プライバシー重視検索
+29. **[Google Maps](06_maps_navigation/google_maps_design.md)** - 地図・ナビゲーション
+30. **[Lyft](06_maps_navigation/lyft_design.md)** - ライドシェアリング
+31. **[Grab](06_maps_navigation/grab_design.md)** - 東南アジアのスーパーアプリ
+32. **[Google Drive](07_storage_file_sharing/google_drive_design.md)** - クラウドストレージ
+33. **[OneDrive](07_storage_file_sharing/onedrive_design.md)** - Microsoftクラウドストレージ
+34. **[iCloud](07_storage_file_sharing/icloud_design.md)** - Appleクラウドストレージ
+35. **[Apple Music](08_music_streaming/apple_music_design.md)** - Apple音楽ストリーミング
+36. **[Pandora](08_music_streaming/pandora_design.md)** - パーソナライズドラジオ
+37. **[Booking.com](09_hosting_rental/booking_design.md)** - ホテル予約プラットフォーム
+38. **[Expedia](09_hosting_rental/expedia_design.md)** - 旅行予約プラットフォーム
+39. **[Medium](10_news_media/medium_design.md)** - ブログプラットフォーム
+40. **[Quora](10_news_media/quora_design.md)** - Q&Aプラットフォーム
+
+### Phase 3: その他のシステム
+
+41. **[Steam](11_gaming/steam_design.md)** - PCゲームプラットフォーム
+42. **[Epic Games](11_gaming/epic_games_design.md)** - ゲーム開発・配信
+43. **[PlayStation Network](11_gaming/playstation_network_design.md)** - コンソールゲームネットワーク
+44. **[Stripe](12_payment_finance/stripe_design.md)** - 決済APIプラットフォーム
+45. **[Venmo](12_payment_finance/venmo_design.md)** - P2P決済アプリ
+46. **[Square](12_payment_finance/square_design.md)** - 決済・POSシステム
+47. **[Azure](13_cloud_services/azure_design.md)** - Microsoftクラウドプラットフォーム
+48. **[GCP](13_cloud_services/gcp_design.md)** - Googleクラウドプラットフォーム
+49. **[Cloudflare](14_cdn/cloudflare_design.md)** - CDN・セキュリティサービス
+50. **[Akamai](14_cdn/akamai_design.md)** - CDN・クラウドサービス
+51. **[AWS CloudFront](14_cdn/aws_cloudfront_design.md)** - AWS CDNサービス
+52. **[Zoom](15_realtime_systems/zoom_design.md)** - ビデオ会議プラットフォーム
+53. **[WebRTC](15_realtime_systems/webrtc_design.md)** - リアルタイム通信プロトコル
+54. **[Realtime Gaming](15_realtime_systems/realtime_gaming_design.md)** - リアルタイムゲームシステム
+55. **[Recommendation System](16_ml_ai_systems/recommendation_system_design.md)** - 推薦システム
+56. **[ML Inference](16_ml_ai_systems/ml_inference_design.md)** - 機械学習推論システム
+57. **[Chatbot](16_ml_ai_systems/chatbot_design.md)** - チャットボットシステム
+
+### Phase 4: 共通パターンとケーススタディ
+
+#### 共通パターン
+
+- **[Load Balancing](17_common_patterns/load_balancing.md)** - 負荷分散パターン
+- **[Caching Strategies](17_common_patterns/caching_strategies.md)** - キャッシング戦略
+- **[Database Sharding](17_common_patterns/database_sharding.md)** - データベースシャーディング
+- **[Message Queues](17_common_patterns/message_queues.md)** - メッセージキュー
+- **[Rate Limiting](17_common_patterns/rate_limiting.md)** - レート制限
+- **[Monitoring & Logging](17_common_patterns/monitoring_logging.md)** - モニタリングとログ
+
+#### ケーススタディ
+
+- **[Scaling Challenges](18_case_studies/scaling_challenges.md)** - スケーリングの課題と解決策
+- **[Performance Optimization](18_case_studies/performance_optimization.md)** - パフォーマンス最適化の事例
+- **[Cost Optimization](18_case_studies/cost_optimization.md)** - コスト最適化の事例
+
 ## 各システム設計ドキュメントの構成
 
 各システム設計ドキュメントは以下のセクションで構成されています：
@@ -181,9 +246,23 @@ system_design/
   - Twitter, YouTube, Uber, Netflix, Amazon
   - Google検索, WhatsApp, Instagram, Facebook, Airbnb
   - Dropbox, Spotify, Reddit, PayPal, AWS
-- 2024: Phase 2（重要20システム）を追加予定
-- 2024: Phase 3（その他15+システム）を追加予定
-- 2024: Phase 4（共通パターンとケーススタディ）を追加予定
+- 2024: Phase 2（重要25システム）を追加
+  - LinkedIn, TikTok, Twitch, Hulu, eBay, Shopify, Alibaba
+  - WeChat, Telegram, Slack, Discord
+  - Bing, DuckDuckGo, Google Maps, Lyft, Grab
+  - Google Drive, OneDrive, iCloud
+  - Apple Music, Pandora
+  - Booking.com, Expedia, Medium, Quora
+- 2024: Phase 3（その他17システム）を追加
+  - Steam, Epic Games, PlayStation Network
+  - Stripe, Venmo, Square
+  - Azure, GCP
+  - Cloudflare, Akamai, AWS CloudFront
+  - Zoom, WebRTC, Realtime Gaming
+  - Recommendation System, ML Inference, Chatbot
+- 2024: Phase 4（共通パターンとケーススタディ）を追加
+  - 共通パターン: Load Balancing, Caching Strategies, Database Sharding, Message Queues, Rate Limiting, Monitoring & Logging
+  - ケーススタディ: Scaling Challenges, Performance Optimization, Cost Optimization
 
 ---
 
