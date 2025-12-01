@@ -74,8 +74,14 @@ algorithm_logic/
 ### Phase 3: 高度なアルゴリズム
 
 6. **[動的計画法](07_dynamic_programming/README.md)** - 最適化問題の強力な手法
+   - [Interval DP](07_dynamic_programming/interval_dp_logic.md)
+   - [Bit DP](07_dynamic_programming/bit_dp_logic.md)
 7. **[貪欲法](08_greedy/README.md)** - 局所最適解を積み重ねる
 8. **[木の探索](09_tree_traversal/README.md)** - DFS/BFSの理解
+   - [Tree DP](09_tree_traversal/tree_dp_logic.md)
+   - [Tree Diameter](09_tree_traversal/tree_diameter_logic.md)
+   - [Centroid Decomposition](09_tree_traversal/centroid_decomposition_logic.md)
+   - [Euler Tour](09_tree_traversal/euler_tour_logic.md)
 
 ### Phase 4: 専門テクニック
 
@@ -131,20 +137,26 @@ algorithm_logic/
    - [KMP Algorithm](22_advanced_string/kmp_algorithm_logic.md)
    - [Rabin-Karp](22_advanced_string/rabin_karp_logic.md)
    - [Manacher's Algorithm](22_advanced_string/manacher_algorithm_logic.md)
+   - [Z-algorithm](22_advanced_string/z_algorithm_logic.md)
 22. **[高度なグラフアルゴリズム](23_advanced_graph/README.md)** - トポロジカルソート、最短経路、MST
    - [Topological Sort](23_advanced_graph/topological_sort_logic.md)
    - [Dijkstra Shortest Path](23_advanced_graph/dijkstra_shortest_path_logic.md)
    - [Kruskal MST](23_advanced_graph/kruskal_mst_logic.md)
+   - [Strongly Connected Components (SCC)](23_advanced_graph/strongly_connected_components_logic.md)
+   - [Bipartite Graph Detection](23_advanced_graph/bipartite_graph_logic.md)
 23. **[高度な数学的アルゴリズム](24_advanced_math/README.md)** - GCD、素数、組み合わせ
    - [GCD/LCM](24_advanced_math/gcd_lcm_logic.md)
    - [Sieve of Eratosthenes](24_advanced_math/sieve_of_eratosthenes_logic.md)
    - [Combinatorics](24_advanced_math/combinatorics_logic.md)
+   - [Extended Euclidean Algorithm](24_advanced_math/extended_euclidean_logic.md)
 
 ### Phase 8: 専門トピック
 
 24. **[セグメント木](25_segment_tree/README.md)** - 範囲クエリと更新（AtCoder特有）
    - [Range Sum Query - Mutable](25_segment_tree/range_sum_query_segment_tree_logic.md)
    - [Range Minimum Query](25_segment_tree/range_minimum_query_logic.md)
+   - [Fenwick Tree (Binary Indexed Tree)](25_segment_tree/fenwick_tree_logic.md)
+   - [Lazy Segment Tree](25_segment_tree/lazy_segment_tree_logic.md)
 25. **[座標圧縮](26_coordinate_compression/README.md)** - 大きな値を小さな整数にマッピング
    - [Coordinate Compression](26_coordinate_compression/coordinate_compression_logic.md)
 26. **[設計問題](27_design/README.md)** - 実用的なシステム設計
@@ -192,6 +204,7 @@ algorithm_logic/
 - 2024: Phase 7（高度な文字列、高度なグラフ、高度な数学的アルゴリズム）を追加
 - 2024: Phase 8（セグメント木、座標圧縮、設計問題、問題パターン識別ガイド）を追加
 - 2024: 既存セクションへの重要問題を追加（DP: 5問題、Tree: 4問題、Graph: 3問題、String: 4問題、Math: 4問題、Stack/Queue: 3問題）
+- 2024: 追加トピックを追加（Fenwick Tree、Lazy Segment Tree、SCC、Z-algorithm、Extended Euclidean、Interval DP、Bit DP、Tree DP、Tree Diameter、Centroid Decomposition、Euler Tour、Bipartite Graph）
 
 ---
 
