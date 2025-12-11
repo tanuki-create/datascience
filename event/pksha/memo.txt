@@ -1,0 +1,128 @@
+PSI, NLP技術
+
+NeurlPS論文読む
+
+日本企業通しているところ少ない
+
+##ローカルモデルの機運
+
+VLAモデルはトルクを決めるところは高速の必要性
+
+Jetson orinなどエッジGPUの発展
+
+蒸留、reasoning, loopにより小さなモデルでも性能発揮が可能へ
+
+##最先端
+
+論文からおおまかん方向性を知ることができる
+最新プロバイダーの詳細は正直わからないところも多いが
+
+研究、事業開発においても論文のフォローは大事
+
+## On the creattion of narrow AI, hiera...　竹山さん
+
+特定タスクに特化し、軽量化させるタイプの手法が事業開発に役立つのでは
+
+CMSP Task
+group sparsit regularization　枝刈り知識忘却
+Mnist, LLM
+
+##Sparse parity問題
+
+##Compositional multitask sparse parity問題
+
+##検証したいこと
+AIが最先端のタスクを覚える時、初等的なタスクを幅広く知る必要があるのでは
+階層的な理解なしに解ける？
+
+##CMSPタスクにおける学習
+特定のタスクだとしても、簡単な部分問題のデータを増やさないと精度が上がらない
+という主張
+
+難しいことだけやってもダメだね〜
+
+##枝刈りでの検証
+データ表現の特化
+より小さいモデルの構築を目指せるのでは
+
+
+
+##枝刈り、蒸留での結果
+シンプルなタスクでは97パーセントまで
+
+精度が出ていた
+
+「それを構成する簡単なサブスキル」を含む広い分布で学習した方が
+むしろ狭い複合スキルも速く学べる。
+
+
+##Edit Flows: Variable Length Discrete Flow Matching with Sequence-Level Edit Operations
+
+https://neurips.cc/virtual/2025/loc/san-diego/poster/119031
+
+Masked Diffusion Models (MLM) 有望な拡散言語モデル
+
+ARとは異なり、並列生成の利点、追従の利点
+固定調整薬　損失関数に関するもんだい、サンプリングの効率性の問題もある
+
+
+
+##Discrete Flow Matching
+
+
+
+##WebTHinker 
+
+Iterative DPO（反復的 DPO）＝
+「モデルが自分で作った新データに対して、何度も DPO をかけ直しながら性能を底上げしていく手法」
+
+RL や RLHF、DPO の話の中でよく出てくる trajectory は、
+
+あるエージェント（モデル）が
+「最初から最後までどう行動したか」という一連の履歴
+
+
+##Date Generation for benchmarking deep learning
+
+材料のデータセット作成
+
+物理現象のモデルから画像を作れる
+こういう装置を使うとこういうノイズが出るので、ノイズも載せれる
+
+CycleGAN-based Texture Transforfer
+
+CycleGANは　ペア画像がなくても　A-Bへの変換を学習できる生成モデル
+
+zebras-horses
+
+学習
+X - Y - X でちゃんと戻るかどうかを損失関数にしている
+
+材料画像のテクスチャを合わせるためのFFT損失、撮影環境をお合わせるための輝度平均損失、形状を変化させないためのLI損失導入
+
+
+真の材料画像に合成データを似せれないかというところ
+
+今後拡散モデルを使用する案
+
+人手アノテーションと比較して、95パーセントの精度
+
+(材料に特化、形状シミュレーション)
+
+step1のマスク画像をセグメントとして
+step3の色々したやつを学習画像として
+使用
+
+
+##attension
+
+Gated attension
+
+Qwen3-nextに採用されている
+
+
+Titan+Miras
+https://research.google/blog/titans-miras-helping-ai-have-long-term-memory/
+
+Nested Learning
+
