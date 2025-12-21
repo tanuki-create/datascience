@@ -1,0 +1,995 @@
+
+================================================================================
+ページ 1
+================================================================================
+!ery-Aware Graph Neural Networks for Enhanced
+Retrieval-Augmented Generation
+Vibhor Agrawal
+NVIDIA
+Santa Clara, USA
+vibhora@nvidia.com
+Fay Wang
+NVIDIA
+Santa Clara, USA
+fayw@nvidia.com
+Rishi Puri
+NVIDIA
+Santa Clara, USA
+riship@nvidia.com
+Abstract
+We present a novel graph neural network (GNN) architecture for
+retrieval-augmented generation (RAG) that leverages query-aware
+attention mechanisms and learned scoring heads to improve re-
+trieval accuracy on complex, multi-hop questions. Unlike traditional
+dense retrieval methods that treat documents as independent enti-
+ties, our approach constructs per-episode knowledge graphs that
+capture both sequential and semantic relationships between text
+chunks. We introduce an Enhanced Graph Attention Network with
+query-guided pooling that dynamically focuses on relevant parts of
+the graph based on user queries. Experimental results demonstrate
+that our approach signi!cantly outperforms standard dense retriev-
+ers on complex question answering tasks, particularly for questions
+requiring multi-document reasoning. Our implementation lever-
+ages PyTorch Geometric for e"cient processing of graph-structured
+data, enabling scalable deployment in production retrieval systems.
+CCS Concepts
+• Information systems →Information retrieval; Retrieval
+models and ranking; • Computing methodologies →Neural
+networks; Natural language processing; • Theory of computation
+→Graph algorithms analysis.
+Keywords
+Graph Neural Networks, Retrieval-Augmented Generation, Query-
+Aware Attention, Information Retrieval, Heterogeneous Graphs,
+Large Language Models, Text-Attributed Graphs
+ACM Reference Format:
+Vibhor Agrawal, Fay Wang, and Rishi Puri. 2025. Query-Aware Graph Neural
+Networks for Enhanced Retrieval-Augmented Generation. In Proceedings of
+MLoG-GenAI Workshop at KDD ’25 (MLoG-GenAI ’25). ACM, New York, NY,
+USA, 9 pages. https://doi.org/10.1145/nnnnnnn.nnnnnnn
+1
+Introduction
+Traditional vector-based retrieval models typically rely on embed-
+ding spaces where semantic relationships can be inadequately cap-
+tured, leading to retrieval inaccuracies. These systems often over-
+look intricate semantic structures and hierarchical relationships
+within complex datasets, especially when data is multimodal and
+highly interconnected. Graph Neural Networks (GNNs) inherently
+excel at modeling structured relational data, o#ering a promising
+alternative by e#ectively capturing these connections.
+We propose a GNN-based retrieval system that addresses these
+limitations through three key innovations. First, we develop a multi-
+relational graph representation that captures both sequential and
+semantic document structure, enabling the system to understand
+both the natural $ow of information and the conceptual relation-
+ships between text segments. Second, we introduce query-aware
+attention mechanisms that dynamically guide graph traversal based
+on the speci!c information needs expressed in user queries, en-
+suring that the most relevant pathways through the knowledge
+graph receive appropriate focus. Third, we design a learned scoring
+head that intelligently combines reranking logits with rich graph
+embeddings, producing more accurate relevance assessments than
+traditional vector-based approaches.
+Our implementation leverages PyTorch Geometric (PyG) [3],
+a powerful library for deep learning on irregular structures like
+graphs. PyG provides e"cient implementations of graph neural
+network layers, including Graph Attention Networks (GAT), and
+handles the complexities of batching graphs with varying sizes.
+This foundation enables our system to process multiple subgraphs
+in parallel during training, signi!cantly improving computational
+e"ciency and scalability. The framework’s sophisticated design al-
+lows us to implement edge-aware attention mechanisms e"ciently,
+ensuring that the relationships between nodes receive appropriate
+consideration during the learning process. Additionally, PyG’s scat-
+ter operations facilitate batch-aware pooling across variable-sized
+graph structures, while its $exible architecture seamlessly handles
+heterogeneous edge types in our multi-relational graphs, making
+it ideal for capturing the diverse relationships present in complex
+document collections.
+The framework’s modular design allows seamless integration of
+our enhanced GAT encoder with query-guided pooling mechanisms,
+making it well-suited for retrieval tasks on structured data.
+2
+Related Work
+2.1
+Neural Information Retrieval
+Dense retrieval methods have seen remarkable progress in recent
+years. Dual-encoder architectures like DPR [8] encode queries and
+documents separately into a shared vector space, enabling e"cient
+similarity search with approximate nearest neighbor algorithms.
+ColBERT [9] further enhances this by performing !ne-grained late
+interaction between query and document representations. More
+recently, embedding models like E5 [19] and BGE [22] have achieved
+strong zero-shot transfer capabilities by training on diverse datasets.
+Despite these advances, dense retrievers face inherent limita-
+tions when handling complex queries that require connecting in-
+formation across multiple documents or understanding document
+structure. They typically treat documents as independent units,
+ignoring relationships between them.
+
+
+
+================================================================================
+ページ 2
+================================================================================
+MLoG-GenAI ’25, August 04, 2025, Toronto, Canada
+Vibhor Agrawal, Fay Wang, and Rishi Puri
+2.2
+Graph-Based Retrieval
+Graph-based retrieval approaches attempt to address these limita-
+tions by modeling relationships between documents or text seg-
+ments. TextGraphs [12] constructs document graphs based on en-
+tity co-occurrence and uses random walks for retrieval. HiDE [1]
+incorporates document hierarchies to improve retrieval of long
+documents.
+More recently, GNN-based approaches have shown promising
+results. DeepRank [14] uses graph neural networks to model the
+relevance matching signals between query and document pairs.
+QAGNN [24] constructs knowledge graphs for question answering
+by connecting entities in questions to relevant facts. However, most
+existing GNN-based retrieval systems lack query-aware mecha-
+nisms for targeted retrieval, leading to suboptimal performance on
+complex queries.
+In general, graphs are part of a new wave of works aiming to
+improve upon the limitations of LLMs [17], beyond what basic
+RAG [11] enables. PyG enables e#ortless exploration in this space,
+with a continuously expanding set of features [15].
+2.3
+Graph Neural Networks
+In general, GNNs compute the embeddings of each node as a graph
+by transforming and aggregating the representations of their direct
+neighbors. We can refer to this computation of transforming and
+aggregating the embeddings of neighbor nodes as a "graph con-
+volution". This enables them to e#ectively model the interactions
+between nodes in a graph. PyG enables users to explore the large
+space of possible GNN variants by unifying them under the message
+passing interface [6].
+Our work builds on Graph Attention Networks (GAT) [18], which
+learn to assign di#erent importance to nodes in a neighborhood
+through self-attention mechanisms. Recent advances include edge-
+enhanced GATs [20] that incorporate edge features into the at-
+tention computation, and graph transformers [2] that apply self-
+attention across the entire graph. One can implement a GAT GNN
+using PyG’s GATConv graph convolutional layer [4].
+For graph pooling, Di#Pool [25] and SAGPool [10] propose learn-
+able pooling methods to adaptively coarsen graphs. However, these
+approaches don’t consider external query information when deter-
+mining node importance, which is crucial for retrieval tasks.
+2.4
+Retrieval for Complex Questions
+Answering complex questions that require multi-hop reasoning
+or graph-based understanding has been explored in several works.
+ODQA systems like Multi-hop Dense Retrieval [23] and IRRR [16] it-
+eratively retrieve documents based on intermediate reasoning steps.
+However, these approaches still treat documents as independent
+units during each retrieval step.
+Graph-based approaches like Entity-GNN [21] and GNN-DocRE [26]
+model entity relationships but focus primarily on entity extrac-
+tion rather than document retrieval. Our work bridges this gap
+by directly incorporating both sequential and semantic document
+relationships into the retrieval process.
+3
+Methodology
+GNN-based RAG Pipeline Architecture: Our pipeline consists of
+three main components: (1) Ingestion: processing audio transcripts
+into chunks, embedding them, and constructing a knowledge graph;
+(2) Retrieval: using our enhanced GNN with query-guided pooling
+and scoring head to identify relevant subgraphs; and (3) Genera-
+tion: feeding retrieved context to an LLM for response generation.
+The scoring head architecture adds a lightweight MLP on top of
+the fused graph-query representation to map high-dimensional
+embeddings to scalar relevance scores, !ne-tuned with triplet loss.
+3.1
+Multi-Relational Graph Construction
+Our graph construction process creates a multi-relational graph
+where nodes represent text chunks and edges capture both tem-
+poral adjacency (sequential) and semantic similarity relationships.
+Edge weights encode the strength of relationships. The complete
+algorithm is detailed in Appendix A.1.
+3.2
+Enhanced GAT Encoder
+Our encoder processes node features through multiple attention
+layers with:
+• Edge-aware attention incorporating edge type embeddings
+• Multi-head attention for learning diverse patterns
+• Residual connections and layer normalization for training
+stability
+• Dropout for regularization
+The complete algorithm is detailed in Appendix A.2.
+We leave it to future work to explore how this custom heteroge-
+neous GNN compares to pre-existing heterogeneous GNNs in PyG
+such as HGT [7], RGAT [5].
+3.3
+Query-Guided Pooling
+Our query-guided pooling mechanism computes query-speci!c
+node importance scores and performs weighted aggregation to
+obtain a query-aware graph representation. This approach enables
+the model to focus attention on the most relevant parts of the graph
+based on the query content. The batch-aware softmax ensures
+proper normalization across di#erent graphs in the batch. The
+complete algorithm is detailed in Appendix A.3.
+3.4
+Fusion and Scoring
+Our fusion module combines graph and query representations
+through:
+• Multi-layer perceptron with skip connections
+• Layer normalization for stable training
+• Final scoring head mapping to scalar relevance scores
+The architecture employs progressive dimension reduction and
+regularization to prevent over!tting. The complete algorithm is
+detailed in Appendix A.4.
+3.5
+Subgraph Extraction and PyG Conversion
+A critical component of our system is the conversion of NetworkX
+graph structures to PyG data objects for neural network process-
+ing. Our conversion process handles edge attributes and prepares
+for batch processing in PyG, ensuring proper mapping of graph
+
+
+
+================================================================================
+ページ 3
+================================================================================
+!ery-Aware Graph Neural Networks for Enhanced Retrieval-Augmented Generation
+MLoG-GenAI ’25, August 04, 2025, Toronto, Canada
+structures while maintaining all necessary properties for the neural
+network. The complete algorithm is detailed in Appendix A.5.
+3.6
+Graph-Enhanced Retrieval
+We propose key algorithms that leverage graph structure to enhance
+traditional embedding similarity search. Our approach combines
+vector similarity scores with graph-based relevance metrics to pro-
+duce more accurate and contextually aware rankings. The graph-
+based score adjustment algorithm improves retrieval quality by
+considering the semantic structure of the document relationships.
+The complete algorithm is detailed in Appendix A.9.
+Our approach also includes a query-aware subgraph extraction
+method that identi!es the most relevant portions of the graph based
+on the query. This technique optimizes both computational e"-
+ciency and retrieval accuracy by focusing on the most promising
+regions of the graph. We use an adaptive traversal approach that
+considers semantic similarity between the query and neighboring
+nodes, expanding only through paths that maintain relevance to
+the query. This is particularly valuable for large document collec-
+tions where processing the entire graph would be computationally
+prohibitive. The detailed algorithm can be found in Appendix A.
+These algorithms demonstrate how our system combines embed-
+ding similarity with graph structure to improve retrieval quality
+for complex queries. The graph-based score adjustment weights
+chunks that have stronger semantic connections in the document,
+while the subgraph extraction provides the context necessary for
+complex understanding.
+3.7
+Score Fusion with Learned Combination
+While our graph-enhanced retrieval and query-guided attention
+provide signi!cant improvements, we further enhance performance
+through learned score combination. Our approach uses a logistic re-
+gression model to combine multiple relevance signals into a uni!ed
+score. The complete algorithm is detailed in Appendix A.6.
+Our approach combines multiple complementary relevance sig-
+nals into a uni!ed scoring framework. The model integrates se-
+mantic similarity metrics with structural information derived from
+the graph. By fusing these diverse signals through a learned com-
+bination function, we enable the system to leverage the strengths
+of each component while compensating for their individual weak-
+nesses. The fusion is trained on the data where chunks are labeled
+based on their overlap with ground-truth relevant segments. This
+integrated approach captures both local semantic relevance and
+global document structure.
+4
+Implementation
+4.1
+System Architecture
+Our system consists of four main components, as depicted in Figure
+1:
+Our system architecture integrates four interconnected compo-
+nents that work synergistically to deliver superior retrieval perfor-
+mance. The Document Processing Pipeline forms the foundation
+by transcribing audio using Riva ASR for high-quality speech recog-
+nition, employing sophisticated chunking strategies that consider
+both temporal boundaries from the audio stream and semantic
+boundaries derived from content analysis. This preprocessing cul-
+minates in generating rich chunk embeddings using Llama 3.2
+NV-EmbedQA [13], providing a robust foundation for semantic
+search and retrieval operations.
+The Graph Construction Module builds upon these embed-
+dings by creating sophisticated multi-relational graph structures
+that capture both sequential document $ow and semantic relation-
+ships between content segments. This module carefully normalizes
+embeddings to ensure accurate cosine similarity computations be-
+tween nodes while implementing intelligent caching mechanisms
+that store constructed graphs for e"cient retrieval and reuse across
+similar queries, signi!cantly reducing computational overhead.
+Our Retrieval System employs a multi-stage approach begin-
+ning with FAISS-based approximate nearest neighbor search for
+initial candidate selection. The system then enhances these prelim-
+inary results by applying sophisticated graph-based score adjust-
+ment algorithms with con!gurable mixing parameters, allowing
+precise balance between traditional vector similarity and struc-
+tural graph relevance. For each promising candidate, the system
+dynamically extracts ego-subgraphs that capture local context and
+inter-chunk relationships for deeper analysis.
+Finally, the GNN-based Scoring component converts extracted
+subgraphs into PyG format for e"cient neural network process-
+ing. These graph representations undergo processing through our
+enhanced GAT encoder, which incorporates edge-aware attention
+mechanisms for maximum computational e"ciency. The system
+concludes by applying query-guided pooling and specialized scor-
+ing functions that generate precise relevance scores considering
+both content similarity and structural context.
+The system is implemented using PyTorch and PyG, utilizing
+e"cient scatter operations for batch processing of variable-sized
+graphs. The scoring head architecture builds on top of our GNN
+encoder with a progressive dimension reduction design that maps
+the fused graph-query representation to a scalar relevance score.
+Details of the score head implementation are provided in Appendix
+A.7.
+The implementation strategically integrates several specialized
+PyG components to achieve optimal performance. We leverage
+GATConv layers to implement sophisticated graph attention mech-
+anisms with edge-aware capabilities, enabling the model to selec-
+tively focus on the most relevant node relationships during informa-
+tion propagation. Scatter operations provide e"cient batch-aware
+pooling functionality, allowing the system to process variable-sized
+graph structures simultaneously while maintaining computational
+e"ciency. The architecture incorporates GlobalAttention mecha-
+nisms for query-guided node importance scoring, ensuring that the
+most relevant nodes receive appropriate emphasis during the re-
+trieval process. Additionally, we employ custom loss functions that
+intelligently combine triplet loss with binary cross-entropy, creat-
+ing a training objective that simultaneously optimizes for ranking
+quality and classi!cation accuracy.
+Our graph construction module uses NetworkX for building and
+manipulating graphs, which are then converted to PyG data objects
+for neural network processing. The system can be deployed as a
+retrieval service that accepts queries, processes them through the
+enhanced GNN, and returns ranked results based on the scoring
+head output.
+
+
+
+================================================================================
+ページ 4
+================================================================================
+MLoG-GenAI ’25, August 04, 2025, Toronto, Canada
+Vibhor Agrawal, Fay Wang, and Rishi Puri
+Figure 1: GNN-based RAG Pipeline with Scoring Head. The pipeline integrates audio transcript processing, graph construction,
+enhanced GNN with query-aware attention, and scoring head for improved retrieval accuracy.
+4.2
+Hard Query Generation
+We introduce a comprehensive framework for generating complex
+queries that speci!cally target structural understanding capabilities
+of retrieval systems. Our approach focuses on three distinct types
+of challenging queries that expose the limitations of traditional
+retrieval methods. Multi-hop questions require connecting in-
+formation across 2-4 non-adjacent document segments, testing the
+system’s ability to traverse complex relationship paths within the
+knowledge graph. For example, questions like "How does concept
+A introduced at the beginning relate to concept C discussed at the
+end?" force the system to maintain long-range dependencies and
+understand conceptual evolution throughout a document.
+Structural relationship questions speci!cally target docu-
+ment organization and concept dependencies, evaluating whether
+the system can understand hierarchical information $ow and pre-
+requisite relationships. These queries, such as "What prerequisites
+were established before introducing the transformer architecture?"
+require the retrieval system to recognize and leverage the inten-
+tional structuring of information by authors.
+Context-dependent questions challenge systems to synthesize
+broader contextual information beyond individual chunks, testing
+their ability to understand nuanced reasoning and decision-making
+processes. Questions like "Why was this particular approach cho-
+sen given the constraints mentioned earlier?" require the system
+to connect scattered contextual clues and understand implicit rela-
+tionships between di#erent parts of the document.
+Each question is annotated with complexity level (4-5), query
+type, and required segments for evaluation. The framework enables
+parameterized generation with con!gurable distribution across
+query types.
+This query generation approach allows us to systematically eval-
+uate retrieval systems on their ability to leverage document struc-
+ture and graph-based reasoning, providing a more comprehensive
+assessment than traditional benchmarks focused on simpler re-
+trieval scenarios.
+
+
+
+================================================================================
+ページ 5
+================================================================================
+!ery-Aware Graph Neural Networks for Enhanced Retrieval-Augmented Generation
+MLoG-GenAI ’25, August 04, 2025, Toronto, Canada
+Figure 2: Detailed architecture of the GNN-based retrieval system, showing the query-aware attention mechanism, edge-aware
+graph processing, and scoring head components.
+5
+Training Methodology
+5.1
+Two-Stage Training Pipeline
+We employ a two-stage training approach to optimize both repre-
+sentation learning and task-speci!c scoring:
+• Stage 1: Backbone Pre-training The Enhanced GAT en-
+coder is pre-trained on unsupervised graph reconstruction
+objectives to learn meaningful node representations. Once
+converged, backbone parameters are frozen.
+• Stage 2: Scoring Head Fine-tuning The scoring head is
+trained on triplet data with hard negative sampling
+6
+Experimental Evaluation
+6.1
+Datasets
+We evaluate our approach on two carefully curated educational
+content datasets that provide comprehensive coverage of di#erent
+learning modalities and complexity levels.
+• LPM Dataset (Lecture Presentations Multimodal) rep-
+resents a substantial collection of 325 lecture recordings
+encompassing over 9,000 slides drawn from more than 180
+hours of high-quality educational video content. This dataset
+features contributions from 10 expert lecturers covering di-
+verse academic subjects including anatomy, biology, psy-
+chology, computer science, and dentistry, providing rich
+interdisciplinary content that challenges retrieval systems
+across multiple knowledge domains. To ensure rigorous eval-
+uation, we developed an extensive collection of over 17,000
+question-answer pairs distributed across 5 complexity levels,
+with particular emphasis on custom-generated multi-hop
+queries requiring 2-4 reasoning steps that enable compre-
+hensive testing of graph traversal capabilities and structural
+understanding.
+• TED Talks Dataset complements our evaluation frame-
+work with over 2,600 video transcripts averaging 14 minutes
+in length, covering an expansive range of topics including
+cutting-edge technology, educational methodologies, scien-
+ti!c discoveries, and cultural insights. This dataset is metic-
+ulously segmented with precise speaker timestamps and
+topic boundaries, facilitating !ne-grained analysis of con-
+tent structure and temporal relationships. We developed a
+comprehensive evaluation suite comprising 32,900 question-
+answer pairs, with 13,100 speci!cally designed to require
+structural understanding and cross-segment reasoning ca-
+pabilities. This dataset serves primarily for cross-domain
+evaluation and generalization testing, allowing us to assess
+how well our graph-based approach transfers across di#erent
+content types and presentation styles.
+Both datasets include synthetically generated question-answer pairs
+with start and end timestamps indicating relevant segments for
+each question. This information enables us to evaluate the recall@5
+of our retrieval method in comparison to a basic RAG baseline.
+Questions are categorized by complexity level (1-5).
+6.2
+Results
+Our approach demonstrates consistent improvements across both
+datasets and complexity levels. On the LPM dataset, we achieve a
+1.6% relative improvement for Complexity 4 queries and a more
+substantial 5.5% gain for Complexity 5 queries. Similarly, on the
+
+
+
+================================================================================
+ページ 6
+================================================================================
+MLoG-GenAI ’25, August 04, 2025, Toronto, Canada
+Vibhor Agrawal, Fay Wang, and Rishi Puri
+Table 1: Overall Performance Comparison
+Dataset
+Method
+Recall@5
+Rel. Imp.
+LPM
+Traditional RAG
+0.7855
+-
+LPM
+Query-Guided GAT
+0.8120
++3.4%
+TED
+Traditional RAG
+0.6765
+-
+TED
+Query-Guided GAT
+0.7027
++3.9%
+Table 2: Performance on Hard Queries by Complexity Level
+Dataset
+Method
+Compl. 4
+Compl. 5
+LPM
+Traditional RAG
+0.7855
+0.7069
+LPM
+Query-Guided GAT
+0.7985
+0.7618
+TED
+Traditional RAG
+0.6672
+0.6867
+TED
+Query-Guided GAT
+0.6913
+0.7097
+TED dataset, our method shows a 3.6% improvement for Complexity
+4 and a 3.3% improvement for Complexity 5 queries.
+These results highlight an interesting pattern: while improve-
+ments on the LPM dataset increase with complexity, the TED dataset
+shows more consistent gains across both complexity levels. This
+suggests that the bene!ts of graph-based structural reasoning may
+depend not only on query complexity but also on the underly-
+ing content structure. The LPM lectures, with their longer format
+and more hierarchical organization, particularly bene!t from our
+approach on the most challenging queries.
+6.3
+Implementation Details
+Our query-aware GNN architecture is implemented using PyG and
+features a carefully designed multi-component structure optimized
+for retrieval tasks. The base model employs a 2-layer GNN con!gu-
+ration with 256 hidden dimensions and 4 attention heads, providing
+su"cient representational capacity while maintaining computa-
+tional e"ciency for real-time retrieval scenarios. The query en-
+coder generates rich 2048-dimensional dense representations that
+capture semantic nuances and contextual information from user
+queries, enabling e#ective query-graph interaction throughout the
+processing pipeline.
+The fusion network implements a progressive dimension reduc-
+tion strategy through a 3-layer MLP with dimensions [512, 256, 128],
+systematically combining query and graph representations while
+preserving the most discriminative features for relevance scoring.
+Our training regimen employs the AdamW optimizer with a learn-
+ing rate of 5e-4 and batch size of 128, parameters carefully tuned
+through extensive experimentation to achieve optimal convergence
+characteristics. To prevent over!tting and ensure robust general-
+ization, we apply dropout regularization at 0.3 and weight decay
+of 1e-4, maintaining model performance across diverse document
+collections and query types.
+For graph construction, we set the semantic edge threshold
+𝐿= 0.6 and keep top-5 neighbors per node. All experiments were
+conducted on NVIDIA A100 GPUs with 40GB memory.
+6.4
+Results and Analysis
+Our query-aware GNN approach consistently outperforms all base-
+line methods across all datasets, with the largest improvements
+observed on the HotpotQA dataset that speci!cally requires multi-
+hop reasoning. The performance gain is particularly signi!cant
+for complex queries that bene!t from structural understanding of
+document relationships.
+6.5
+Performance on Hard Query Types
+Table 2 presents a breakdown of performance across di#erent types
+of hard queries. Our approach shows particularly strong perfor-
+mance on complex queries that require traversing semantic rela-
+tionships between documents.
+The largest gains are seen for counterfactual and comparative
+queries, where understanding document structure and semantic
+relationships is critical. This con!rms that our approach e#ectively
+leverages the graph structure to navigate complex information
+spaces beyond what is possible with traditional dense retrievers.
+7
+Discussion
+The experimental results highlight several important insights about
+graph-based retrieval for complex queries:
+7.1
+Graph Structure Improves Complex
+Retrieval
+Our analysis shows that graph structures capture important docu-
+ment relationships that are missed by traditional dense retrievers.
+The semantic edges in our multi-relational graphs enable the model
+to navigate between related concepts even when they appear in
+di#erent parts of a document or across document boundaries. This
+structural information is particularly valuable for complex queries
+that require connecting multiple pieces of information.
+7.2
+Query-Aware Mechanisms Provide Focus
+The integration of query information into the graph processing
+through query-guided pooling signi!cantly improves retrieval per-
+formance. By allowing the query to guide attention across the graph,
+our model can focus on relevant substructures while ignoring irrel-
+evant connections. This targeted approach is especially bene!cial
+for large document collections where the signal-to-noise ratio can
+be low.
+7.3
+End-to-End Training Bene!ts
+Our curriculum learning approach with end-to-end !ne-tuning
+shows the importance of jointly optimizing all components of the
+retrieval pipeline. The scoring head, in particular, bene!ts from
+being trained in conjunction with the graph representation learning,
+as it learns to leverage both structural and semantic information in
+the relevance prediction.
+7.4
+Limitations and Challenges
+Despite the strong performance, our approach faces several chal-
+lenges:
+
+
+
+================================================================================
+ページ 7
+================================================================================
+!ery-Aware Graph Neural Networks for Enhanced Retrieval-Augmented Generation
+MLoG-GenAI ’25, August 04, 2025, Toronto, Canada
+• Computational Complexity: Graph construction and GNN
+processing are more computationally intensive than tradi-
+tional dense retrieval, potentially limiting scalability to very
+large document collections.
+• Graph Sparsity: For domains with limited semantic con-
+nections between documents, the bene!ts of graph-based
+approaches may be reduced.
+• Training Data Requirements: Our model requires training
+data with !ne-grained relevance annotations, which can be
+expensive to create for new domains.
+These limitations point to opportunities for future research on
+more e"cient graph construction and processing methods, as well
+as techniques for leveraging graph structures in low-resource do-
+mains.
+8
+Conclusion
+We presented a novel query-aware graph neural network architec-
+ture for enhanced retrieval-augmented generation. Our approach
+addresses fundamental limitations of traditional dense retrievers by
+modeling both sequential and semantic relationships between doc-
+ument chunks and incorporating query information directly into
+the graph processing pipeline. Experimental results demonstrate
+signi!cant improvements over state-of-the-art retrieval methods,
+particularly for complex questions requiring multi-hop reasoning.
+The combination of edge-aware attention, query-guided pooling,
+and learned score fusion enables our system to e#ectively navi-
+gate graphs and identify relevant information across document
+boundaries. Our PyG implementation ensures e"cient processing
+of graph structures, making the approach practical for real-world
+retrieval systems.
+Several promising directions for future work emerge from this
+research:
+• End-to-end RAG Optimization: Integrating our graph-
+based retrieval directly with language model generation to
+jointly optimize both components.
+• Hierarchical Document Representations: Extending our
+approach to handle multi-level document structures with
+hierarchical graphs.
+• Multi-modal Retrieval: Applying graph-based methods
+to capture relationships between di#erent modalities (text,
+images, audio) in uni!ed retrieval systems.
+• Dynamic Graph Updates: Developing techniques for ef-
+!ciently updating graph structures as new information be-
+comes available, without requiring complete reprocessing.
+By addressing these challenges, graph-based approaches have
+the potential to signi!cantly enhance retrieval capabilities for in-
+creasingly complex information needs in modern AI systems.
+References
+[1] Joonhyuk Choi, Kijong Yi, and Sungzoon Kim. 2020. HiDE: A Hierarchical-to-
+Document Network Embedding for Document Classi!cation. In Proceedings of
+the 28th International Conference on Computational Linguistics. 5393–5403.
+[2] Vijay Prakash Dwivedi and Xavier Bresson. 2021. A Generalization of Trans-
+former Networks to Graphs. In AAAI Workshop on Deep Learning on Graphs:
+Methods and Applications.
+[3] Matthias Fey and Jan Eric Lenssen. 2019. Fast Graph Representation Learning
+with PyTorch Geometric. arXiv preprint arXiv:1903.02428 (2019).
+[4] PyTorch Geometric. 2023.
+PyTorch Geometric Documentation: GAT-
+Conv.
+https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_
+geometric.nn.conv.GATConv.html.
+[5] PyTorch Geometric. 2023.
+PyTorch Geometric Documentation: RGAT-
+Conv.
+https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_
+geometric.nn.conv.RGATConv.html.
+[6] Justin Gilmer, Samuel S. Schoenholz, Patrick F. Riley, Oriol Vinyals, and George E.
+Dahl. 2017. Neural Message Passing for Quantum Chemistry. arXiv preprint
+arXiv:1704.01212 (2017).
+[7] Ziniu Hu, Yuxiao Dong, Kuansan Wang, and Yizhou Sun. 2020. Heterogeneous
+Graph Transformer. In Proceedings of The Web Conference 2020. 2704–2710.
+[8] Vladimir Karpukhin, Barlas Oguz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey
+Edunov, Danqi Chen, and Wen-tau Yih. 2020. Dense Passage Retrieval for Open-
+Domain Question Answering. In Proceedings of the 2020 Conference on Empirical
+Methods in Natural Language Processing (EMNLP). 6769–6781.
+[9] Omar Khattab and Matei Zaharia. 2020. ColBERT: E"cient and E#ective Passage
+Search via Contextualized Late Interaction over BERT. In Proceedings of the 43rd
+International ACM SIGIR Conference on Research and Development in Information
+Retrieval. 39–48.
+[10] Junhyun Lee, Inyeop Lee, and Jaewoo Kang. 2019. Self-Attention Graph Pooling.
+In International Conference on Machine Learning. 3734–3743.
+[11] Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin,
+Naman Goyal, Heinrich Küttler, Mike Lewis, Wen-tau Yih, Tim Rocktäschel, et al.
+2020. Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.
+arXiv preprint arXiv:2005.11401 (2020).
+[12] Andrew McCallum, Khashayar Rohanimanesh, Michael Wick, Karl Schultz, and
+Sameer Singh. 2008. TextGraphs: Graphs as Constraints on Text Generation. In
+ICML Workshop on OpenEnded Text Generation.
+[13] NVIDIA. 2025. Llama 3.2 NV-EmbedQA-1B-v2. NVIDIA AI Foundation Models.
+https://build.nvidia.com/nvidia/llama-3.2-nv-embedqa.
+[14] Liang Pang, Yanyan Lan, Jiafeng Guo, Jun Xu, Jingfang Xu, and Xueqi Cheng.
+2017. DeepRank: A new deep architecture for relevance ranking in information
+retrieval. arXiv preprint arXiv:1710.05649 (2017).
+[15] Rishi Puri and Ben Berger. 2025. NVIDIA x Kumo: Graph Neural Networks for
+LLMs. https://www.youtube.com/watch?v=uRIA8e7Y_vs.
+[16] Peng Qi, Xiaowen Lin, Leo Mehr, Zijian Zhu, and Christopher D Manning. 2019.
+Iterative Document Retrieval for Open-Domain Question Answering. In Proceed-
+ings of the 2019 Conference on Empirical Methods in Natural Language Processing
+and the 9th International Joint Conference on Natural Language Processing. 2468–
+2473.
+[17] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+Aidan N Gomez, Lukasz Kaiser, and Illia Polosukhin. 2017. Attention is All
+You Need. In Advances in Neural Information Processing Systems. 5998–6008.
+[18] Petar Veli%kovi&, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro
+Liò, and Yoshua Bengio. 2018. Graph Attention Networks. In International Con-
+ference on Learning Representations.
+[19] Liang Wang, Nan Yang, Xiaolong Huang, Binxing Jiao, Linjun Yang, Daxin Jiang,
+Rangan Majumder, and Furu Wei. 2022. E5: Towards Uni!ed Embeddings and
+Fine-tuning for Knowledge Intensive NLP Tasks. arXiv preprint arXiv:2212.03533
+(2022).
+[20] Yifan Wang, Jie Wang, Xiaotian Lin, and Yixiang Li. 2020. Edge-Enhanced Graph
+Attention Network for Node Classi!cation. IEEE Access 8 (2020), 176387–176395.
+[21] Zihao Wu, Songlin Pan, Feiyang Chen, Guodong Long, Chengqi Zhang, and
+Philip S Yu. 2020. Entity-GNN: Entity-aware Graph Neural Networks for Knowl-
+edge Graph Completion. In Proceedings of the AAAI Conference on Arti!cial
+Intelligence. 6301–6308.
+[22] Fangyu Xiao, Wenxuan Sheng, Hongyu Zhuang, Yingxin Wu, Yue Zhang, and Hai
+Zhang. 2023. BGE: BERT of General Embedding. arXiv preprint arXiv:2307.07976
+(2023).
+[23] Wenhan Xiong, Xiang He, Minghao Hu, Chen Zhang, Graham Neubig, and Eduard
+Hovy. 2021. Multi-hop Dense Retrieval for Open-Domain Question Answering.
+In Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021.
+3567–3581.
+[24] Michihiro Yasunaga, Hongyu Ren, Antoine Bosselut, Percy Liang, and Jure
+Leskovec. 2021. QA-GNN: Reasoning with Language Models and Knowledge
+Graphs for Question Answering. In Proceedings of the 2021 Conference of the
+North American Chapter of the Association for Computational Linguistics: Human
+Language Technologies. 535–546.
+[25] Zhitao Ying, Jiaxuan You, Christopher Morris, Xiang Ren, Will Hamilton, and Jure
+Leskovec. 2018. Hierarchical Graph Representation Learning with Di#erentiable
+Pooling. In Advances in Neural Information Processing Systems. 4800–4810.
+[26] Wenxuan Zhou and Kevin Huang. 2021. Document-Level Relation Extraction
+with Adaptive Thresholding and Localized Context Pooling. In Proceedings of the
+AAAI Conference on Arti!cial Intelligence. 14612–14620.
+
+
+
+================================================================================
+ページ 8
+================================================================================
+MLoG-GenAI ’25, August 04, 2025, Toronto, Canada
+Vibhor Agrawal, Fay Wang, and Rishi Puri
+A
+Algorithm Details
+This appendix provides detailed algorithms for our approach.
+A.1
+Multi-Relational Graph Construction
+Algorithm 1 Episode Graph Construction
+1: Input: Episode chunks 𝑀= {𝑁1, ...,𝑁𝐿}, similarity threshold 𝐿
+2: Output: Multi-relational graph 𝑂= (𝑃, 𝑄)
+3: Initialize 𝑂as empty MultiDiGraph
+4: for each chunk 𝑁𝑀in 𝑀do
+5:
+Add node 𝑅𝑀with embedding 𝑆𝑀and metadata
+6: end for
+7: // Sequential edges
+8: for 𝑇= 1 to 𝑈↑1 do
+9:
+Add bidirectional edge (𝑅𝑀, 𝑅𝑀+1) with type="sequential"
+10: end for
+11: // Semantic edges
+12: Compute similarity matrix 𝑉= cosine_similarity(𝑄)
+13: for each node 𝑅𝑀do
+14:
+neighbors = top_k(𝑉[𝑇],𝑊) where 𝑉[𝑇, 𝑋] > 𝐿
+15:
+for each 𝑅𝑁in neighbors do
+16:
+Add edge (𝑅𝑀, 𝑅𝑁) with type="semantic", weight=𝑉[𝑇, 𝑋]
+17:
+end for
+18: end for
+19: return 𝑂
+A.2
+Enhanced GAT Encoder
+Algorithm 2 Edge-Aware Graph Attention
+1: Input: Node features 𝑌, edge features 𝑄, adjacency 𝑍
+2: Output: Updated node representations 𝑌↓
+3: for layer 𝑎= 1 to 𝑏do
+4:
+for each node 𝑇do
+5:
+for each neighbor 𝑋↔𝑐(𝑇) do
+6:
+𝑆𝑀𝑁= EdgeEmbed(type𝑀𝑁) ↗weight𝑀𝑁
+7:
+𝑑𝑀𝑁= Attention(𝑒𝑀,𝑒𝑁,𝑆𝑀𝑁)
+8:
+end for
+9:
+𝑑𝑀= Softmax(𝑑𝑀) // Normalize attention
+10:
+𝑒↓
+𝑀= !
+𝑁𝑑𝑀𝑁·𝑓𝑂𝑒𝑁
+11:
+𝑒↓
+𝑀= 𝑒↓
+𝑀+ ResProj(𝑒𝑀) // Residual connection
+12:
+end for
+13:
+𝑌= LayerNorm(ReLU(𝑌↓))
+14: end for
+15: return 𝑌
+A.3
+Query-Guided Pooling
+Algorithm 3 Query-Aware Graph Pooling
+1: Input: Node embeddings 𝑌, query 𝑔, batch assignments 𝑕
+2: Output: Graph representation 𝑖
+3: 𝑌𝐿= ProjectNodes(𝑌)
+4: 𝑒𝑃= ProjectQuery(𝑔)
+5: for each node 𝑇in graph do
+6:
+score𝑀= AttentionMLP(𝑌𝐿[𝑇] + 𝑒𝑃[𝑕[𝑇]])
+7: end for
+8: 𝑑= BatchSoftmax(scores, 𝑕) // Normalize per graph
+9: 𝑖= !
+𝑀𝑑𝑀· 𝑌[𝑇] // Weighted aggregation
+10: return Dropout(𝑖)
+A.4
+Fusion and Scoring
+Algorithm 4 Representation Fusion and Scoring
+1: Input: Graph representation 𝑖, query 𝑔
+2: Output: Relevance score 𝑗
+3: combined = Concatenate(𝑖,𝑔)
+4: 𝑘= FusionNetwork(combined)
+5: 𝑘= 𝑘+ SkipConnection(combined) // Gradient $ow
+6: 𝑗= ScoringHead(𝑘)
+7: return 𝑗
+A.5
+Subgraph Extraction and PyG Conversion
+Algorithm 5 Subgraph to PyG Conversion
+1: Input: NetworkX subgraph 𝑂, embedding dimension 𝑙
+2: Output: PyG Data object or None
+3: if 𝑂.number_of_edges() == 0 then
+4:
+return None {Skip isolated nodes}
+5: end if
+6: {Prepare node features}
+7: for each node 𝑈in 𝑂.nodes() do
+8:
+emb = get_embedding(𝑈, default = [0] ↘𝑙)
+9:
+𝑈[’x’] = tensor(emb) // Set node features
+10:
+remove_other_attributes(𝑈) // Clean attributes
+11: end for
+12: // Convert to PyG
+13: data = from_networkx(𝑂, node_attrs=[’x’], edge_attrs=[’edge_weight’, ’ed
+14: // Process edge attributes
+15: if data has edge_attr then
+16:
+data.edge_weight = data.edge_attr[:, 0]
+17:
+data.edge_type_id = data.edge_attr[:, 1].long()
+18:
+remove data.edge_attr
+19: else
+20:
+init_empty_edge_attributes(data)
+21: end if
+22: data.batch = zeros(data.num_nodes) // For batch processing
+23: return data
+
+
+
+================================================================================
+ページ 9
+================================================================================
+!ery-Aware Graph Neural Networks for Enhanced Retrieval-Augmented Generation
+MLoG-GenAI ’25, August 04, 2025, Toronto, Canada
+A.6
+Score Fusion with Learned Combination
+Algorithm 6 Score Fusion
+1: Input: Multiple relevance signals 𝑉= {𝑗1, ...,𝑗𝐿}, training data
+𝑚
+2: Output: Combined score function 𝑘
+3: Extract features 𝑛= [faiss_score, graph_score, gnn_score]
+4: Create binary labels 𝑜where 1 = relevant chunk
+5: Train logistic regression model 𝑝on (𝑛,𝑜)
+6: 𝑘(𝑗1, ...,𝑗𝐿) = sigmoid(𝑞0 + ! 𝑞𝑀· 𝑗𝑀)
+7: return 𝑘
+A.7
+Score Head Implementation
+Algorithm 7 Score Head Implementation
+1: Input: Fused graph-query representation𝑒𝑄, output dimension
+𝑙
+2: Output: Relevance score 𝑗
+3: score_head = nn.Sequential(
+4:
+nn.Linear(out_channels, out_channels/4),
+5:
+nn.ReLU(),
+6:
+nn.Linear(out_channels/4, 1),
+7:
+nn.Sigmoid()
+8: )
+9: 𝑗= score_head(𝑒𝑄)
+10: return 𝑗
+A.8
+Query-Aware Subgraph Extraction
+Algorithm 8 Query-Aware Subgraph Extraction
+1: Input: Graph 𝑂, query 𝑔, initial nodes 𝑃0, max depth 𝑙
+2: Output: Subgraph 𝑂↓relevant to query
+3: query_emb = encode_query(𝑔)
+4: 𝑃= 𝑃0 // Set of nodes to include
+5: visited = set()
+6: frontier = 𝑃0
+7: for level = 1 to 𝑙do
+8:
+new_frontier = set()
+9:
+for node 𝑅in frontier do
+10:
+if 𝑅in visited then
+11:
+continue
+12:
+end if
+13:
+add 𝑅to visited
+14:
+for neighbor 𝑟of 𝑅in 𝑂do
+15:
+node_emb = 𝑂.nodes[𝑟][’embedding’]
+16:
+sim = cosine_similarity(query_emb, node_emb)
+17:
+if sim > threshold then
+18:
+add 𝑟to 𝑃
+19:
+add 𝑟to new_frontier
+20:
+end if
+21:
+end for
+22:
+end for
+23:
+frontier = new_frontier
+24: end for
+25: 𝑂↓= 𝑂.subgraph(𝑃)
+26: return 𝑂↓
+A.9
+Graph-Enhanced Retrieval
+Algorithm 9 Graph-Based Score Adjustment
+1: Input: Index results [(chunk, idx_score)], graph cache 𝑂cache,
+mixing parameter 𝑑
+2: Output: Adjusted results [(chunk, combined_score)]
+3: raw_scores = []
+4: for each (chunk, idx_score) in index_results do
+5:
+ep = chunk.episode_id
+6:
+𝑂= 𝑂cache[ep]
+7:
+𝑇= chunks_index[ep][chunk]
+8:
+sem_weights = []
+9:
+for neighbor 𝑋in 𝑂.neighbors(𝑇) do
+10:
+for edge in 𝑂.edges[𝑇, 𝑋] do
+11:
+if edge.type == "semantic" then
+12:
+sem_weights.append(edge.weight)
+13:
+end if
+14:
+end for
+15:
+end for
+16:
+graph_score = mean(sem_weights)
+17:
+combined = 𝑑· idx_score + (1 ↑𝑑) · graph_score
+18:
+raw_scores.append((chunk, combined))
+19: end for
+20: return sorted(raw_scores, key = 𝑠𝑡: 𝑡[1], reverse = True)
+

@@ -1,0 +1,1888 @@
+
+================================================================================
+ページ 1
+================================================================================
+arXiv:2506.11106v1  [cs.CL]  7 Jun 2025
+Graph-based RAG Enhancement via Global Query Disambiguation and
+Dependency-Aware Reranking
+Ningyuan Li1, Junrui Liu1, Yi Shan1 , Minghui Huang1 and Tong Li1
+1 College of Computer Science
+Beijing university of technology
+ningy@emails.bjut.edu.cn, liujunrui@emails.bjut.edu.cn,litong@bjut.edu.cn
+Abstract
+Contemporary
+graph-based
+retrieval-
+augmented
+generation
+(RAG)
+methods
+typically begin by extracting entities from
+user queries and then leverage pre-constructed
+knowledge graphs to retrieve related relation-
+ships and metadata. However, this pipeline’s
+exclusive reliance on entity-level extraction
+can lead to the misinterpretation or omission of
+latent yet critical information and relations. As
+a result, retrieved content may be irrelevant or
+contradictory, and essential knowledge may be
+excluded, exacerbating hallucination risks and
+degrading the fidelity of generated responses.
+To address these limitations, we introduce
+PankRAG, a framework that combines a
+globally aware, hierarchical query-resolution
+strategy with a novel dependency-aware
+reranking
+mechanism.
+PankRAG
+first
+constructs
+a
+multi-level
+resolution
+path
+that captures both parallel and sequential
+interdependencies within a query, guiding large
+language models (LLMs) through structured
+reasoning. It then applies its dependency-aware
+reranker to exploit the dependency structure
+among resolved sub-questions, enriching and
+validating retrieval results for subsequent
+sub-questions. Empirical evaluations demon-
+strate that PankRAG consistently outperforms
+state-of-the-art approaches across multiple
+benchmarks, underscoring its robustness and
+generalizability.
+1
+Introduction
+Large language models (LLMs) exhibit exceptional
+performance across diverse tasks by leveraging
+pre-training on massive text corpora to generate
+appropriate responses. While LLMs’ capabilities
+can be further enhanced through fine-tuning on
+downstream tasks, finite parameter capacity limits
+their ability to store comprehensive and evolving
+world knowledge. Retrieval-augmented generation
+(RAG) (Lewis et al., 2020; Guu et al., 2020; Gao
+et al., 2023; Ram et al., 2023; Fan et al., 2024; Izac-
+ard et al., 2023; Gao et al., 2024)has emerged as the
+predominant solution, owing to its straightforward
+implementation. It enables static models to access
+up-to-date external knowledge while preserving
+interpretability and provenance tracking.
+Retrieval-augmented generation (RAG) methods
+dynamically integrate heterogeneous knowledge
+bases (Sun et al., 2023; Edge et al., 2024; Guo et al.,
+2024; Ma et al., 2024) to enhance contextual rea-
+soning and factual grounding. Among these, knowl-
+edge graphs (Chen et al., 2020; Jin et al., 2024)
+serve as structured frameworks that encode infor-
+mation through interconnected entities and relation-
+ships, explicitly modeling semantic dependencies
+to enable human-like understanding and multi-hop
+logical inference. Recently, many approaches have
+integrated RAG with knowledge graphs. For ex-
+ample, GraphRAG (Edge et al., 2024) enhances
+private-text question answering by precomputing
+community summaries for clusters of related en-
+tities, dynamically synthesizing these summaries
+into contextually unified responses during query
+processing. LightRAG (Guo et al., 2024) em-
+ploys a graph-text hybrid architecture that embeds
+structural relationships into document indexing and
+retrieval. Its hierarchical retrieval system com-
+bines graph-based relational reasoning with vec-
+tor similarity matching, enabling efficient knowl-
+edge extraction while preserving semantic fidelity
+in multi-hop queries.
+However, current graph-based RAG methods
+exhibit critical limitations of inaccuracies in the
+interpretation of critical information or relation-
+ships when handling specific and abstract com-
+plex queries.
+Specific complex queries (SCQ)
+demand entity-centric granularity, requiring pre-
+cise retrieval of discrete entities and their rela-
+tional contexts within structured knowledge sys-
+tems, e.g., "In which direction would you travel to
+reach Southampton from the city connected to it by
+1
+
+
+
+================================================================================
+ページ 2
+================================================================================
+rail?". For specific queries, existing methods fail to
+capture latent information embedded in multi-hop
+relationships. For example, when GraphRAG’s
+local search retrieves content for the prior spe-
+cific query, it returns extensive information about
+“Southampton,” most of which, beyond the city’s
+geographic location and its rail-connected neigh-
+bor, is irrelevant and may exacerbate LLM hal-
+lucinations. Abstract complex queries(ACQ) em-
+phasize conceptual synthesis beyond entity-level
+precision, addressing domain-wide implications
+or systemic interactions, e.g., “How can theoret-
+ical principles from programming language the-
+ory be made accessible to new developers?”,(A
+detailed case study analyzing this example ACQ
+is presented in subsection A.3). For ACQ, meth-
+ods often overlook the implicit context underlying
+conceptual abstractions. When LightRAG retrieves
+content for the prior ACQ, it prioritizes formal
+syntax definitions, while teaching tools, like step-
+by-step tutorials, error-driven case studies, and di-
+verse code examples—provides richer contextual
+guidance, enabling the LLM to generate more in-
+depth responses. These limitations underscore the
+insufficiency of single-phase, query-as-is retrieval
+paradigms in addressing real-world SCQ and ACQ,
+challenging current graph-based RAG methods.
+In this paper, we propose PankRAG, which
+resolves queries through a hierarchical resolu-
+tion path with global awareness, augmented by a
+dependency-aware reranking mechanism. Specif-
+ically, our approach leverages the robust plan-
+ning capabilities of LLMs to generate globally-
+aware (i.e., holistically planned rather than step-
+wise) problem-solving pathways, explicitly reveal-
+ing parallel and progressive relationships among
+sub-questions. Next, we refine complex queries
+by integrating the implicit critical information re-
+solved from prior sub-question resolutions. This
+dual-level process produces a hierarchical resolu-
+tion pathway with global awareness, enhancing
+interpretability through contextual grounding. It
+enables LLMs to dynamically disambiguate and
+contextualize ambiguous or polysemous queries
+before final answer generation.
+During execu-
+tion, our dependency-aware reranking mechanism
+augments and reorders retrieved content for sub-
+questions dependent on prior resolutions by in-
+tegrating their resolved dependencies. This pro-
+cess refines the retrieved context by integrating
+resolved sub-question dependencies, thereby en-
+hancing the alignment between retrieved contexts
+and dependency-driven sub-question answers chal-
+lenging for LLMs to capture and resolve.
+We evaluate PankRAG on four benchmark
+datasets for ACQ and two for SCQ, demonstrat-
+ing that it consistently outperforms state-of-the-art
+baselines across six benchmarks. Compared to
+NaiveRAG, GraphRAG, and LightRAG, PankRAG
+achieves average win rates of 87.0%, 59.78% and
+61.59% respectively in ACQ datasets, and achieves
+average metric improvements of 17.42%, 11.61%,
+11.08% in SCQ datasets.
+Our contributions to this work are as follows:
+• We propose a hierarchical query decom-
+position strategy that systematically plans
+globally-aware problem-solving pathways, en-
+hancing LLMs’ capacity to capture and re-
+solve implicit information and relationships,
+fostering alignment between query intent and
+generated responses.
+• We propose a dependency-aware reranking
+mechanism that augments and reorders re-
+trieved content for the current sub-question
+by integrating resolved sub-question depen-
+dencies.
+• PankRAG demonstrates consistent superior-
+ity over state-of-the-art baselines, achieving
+comprehensive improvements on four ACQ
+benchmarks evaluated across six dimensions
+and two SCQ benchmarks assessed via four
+metrics.
+2
+Releated Works
+2.1
+Retrieval-Augmented Generation Based
+On Chunks
+RAG (Fan et al., 2024; Gao et al., 2024) is widely
+used to address the timeliness of knowledge bases
+and hallucination issues (Yao et al., 2023) in large
+language models (LLMs). Additionally, this ap-
+proach is more cost-effective and easier to imple-
+ment compared to methods like fine-tuning or re-
+training, significantly reducing computational and
+time resources. NaiveRAG (Gao et al., 2024) is
+a method that typically processes documents and
+queries by splitting them into smaller text chunks,
+converting these chunks into vector representations.
+The retrieved chunks, which are selected by com-
+paring similarity with queries in vector space, are
+then used to generate responses through LLMs.
+2
+
+
+
+================================================================================
+ページ 3
+================================================================================
+Construction
+Bottom-up
+Paralism Progress
+SubQ
+1.1
+Ans
+1.1
+Dependency-
+Aware Rerank
+（DAR)
+Ans
+1.2
+Gnenrate
+Generate
+Retrieve
+SubQ
+1.2
+Top-down 
+Globally-Aware Planning
+Excutation
+Extract
+Index
+In which 
+direction 
+would you 
+travel to reach 
+Southampton 
+from the city 
+connected to 
+it by rail?
+In which direction 
+would you  you travel 
+from         to reach
+Ans
+Ans
+1.2
+Ans
+2.1
+SubQ
+2.1 Retrieve
+Ans
+2.1
+Retrieve
+DAR
+DAR
+SubQ
+0.1
+Ans
+0.1
+Query
+Query
+SubQ
+1.1
+SubQ
+1.2
+SubQ
+2.1
+SubQ
+0.1
+Query
+Retrieve
+Ans
+DAR
+Retrieve
+Figure 1: The overall workflow of PankRAG. During Globally-Aware Planning, queries are decomposed into colored
+resolution pathways. In the bottom-up phase, two parallel sub-question sequences are generated: a blue sequence
+for interdependent sub-questions that require sequential processing, and an green independent sequence that can be
+resolved concurrently. In the top-down phase, an orange sequence rewrites complex queries, incorporating resolved
+sub-question dependencies to enhance clarity.
+Numerous advanced RAG methods, such as
+MemoRAG (Qian et al., 2024), RQ-RAG (Chan
+et al., 2024), and others (Asai et al., 2023; Lin et al.,
+2023), build upon the foundational framework of
+NaiveRAG, introducing specialized improvements.
+MemoRAG (Qian et al., 2024) is an advanced
+RAG framework empowered by global memory-
+augmented retrieval. It combines two specialized
+components: a lightweight system that generates
+draft answers as "global memory" to guide pre-
+cise retrieval, and a powerful system that crafts the
+final answer using the retrieved information. RQ-
+RAG is a method designed to tackle ambiguous
+or complex queries. The model is equipped with
+explicit capabilities for query rewriting, decom-
+position, and disambiguation to enhance retrieval
+accuracy. Inspired by two methods, our proposed
+method integrates query decomposition and query
+rewriting principles, enhancing comprehension of
+hidden critical information or relationships within
+queries.
+However, most text-based RAG methods utilize
+a flat structured database, failing to capture criti-
+cal inter-chunk relationships, which constrains the
+quality of LLM-generated responses. While ad-
+vanced RAG variants improve generation accuracy,
+their reliance on retrieving a limited subset of doc-
+uments restricts comprehensive global information
+integration. It ultimately hinders their ability to
+address tasks requiring full-context understanding,
+such as ACQ.
+2.2
+Retrieval-Augmented Generation Based
+On KGs
+Apart from a database of texts, a knowledge
+graph (Jin et al., 2024; Chen et al., 2020), a struc-
+tured framework organizing knowledge through
+interconnected entities and relationships, is increas-
+ingly employed as a valuable source for RAG meth-
+ods. Unlike traditional RAG (Gao et al., 2024),
+Graph-based RAG methods (Sun et al., 2023; Ma
+et al., 2024)leverage graphs either as knowledge
+carriers or indexing tools to enable efficient re-
+trieval. By modeling relationships between nodes,
+they facilitate the discovery of topic-centered or
+entity-centered knowledge pieces, ensuring thor-
+ough and contextually coherent retrieval. Further-
+more, the graph structure contained dependencies
+or relationships between entities, which enhances
+both precision and scalability compared to flat
+3
+
+
+
+================================================================================
+ページ 4
+================================================================================
+databases.
+Graph-based RAG methods differ in how they
+leverage the underlying graph data. GraphRAG
+(Edge et al., 2024) is designed to enhance ques-
+tion answering over private text corpora by using
+a knowledge graph. It pre-generates community
+summaries for clusters of related entities and dy-
+namically aggregates them into coherent final re-
+sponses during query resolution. LightRAG (Guo
+et al., 2024) is a novel framework that integrates
+graph structures into text indexing and retrieval.
+Employing a dual-level retrieval mechanism, it en-
+hances comprehensive knowledge discovery and
+accelerates response generation without compro-
+mising contextual accuracy.
+While prior research introduces knowledge
+graphs as a structured database, inaccuracies in
+the interpretation of hidden critical information
+or relationships within queries remain persistent
+challenges. Specifically, while knowledge graphs
+provide RAG systems with robust knowledge rep-
+resentation and enhanced retrieval performance,
+their practical effectiveness depends on accurately
+comprehending latent critical information and rela-
+tionships within queries to identify precise retrieval
+targets. Our proposed framework is specifically
+designed to address this challenge. We also notice
+a concurrent work, CogGRAG (Cheng et al., 2025)
+that leverages the principle of query decomposi-
+tion. While they predominantly focus on problem
+decomposition strategy, our research prioritizes the
+acquisition of problem-solving pathways, with par-
+ticular emphasis on the interplay between parallel
+interrelationships within these pathways and the
+impact of resolved sub-question dependencies on
+contextualizing information retrieved for the cur-
+rent sub-question.
+3
+Methodology
+In this section, we detail our proposed framework,
+which comprises three core components. First,
+Graph Construction extracts entities and relation-
+ships from external knowledge sources to build
+a structured knowledge graph. Next, Globally-
+Aware Planning formulates a query resolution
+pathway by identifying latent critical information
+and relationships, improving LLMs’ comprehen-
+siveness of complex queries. Finally, during Ex-
+ecution, the LLM processes sub-questions either
+concurrently or sequentially based on their inter-
+relationships. After retrieving context for a sub-
+question, the dependency-aware reranking mech-
+anism augments and validates the content when
+the current sub-question depends on a prior sub-
+question. The LLM then leverages this refined
+context to generate accurate responses. The overall
+workflow of FG-RAG is shown in Figure 1.
+3.1
+Graph Contruction
+The source document corpus D is segmented into
+n text chunks {Di}n
+i=1. As the Equation 1, for
+each chunk Di, the LLM performs entity recogni-
+tion and relationship extraction, abstracting struc-
+tured semantic elements including entities Vi and
+relations Ei from unstructured text via prompt-
+ing strategies. A knowledge graph G is then con-
+structed by instantiating nodes representing entities
+{Vi} and edges representing relationships {Ei} in
+Equation 2.
+(Vi, Ei) =
+[
+Di∈D
+Extract(Di)
+(1)
+G = {Vi, Ei}n
+i=1
+(2)
+Next, Multiple communities {Comi} are aggre-
+gated into a higher-level community Hi via Leiden
+clustering, and this process is iteratively applied to
+hierarchically construct a multi-layered community
+structure. Finally, multi-scale community summa-
+rization is executed by the LLM, which populates
+a summary template with various elements (nodes,
+edges, and associated claims).
+Hi = Leiden((Comi)k
+i=1)
+(3)
+3.2
+Globally-Aware Planning
+[A1.1]
+Query
+SubQ1.1
+Which city is 
+connected to 
+Southampton 
+by rail?
+In which 
+direction do 
+you travel 
+from [A1.2] to 
+reach [A2.1]?
+In which 
+direction would 
+you travel to 
+reach 
+Southampton 
+from the city 
+connected to it 
+by rail?
+SubQ1.2
+What is the 
+geographical 
+location of 
+[A1.1]?
+SubQ2.1
+What is the 
+geographical 
+location of 
+Southampton?
+Top-down Phase: 
+Rewrite
+(Rewrite with resolved 
+dependencies
+[A1.2]&[A2.1])
+Bottom-up Phase: 
+Paralism 
+& 
+Progress
+SubQ0.1
+Figure 2: Operation example of Globally-Aware Plan-
+ning. The color assignments follow the configuration
+illustrated in the caption of Figure 1. [A1.1], [A1.2],
+and [A2.1] correspond to the resolved outputs of sub-
+questions SubQ[1.1], SubQ[1.2], and SubQ[2.1], respec-
+tively.
+4
+
+
+
+================================================================================
+ページ 5
+================================================================================
+We propose a hierarchical query decomposition
+strategy that synergizes bottom-up relationship de-
+composition with top-down contextual rephrasing
+to address both implicit parallel or progress rela-
+tionships and ambiguous or polysemous expres-
+sions in complex queries. Unlike conventional it-
+erative approaches (e.g., Chain-of-Thought, CoT),
+which suffer from fixed iteration counts and myopic
+decomposition prone to local optima, our strategy
+dynamically adjusts the granularity and sequence
+of reasoning steps based on query complexity.
+In the bottom-up phase, two crucial relation-
+ship types are detected. First, parallelizable task
+relationships are identified to enable concurrent
+resolution of mutually independent sub-questions,
+optimizing computational efficiency by reducing
+redundant resource contention and minimizing la-
+tency. Second, latent dependencies are systemati-
+cally extracted to ensure prerequisite sub-questions
+are solved before dependent tasks.
+Simultaneously, the top-down phase disam-
+biguates polysemous expressions into logically co-
+herent substructures, combining the resolved sub-
+question dependencies. This dual mechanism re-
+duces the risk of deviation in reasoning paths and
+enhances computational efficiency by eliminating
+redundant iterations, achieving a balanced trade-off
+between precision and scalability. The detailed
+workflow is presented below, and a real-world
+query in Multihop-RAG dataset example is above
+in Figure 2.
+• Bottom-up phase: In the Parallel Relation-
+ship Detection step, parallel semantic rela-
+tionships—such as independent sub-questions
+or co-occurring entities—are identified. If
+no parallelism is detected, a single resolu-
+tion sequence is initialized.
+When paral-
+lelism exists, multiple concurrent sequences
+(SubQ1.x and SubQ2.x in Figure 2) are adap-
+tively spawned to optimize concurrent execu-
+tion. Concurrently, latent progress relation-
+ships are extracted from the query.
+Upon
+identifying distinct relationships within the
+query, sub-questions are generated and for-
+malized into a directed acyclic graph (DAG),
+where nodes represent sub-questions and
+edges encode their relationships.
+Finally,
+topological sorting is applied to enforce
+prerequisite-resolution order, ensuring logical
+coherence during execution.
+• Top-down phase: For queries containing
+explicit ambiguities or polysemous expres-
+sions, a disambiguation sequence combining
+resolved sub-question dependencies (SubQ0.x
+in Figure 2) is invoked. In this phase, an LLM-
+driven rephrasing process converts ambigu-
+ous queries into logically partitioned formula-
+tions.
+3.3
+Execution
+3.3.1
+Retrieval
+Following GraphRAG, we apply distinct retrieval
+strategies for different query types.
+For SCQ, we use a local search approach that
+employs vector similarity metrics to identify nodes
+explicitly referenced in the query, then expands
+to neighboring nodes to retrieve related relation-
+ships and community context. This method ensures
+precise grounding in entity-centric evidence while
+maintaining low computational overhead.
+For ACQ, we perform hierarchical commu-
+nity retrieval, dynamically selecting between
+leaf-level summaries for detailed information and
+higher-level summaries for thematic overviews.
+This multi-scale strategy balances breadth and
+depth to search for relevant information for com-
+plex queries.
+3.3.2
+Dependency-Aware Reranking
+Mechanism
+The dependency-aware reranking mechanism is
+triggered when resolving a sub-question that de-
+pends on previously resolved sub-questions. It dy-
+namically adjusts retrieval priorities by indirectly
+leveraging these resolved dependencies. Unlike
+conventional methods that directly incorporate re-
+solved sub-question dependencies, risking cumula-
+tive hallucination errors across iterative reasoning
+steps, our mechanism mitigates such propagation
+by reinforcing contextually relevant content and
+filtering out incongruent evidence through seman-
+tic similarity validation. If no dependencies are
+present, the generation proceeds without reranking,
+preserving computational efficiency while main-
+taining robustness against cascading inaccuracies.
+The reranking mechanism computes a composite
+score by weighted summation of two components:
+the intrinsic quality score Ri of retrieved content
+and the semantic similarity Mi between retrieved
+content and resolved dependent sub-question an-
+swers. The intrinsic quality score Ri of retrieved
+content is generated and retained during the orig-
+inal retrieval phase (Edge et al., 2024).
+The
+5
+
+
+
+================================================================================
+ページ 6
+================================================================================
+Table 1: Performance across four datasets and six evaluation dimensions in terms of averaged win rates.
+Agriculture
+Legal
+CS
+Mix
+NaiveRAG
+PankRAG
+NaiveRAG
+PankRAG
+NaiveRAG
+PankRAG
+NaiveRAG
+PankRAG
+Comprehensiveness
+18.0%
+82.0%
+9.6%
+90.4%
+20.4%
+79.6%
+16.8%
+83.2%
+Diversity
+19.6%
+80.4%
+7.2%
+92.8%
+27.6%
+72.4%
+8.8%
+91.2%
+logicality
+2.8%
+97.2%
+8.8%
+91.2%
+7.6%
+92.4%
+17.2%
+82.8%
+relevance
+6.0%
+94.0%
+11.2%
+88.8%
+12.8%
+87.2%
+19.2%
+80.8%
+coherence
+2.8%
+97.2%
+8.4%
+91.6%
+6.8%
+93.2%
+16.8%
+83.2%
+Empowerment
+12.0%
+86.0%
+9.6%
+90.4%
+16.4%
+83.6%
+11.6%
+88.4%
+GraphRAG
+PankRAG
+GraphRAG
+PankRAG
+GraphRAG
+PankRAG
+GraphRAG
+PankRAG
+Comprehensiveness
+40.8%
+59.2%
+44.4%
+55.6%
+48.4%
+53.2%
+44.8%
+55.2%
+Diversity
+44.8%
+55.2%
+39.2%
+60.8%
+39.6%
+60.4%
+43.6%
+56.4%
+logicality
+32.8%
+67.2%
+43.6%
+56.4%
+46.4%
+53.6%
+30.0%
+70.0%
+relevance
+40.4%
+59.6%
+38.0%
+62.0%
+39.6%
+60.4%
+44.4%
+55.6%
+coherence
+34.4%
+65.6%
+38.0%
+62.0%
+42.4%
+57.6%
+31.2%
+68.8%
+Empowerment
+39.6%
+60.4%
+36.4%
+63.6%
+44.0%
+56.0%
+40.0%
+60.0%
+LightRAG
+PankRAG
+LightRAG
+PankRAG
+LightRAG
+PankRAG
+LightRAG
+PankRAG
+Comprehensiveness
+44.8%
+55.2%
+48.4%
+53.2%
+35.0%
+65.0%
+45.2%
+54.8%
+Diversity
+41.6%
+58.4%
+40.8%
+71.6%
+28.0%
+72.0%
+37.2%
+62.8%
+logicality
+16.4%
+83.6%
+38.0%
+57.2%
+41.2%
+58.8%
+42.8%
+57.6%
+relevance
+35.2%
+64.8%
+38.0%
+56.0%
+43.6%
+56.4%
+43.6%
+56.4%
+coherence
+16.8%
+83.2%
+38.0%
+55.6%
+42.0%
+58.0%
+40.0%
+60.0%
+Empowerment
+44.8%
+55.2%
+45.2%
+58.4%
+34.0%
+60.0%
+36.0%
+64.0%
+semantic similarity Mi is computed as the co-
+sine similarity between resolved sub-question de-
+pendencies {subi} and the initially retrieved text
+chunks {orii}.
+Each chunk’s similarity score
+is updated and then linearly combined with its
+original retrieval quality score to optimize pri-
+oritization.
+The weight parameters α (quality)
+and β (relevance) were selected by testing on the
+dataset(subsection 4.4), ensuring maximal retrieval
+precision while mitigating hallucination propaga-
+tion. This process can be formally described as
+follows.
+Mi = Cos(orii + subi)
+(4)
+Combined Score = α × Ri + β × Mi
+(5)
+4
+Experiment
+4.1
+Experimental Setup
+4.1.1
+Datasets
+We adopt the experimental framework of recent
+graph-based RAG studies and evaluate our method
+on six real-world datasets, encompassing both SCQ
+and ACQ. We use the Musique and MultiHop-
+RAG datasets for SCQ, which require reasoning
+across multiple passages, understanding implicit
+relationships, and synthesizing information. ACQ
+demands holistic curation, multi-perspective syn-
+thesis, and coherent organization of information at
+scale. We evaluate our method on the UltraDomin
+dataset (Qin et al., 2024), which is drawn from
+428 college-level textbooks across 18 domains, se-
+lecting the four domains used (Agriculture, Legal,
+Computer Science, and Mix), whose detailed in-
+formation is as follows in LightRAG’s evaluation.
+We follow the standardized preprocessing pipelines
+from GraphRAG and LightRAG.
+4.1.2
+Baselines
+We compare PathRAG with the following state-of-
+the-art methods across all datasets:
+• NaiveRAG (Gao et al., 2024): In this RAG
+method, text is divided into chunks, stored
+as embeddings in a vector database, and the
+most semantically similar chunks are retrieved
+during queries to enable efficient matching.
+• GraphRAG (Edge et al., 2024): In this graph-
+based RAG method, they hierarchically orga-
+nize knowledge through entity-level descrip-
+tions and clustered community summaries.
+For global queries, it retrieves community-
+focused knowledge and aggregates related en-
+tities to produce comprehensive responses.
+6
+
+
+
+================================================================================
+ページ 7
+================================================================================
+Table 2: The QA performance across two datasets and four key metrics: answer faithfulness, context recall, and
+context precision.
+Multihop-RAG
+MuSiQue
+Average
+Method
+Answer
+Relevance
+Faithfulness
+Context
+Recall
+Context
+Precision
+Answer
+Relevance
+Faithfulness
+Context
+Recall
+Context
+Precision
+Answer
+Relevance
+Faithfulness
+Context
+Recall
+Context
+Precision
+NaiveRAG
+66.73%
+73.99%
+55.17%
+54.00%
+66.70%
+62.50%
+59.41%
+58.21%
+66.72%
+66.70%
+57.29%
+56.11%
+GraphRAG
+69.56%
+86.80%
+62.06%
+61.18%
+68.94%
+69.73%
+61.57%
+60.40%
+69.25%
+0.78.27%
+61.82%
+60.70%
+LightRAG
+72.40%
+86.78%
+65.18%
+67.00%
+67.92%
+68.68%
+60.99%
+58.42%
+68.66%
+77.73%
+63.08%
+0.6271%
+PankRAG
+0.7479
+0.9653
+0.8789
+0.8400
+0.7062
+0.8875
+0.6499
+0.6535
+0.7271
+0.9264
+0.7644
+0.7468
+0.53
+0.58
+0.63
+0.68
+0.73
+0.78
+0.83
+[0.5:0.5]
+[0.6:0.4]
+[0.7:0.3]
+[0.75:0.25]
+[0.8:0.2]
+win rate
+[α:β]
+empowerment
+coherence
+relevance
+0.5
+0.52
+0.54
+0.56
+0.58
+0.6
+0.62
+0.64
+0.66
+[0.5:0.5]
+[0.6:0.4]
+[0.7:0.3]
+[0.75:0.25]
+[0.8:0.2]
+win rate
+[α:β]
+comprehensiveness
+diversity
+logicality
+Figure 3: Impact of a pair of hyperparameters in PankRAG on the Mix(left) and Agriculture(right) dataset
+• LightRAG (Guo et al., 2024): In this graph-
+based RAG method, graph structures are in-
+tegrated with vector representations, and a
+dual-level retrieval paradigm is employed to
+enhance both the efficiency and relevance of
+retrieval.
+4.1.3
+Evaluation Metrics
+• SCQ Dataset In the SCQ dataset, we evaluate
+all models using the Ragas (Es et al., 2024)
+framework across four critical metrics: an-
+swer relevance, faithfulness, context recall,
+and context precision.
+• ACQ Dataset In the absence of ground-truth
+answers, we adopt LLM-based evaluation pro-
+tocols following prior work.
+Specifically,
+we leverage GPT-4o-mini to assess gener-
+ated answers across six dimensions: Com-
+prehensiveness, Diversity and Empowerment,
+adopted from LightRAG (Guo et al., 2024),
+and three novel dimensions—Logicality, Rel-
+evance, and Coherence-introduced by recent
+LLM evaluation research (Chen et al., 2025).
+Answers generated by all baselines and our
+method are pairwise compared using win-rate
+analysis, where a higher win rate reflects su-
+perior performance relative to alternatives. To
+mitigate presentation bias, answer order is sys-
+tematically alternated, with final results report-
+ing averaged win rates. How much detail does
+the answer provide to cover all aspects and
+details of the question?
+4.2
+Overall Performance on the ACQ Datasets
+As demonstrated in Table 1, PathRAG consis-
+tently surpasses baseline methods across all eval-
+uation metrics and datasets.
+From the perspective of benchmark datasets,
+PankRAG achieves average win rates of 72.47%
+on the Agriculture dataset, 69.87% on the Legal
+dataset, 67.77% on the CS dataset, and 68.4%
+on the Mix dataset. These results demonstrate
+PankRAG’s generalizability in effectively facili-
+tating LLMs to capture hidden critical information
+and relationships in ACQ across datasets of vary-
+ing scales, thereby achieving robust and superior
+performance.
+From the evaluation dimension perspective,
+PankRAG attains average win rates of 65.55% in
+comprehensiveness, 69.64% in diversity, 72.33%
+in logicality, 68.5% in relevance, 73.00% in co-
+herence, and 68.86% in empowerment. This con-
+sistent outperformance across all dimensions, at-
+tributed to the globally-aware pathway resolution
+and dependency-aware reranking mechanisms, un-
+7
+
+
+
+================================================================================
+ページ 8
+================================================================================
+derscores PankRAG’s comprehensive advantages
+over baseline RAG methods.
+4.3
+Overall Performance on the SCQ Datasets
+As demonstrated in ??, PankRAG consistently
+achieves the best performance across all experi-
+mental settings.
+Compared to NaiveRAG, GraphRAG, and Ligh-
+tRAG, PankRAG achieves average metric improve-
+ments of 17.42%, 11.61%, 11.08%.
+Averaged
+over multiple datasets, the results are as follows.
+PankRAG achieves approximately 5.99% higher
+than NaiveRAG, 3.46% higher than GraphRAG,
+and 4.05% higher than LightRAG in Answer Rel-
+evance; 25.94% higher than NaiveRAG, 14.37%
+higher than GraphRAG, and 14.91% higher than
+LightRAG in Faithfulness; 19.15% higher than
+NaiveRAG, 14.62% higher than GraphRAG, and
+13.36% higher than LightRAG in Context Recall;
+and 18.57% higher than NaiveRAG, 13.98% higher
+than GraphRAG, and 11.97% higher than Ligh-
+tRAG in Context Precision. These results demon-
+strate PankRAG’s superiority over prior graph-
+based RAG methods in handling concrete complex
+problems.
+Notably, GraphRAG and LightRAG show mini-
+mal improvements in Context Recall and Context
+Precision (4%-6% over NaiveRAG), indicating neg-
+ligible enhancement in retrieved context quality.
+This aligns with the identified challenge that LLMs
+struggle to interpret hidden relationships or infor-
+mation in SCQ, leading to misaligned retrieval
+targets. While these methods enhance retrieval
+via graph structures, their limited context quality
+gains highlight unresolved limitations. In contrast,
+PankRAG’s significant improvements in Context
+Recall/Precision suggest effective mitigation of this
+issue, attributed to its globally-aware pathway res-
+olution generation module and dependency-aware
+reranking mechanism. It enables LLMs to better
+capture hidden relationships and thereby improve
+context relevance. Concurrent enhancements in
+Faithfulness and Answer Relevance further indi-
+cate reduced hallucination risks and higher answer
+quality, underscoring PankRAG’s comprehensive
+advancements over existing graph-based RAG ap-
+proaches.
+4.4
+Hyperparameter Analysis
+The parameters α and β are designed to optimize
+the original quality score by integrating a novel
+similarity metric, constrained by α + β = 1 to en-
+sure the normalized score range. Experimental
+results demonstrate that the optimal parameters
+for SCQ are α > 0.6 β < 0.4, whereas for ACQ,
+α = 0.75 and β = 0.25 , with both configurations
+maximizing retrieval performance.
+In SCQ datasets, we evaluated retrieval perfor-
+mance across various (α:β) ratios in Figure 4.
+As (α:β) increases, key metrics—including an-
+swer relevance, context recall, and context preci-
+sion—monotonically improve, peaking at (α:β) =
+0.6:0.4, before declining. Although faithfulness
+attains its maximum at (α:β) = 0.4:0.6, its value at
+0.6 : 0.4 is only 0.0027 lower, indicating a negligi-
+ble trade-off. Thus, α = 0.6 and β = 0.4 represent
+the optimal balance. We indicate that when α >
+0.6 β < 0.4, the weight on sub-question answers is
+insufficient to adequately reinforce and validate re-
+trieved context. Conversely, when α < 0.6 β > 0.4,
+over-emphasis on sub-question answers introduces
+negative hallucinations that outweigh positive re-
+inforcement, degrading performance. At α = 0.6
+and β = 0.4, these opposing effects are balanced,
+yielding the best overall retrieval results.
+In ACQ datasets, We adjust a pair of hyperpa-
+rameters on the Mix and Agriculture dataset, and
+then calculate the win rates compared with Ligh-
+tRAG, the best baseline. As shown in Figure 3,
+parameter configuration of α = 0.75 and β = 0.25
+achieves the highest win rates across the majority of
+the six dimensions and secures the second-highest
+performance in all remaining cases. For ACQ, the
+optimal parameter configuration that maximizes
+retrieval performance is achieved when α = 0.75
+and β = 0.25.
+4.5
+Ablation Studies
+In ACQ datasets, Since our proposed dependency-
+aware reranking mechanism (Ank) operates on top
+of the globally-aware pathway resolution (Path),
+we first evaluated the effectiveness of Path by
+measuring the win rates of PankRAG-Path versus
+PankRAG-Ank across six dimensions, as shown in
+the Table 3. Subsequently, to validate the syner-
+gistic enhancement of Ank on the Path-integrated
+graph RAG framework, we compared the win rates
+of PankRAG-Ank against PankRAG across the
+same six dimensions.
+As shown in Table 3, PathRAG achieves an av-
+erage win rate of 57.75% against PathRAG-Ank,
+PathRAG-Ank attains a 55.27% average win rate
+over PathRAG-Pank. These results demonstrate
+the necessity of the globally-aware pathway reso-
+8
+
+
+
+================================================================================
+ページ 9
+================================================================================
+0.7134
+0.7201
+0.7398
+0.7521
+0.7479
+0.69
+0.7
+0.71
+0.72
+0.73
+0.74
+0.75
+0.76
+[0.3:0.7]
+[0.4:0.6]
+[0.5:0.5]
+[0.6:0.4]
+[0.7:0.3]
+Answer_Relevancy
+[α:β]
+Answer_Relevancy
+0.9575
+0.9741
+0.9647
+0.9714
+0.9653
+0.945
+0.95
+0.955
+0.96
+0.965
+0.97
+0.975
+0.98
+[0.3:0.7]
+[0.4:0.6]
+[0.5:0.5]
+[0.6:0.4]
+[0.7:0.3]
+Faithfulness
+[α:β]
+Faithfulness
+0.8163
+0.863
+0.8991
+0.8998
+0.8789
+0.76
+0.78
+0.8
+0.82
+0.84
+0.86
+0.88
+0.9
+0.92
+[0.3:0.7]
+[0.4:0.6]
+[0.5:0.5]
+[0.6:0.4]
+[0.7:0.3]
+Context Recall
+[α:β]
+Context_Recall
+0.83
+0.82
+0.83
+0.86
+0.84
+0.8
+0.81
+0.82
+0.83
+0.84
+0.85
+0.86
+0.87
+[0.3:0.7]
+[0.4:0.6]
+[0.5:0.5]
+[0.6:0.4]
+[0.7:0.3]
+Context Precision
+[α:β]
+Context_Precision
+Figure 4: Impact of a pair of hyperparameters in PankRAG on the Multihop-RAG dataset
+Table 3: Ablation study on abstract queries on the global-aware pathway resolution generation module and
+dependency-aware reranking mechanism in PankRAG for Abstract Queries.
+Agriculture
+Legal
+CS
+Mix
+PankRAG - Pank
+PankRAG - Ank
+PankRAG - Pank
+PankRAG - Ank
+PankRAG - Pank
+PankRAG - Ank
+PankRAG - Pank
+PankRAG - Ank
+Comprehensiveness
+46.8%
+53.2%
+34.8%
+55.2%
+47.2%
+52.8%
+46.0%
+54.0%
+Diversity
+42.3%
+58.8%
+38.0%
+62.0%
+36.2%
+54.8%
+33.6%
+56.4%
+logicality
+44.4%
+55.6%
+44.0%
+56.0%
+44.8%
+55.2%
+45.2%
+54.8%
+relevance
+45.2%
+54.8%
+44.8%
+55.2%
+46.4%
+53.6%
+46.0%
+54.0%
+coherence
+46.8%
+53.2%
+43.8%
+57.2%
+46.4%
+53.6%
+45.2%
+54.8%
+Empowerment
+56.0%
+54.0%
+41.2%
+58.8%
+46.0%
+54.0%
+43.6%
+54.4%
+PankRAG - Ank
+PankRAG
+PankRAG - Ank
+PankRAG
+PankRAG - Ank
+PankRAG
+PankRAG - Ank
+PankRAG
+Comprehensiveness
+41.6%
+58.4%
+46.0%
+54.0%
+46.0%
+54.0%
+39.2%
+55.2%
+Diversity
+46.4%
+53.6%
+44.8%
+55.2%
+41.2%
+58.8%
+30.8%
+56.4%
+logicality
+33.2%
+66.8%
+43.2%
+56.8%
+44.8%
+55.2%
+32.4%
+68.8%
+relevance
+41.6%
+58.4%
+46.0%
+54.0%
+45.6%
+54.4%
+32.4%
+56.4%
+coherence
+36.8%
+63.2%
+43.0%
+57.0%
+43.6%
+56.4%
+32.4%
+60.0%
+Empowerment
+37.2%
+62.8%
+43.4%
+55.6%
+44.0%
+56.0%
+42.4%
+58.8%
+Table 4: Ablation study on abstract queries on the global-aware pathway resolution generation module and
+dependency-aware reranking mechanism in PankRAG for Specific Queries.
+Multihop-RAG
+MuSiQue
+Average
+Method
+Answer
+Relevance
+Faithfulness
+Context
+Recall
+Context
+Precision
+Answer
+Relevance
+Faithfulness
+Context
+Precision
+Context
+Recall
+Answer
+Relevance
+Faithfulness
+Context
+Recall
+Context
+Precision
+PankRAG-Pank
+67.96
+88.21%
+62.94
+62.21
+67.45%
+75.16%
+59.90%
+58.73%
+67.70%
+81.69%
+61.42%
+60.47%
+PankRAG-Ank
+70.21%
+94.45
+84.31
+67.65
+69.02%
+81.13%
+62.27%
+61.23%
+69.61%
+87.79%
+73.29%
+68.63%
+PankRAG
+0.7479
+0.9653
+0.8789
+0.8400
+0.7062
+0.8875
+0.6499
+0.6535
+0.7271
+0.9264
+0.7644
+0.7468
+lution and further validate the dependency-aware
+reranking mechanism’s critical role in optimizing
+RAG systems incorporating globally-aware path-
+way resolution.
+In SCQ datasets, we separately evaluated
+PankRAG-Pank, PankRAG-Ank, and PankRAG
+across four metrics to validate the effectiveness of
+the globally-aware pathway resolution (Path) and
+the dependency-aware rerank (Ank), respectively.
+As shown in the Table 4, PankRAG sur-
+passes PankRAG-Ank by approximately 3.1%
+and PankRAG-Pank by 4.51% in Answer Rele-
+vance. For Faithfulness, PankRAG outperforms
+PankRAG-Ank by 4.85% and PankRAG-Pank by
+10.96%. In Context Precision, PankRAG exceeds
+PankRAG-Ank by 3.35% and PankRAG-Pank by
+9
+
+
+
+================================================================================
+ページ 10
+================================================================================
+15.22%, while in Context Recall, it surpasses
+PankRAG-Ank by 6.05% and PankRAG-Pank by
+14.21%. Notably, PankRAG-Ank achieves signifi-
+cant improvements over PankRAG-Pank in Context
+Precision and Recall, indicating enhanced retrieval
+performance and underscoring the necessity of the
+globally-aware pathway resolution. Concurrently,
+PankRAG’s consistent superiority over PankRAG-
+Ank across all metrics highlights the critical role
+of the dependency-aware reranking mechanism.
+5
+Conclusion
+In this paper, we propose PankRAG, a novel RAG
+framework designed to enhance LLMs’ capac-
+ity to accurately interpret and retrieve informa-
+tion for complex queries. PankRAG combines a
+globally aware pathway-resolution module with a
+dependency-aware reranking mechanism. By exe-
+cuting globally coherent reasoning pathways and
+augmenting retrieved content through dependency-
+aware reranking, our framework captures and re-
+solves hidden relationships and information in both
+abstract and specific complex queries, significantly
+enhancing retrieval performance and response qual-
+ity.
+Limitations
+While PankRAG enhances retrieval accuracy and
+comprehensiveness through globally-aware query
+resolution paths and dependency-aware reranking
+mechanisms, it faces two key limitations. First,
+resolving multiple sub-problems during retrieval
+necessitates additional LLM invocations, which
+improves quality of response but introduces higher
+computational overhead. Second, our evaluation
+follows the relative metrics of existing graph-based
+RAG methods, which may lack stability compared
+to absolute benchmarks. Future work will focus on
+establishing more reliable and absolute evaluation
+metrics tailored to graph-based RAG frameworks.
+References
+Akari Asai, Zeqiu Wu, Yizhong Wang, Avirup Sil, and
+Hannaneh Hajishirzi. 2023. Self-rag: Learning to
+retrieve, generate, and critique through self-reflection.
+In The Twelfth International Conference on Learning
+Representations.
+Chi-Min Chan, Chunpu Xu, Ruibin Yuan, Hongyin Luo,
+Wei Xue, Yike Guo, and Jie Fu. 2024. Rq-rag: Learn-
+ing to refine queries for retrieval augmented genera-
+tion. arXiv preprint arXiv:2404.00610.
+Boyu Chen, Zirui Guo, Zidan Yang, Yuluo Chen, Junze
+Chen, Zhenghao Liu, Chuan Shi, and Cheng Yang.
+2025. Pathrag: Pruning graph-based retrieval aug-
+mented generation with relational paths.
+arXiv
+preprint arXiv:2502.14902.
+Xiaojun Chen, Shengbin Jia, and Yang Xiang. 2020. A
+review: Knowledge reasoning over knowledge graph.
+Expert systems with applications, 141:112948.
+Yao Cheng, Yibo Zhao, Jiapeng Zhu, Yao Liu, Xing Sun,
+and Xiang Li. 2025. Human cognition inspired rag
+with knowledge graph for complex problem solving.
+arXiv preprint arXiv:2503.06567.
+Darren Edge, Ha Trinh, Newman Cheng, Joshua
+Bradley, Alex Chao, Apurva Mody, Steven Truitt,
+Dasha Metropolitansky, Robert Osazuwa Ness, and
+Jonathan Larson. 2024. From local to global: A
+graph rag approach to query-focused summarization.
+arXiv preprint arXiv:2404.16130.
+Shahul Es, Jithin James, Luis Espinosa Anke, and
+Steven Schockaert. 2024. RAGAs: Automated evalu-
+ation of retrieval augmented generation. In Proceed-
+ings of the 18th Conference of the European Chap-
+ter of the Association for Computational Linguistics:
+System Demonstrations, pages 150–158, St. Julians,
+Malta. Association for Computational Linguistics.
+Wenqi Fan, Yujuan Ding, Liangbo Ning, Shijie Wang,
+Hengyun Li, Dawei Yin, Tat-Seng Chua, and Qing
+Li. 2024. A survey on rag meeting llms: Towards
+retrieval-augmented large language models. In Pro-
+ceedings of the 30th ACM SIGKDD Conference on
+Knowledge Discovery and Data Mining, KDD ’24,
+page 6491–6501, New York, NY, USA. Association
+for Computing Machinery.
+Luyu Gao, Xueguang Ma, Jimmy Lin, and Jamie Callan.
+2023. Precise zero-shot dense retrieval without rel-
+evance labels. In Proceedings of the 61st Annual
+Meeting of the Association for Computational Lin-
+guistics (Volume 1: Long Papers), pages 1762–1777.
+Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia,
+Jinliu Pan, Yuxi Bi, Yi Dai, Jiawei Sun, Meng Wang,
+and Haofen Wang. 2024. Retrieval-augmented gener-
+ation for large language models: A survey. Preprint,
+arXiv:2312.10997.
+Zirui Guo, Lianghao Xia, Yanhua Yu, Tu Ao, and Chao
+Huang. 2024. Lightrag: Simple and fast retrieval-
+augmented generation.
+Kelvin Guu, Kenton Lee, Zora Tung, Panupong Pasu-
+pat, and Ming-Wei Chang. 2020. Realm: retrieval-
+augmented language model pre-training. In Proceed-
+ings of the 37th International Conference on Machine
+Learning, ICML’20. JMLR.org.
+Gautier Izacard, Patrick Lewis, Maria Lomeli, Lucas
+Hosseini, Fabio Petroni, Timo Schick, Jane Dwivedi-
+Yu, Armand Joulin, Sebastian Riedel, and Edouard
+Grave. 2023. Atlas: few-shot learning with retrieval
+augmented language models. J. Mach. Learn. Res.,
+24(1).
+10
+
+
+
+================================================================================
+ページ 11
+================================================================================
+Bowen Jin, Gang Liu, Chi Han, Meng Jiang, Heng Ji,
+and Jiawei Han. 2024. Large language models on
+graphs: A comprehensive survey. IEEE Transactions
+on Knowledge and Data Engineering.
+Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio
+Petroni, Vladimir Karpukhin, Naman Goyal, Hein-
+rich Küttler, Mike Lewis, Wen-tau Yih, Tim Rock-
+täschel, Sebastian Riedel, and Douwe Kiela. 2020.
+Retrieval-augmented generation for knowledge-
+intensive nlp tasks. In Proceedings of the 34th Inter-
+national Conference on Neural Information Process-
+ing Systems, NIPS ’20, Red Hook, NY, USA. Curran
+Associates Inc.
+Xi Victoria Lin, Xilun Chen, Mingda Chen, Weijia Shi,
+Maria Lomeli, Richard James, Pedro Rodriguez, Ja-
+cob Kahn, Gergely Szilvasy, Mike Lewis, and 1 oth-
+ers. 2023. Ra-dit: Retrieval-augmented dual instruc-
+tion tuning. In The Twelfth International Conference
+on Learning Representations.
+Shengjie Ma, Chengjin Xu, Xuhui Jiang, Muzhi Li,
+Huaren Qu, and Jian Guo. 2024. Think-on-graph 2.0:
+Deep and interpretable large language model reason-
+ing with knowledge graph-guided retrieval. arXiv
+e-prints, pages arXiv–2407.
+Hongjin Qian, Peitian Zhang, Zheng Liu, Kelong Mao,
+and Zhicheng Dou. 2024. Memorag: Moving to-
+wards next-gen rag via memory-inspired knowledge
+discovery. arXiv preprint arXiv:2409.05591, 1.
+Zhen Qin, Rolf Jagerman, Kai Hui, Honglei Zhuang,
+Junru Wu, Le Yan, Jiaming Shen, Tianqi Liu, Jialu
+Liu, Donald Metzler, Xuanhui Wang, and Michael
+Bendersky. 2024. Large language models are effec-
+tive text rankers with pairwise ranking prompting. In
+Findings of the Association for Computational Lin-
+guistics: NAACL 2024, Mexico City, Mexico, June
+16-21, 2024, pages 1504–1518. Association for Com-
+putational Linguistics.
+Ori Ram, Yoav Levine, Itay Dalmedigos, Dor Muhlgay,
+Amnon Shashua, Kevin Leyton-Brown, and Yoav
+Shoham. 2023. In-context retrieval-augmented lan-
+guage models. Transactions of the Association for
+Computational Linguistics, 11:1316–1331.
+Jiashuo Sun, Chengjin Xu, Lumingyuan Tang, Saizhuo
+Wang, Chen Lin, Yeyun Gong, Lionel M Ni, Heung-
+Yeung Shum, and Jian Guo. 2023.
+Think-on-
+graph: Deep and responsible reasoning of large lan-
+guage model on knowledge graph. arXiv preprint
+arXiv:2307.07697.
+Jia-Yu Yao, Kun-Peng Ning, Zhen-Hui Liu, Mu-Nan
+Ning, Yu-Yang Liu, and Li Yuan. 2023. Llm lies:
+Hallucinations are not bugs, but features as adversar-
+ial examples. arXiv preprint arXiv:2310.01469.
+A
+Appendix
+A.1
+Datasets
+A.1.1
+ACQ
+• CS: This dataset focuses on core computer
+science domains, emphasizing data science
+and software engineering. It highlights practi-
+cal implementations in machine learning (e.g.,
+recommendation systems, classification algo-
+rithms) and big data processing (e.g., Spark-
+based real-time analytics).
+• Legal: This dataset centers on corporate le-
+gal frameworks, covering restructuring pro-
+cedures, compliance protocols, legal agree-
+ments, and governance mechanisms, with ap-
+plications in legal-financial sector contexts.
+• Agriculture: This dataset addresses agricul-
+tural practices, including beekeeping strate-
+gies, crop production optimization, disease
+prevention techniques, and farm management
+methodologies.
+• Mix: This dataset compiles literary classics
+across genres (essays, poetry, biographies),
+spanning philosophy, history, and cultural
+studies through interdisciplinary perspectives.
+A.2
+Evaluation
+A.2.1
+ACQ
+LLM evaluate RAG responses according to follow-
+ing seven dimensions:
+• Comprehensiveness: How much detail does
+the answer provide to cover all aspects and
+details of the question?
+• Diversity: How varied and rich is the an-
+swer in providing different perspectives and
+insights on the question?
+• Logicality: How logically does the answer
+respond to all parts of the question?
+• Relevance: How relevant is the answer to the
+question, staying focused and addressing the
+intended topic or issue?
+• Coherence: How well does the answer main-
+tain internal logical connections between its
+parts, ensuring a smooth and consistent struc-
+ture?
+11
+
+
+
+================================================================================
+ページ 12
+================================================================================
+• Empowerment: How well does the answer
+help the reader understand and make informed
+judgments about the topic?
+To mitigate ordering effects in comparative evalu-
+ations, we implement a systematic rotation of an-
+swer positions between the two methods under in-
+vestigation. Each method’s output is alternately
+assigned to the primary position (Answer A) and
+the secondary position (Answer B) across evalu-
+ation trials. This dual-perspective counterbalanc-
+ing enables the computation of bidirectional win
+rates, ensuring evaluation parity while controlling
+for positional bias inherent in sequential prompt
+structures.
+A.2.2
+SCQ
+• This metric quantifies the degree to which
+generated responses directly address the orig-
+inal query {r_q}, emphasizing completeness
+and specificity while penalizing redundant or
+tangential content. Automated evaluation in-
+volves generating {r_n} hypothetical ques-
+tions from the answer using LLMs, embed-
+ding both original and generated questions
+(via text-embedding-ada-002), and comput-
+ing their cosine similarity. The final score is
+formally defined as:
+AR = 1
+n
+n
+X
+i=1
+cos(eq, eqi)
+(6)
+where {e_q} denotes the original question and
+{e_q_i} represent LLM-generated counterpart
+questions.
+• Faithfulness(F): This metric measures the fac-
+tual grounding of answers within provided
+contexts, critical for mitigating hallucinations.
+The evaluation involves: 1. Decomposing an-
+swers into atomic claims from 2. Verifying
+each claim against through entailment checks.
+The faithfulness score is calculated as:
+F = |Verified Claims|
+|Total Claims|
+(7)
+where {_V} denotes verified claims and {_S}
+the total extracted statements.
+• Context Recall(CR): This metric evaluates the
+precision of retrieved contexts by quantifying
+the proportion of context sentences directly
+relevant to answering the query. Using LLM
+extraction, critical sentences {S_ext} through
+structured prompting. The context are identi-
+fied from {C_q} recall score (CR) is derived
+as:
+CR = |Sext|
+|c(q)|
+(8)
+where {c(q)} represents the total sentences in
+the context. represents the total sentences in
+the context. Low CR scores indicate exces-
+sive irrelevant content, highlighting retrieval
+inefficiency.
+A.3
+Case Study
+To demonstrate the advantages of PankRAG over
+existing RAG systems, we conduct a comparative
+analysis between PankRAG and baseline meth-
+ods using the ACQ task ("How can theoretical
+principles from programming language theory be
+made accessible to new developers?") from the CS
+dataset. Due to space constraints, we present only
+the case study of the ACQ task with PankRAG ver-
+sus LightRAG. As shown in the table, with the help
+of a hierarchical resolution path with global aware-
+ness in Figure 5, PankRAG outperforms LightRAG
+across all six evaluation metrics, with detailed anal-
+yses evaluated from LLMs provided below.
+LightRAG Response
+Several approaches can facilitate the under-
+standing of these principles, making them
+more relatable and useful for beginners em-
+barking on their coding journeys.
+1. Educational Resources : [...]
+2. Hands-On Experience : [...]
+3. Use of Simplified Language and Analo-
+gies : [...]
+4. Community Building and Support : [...]
+Conclusion:
+Integrating educational re-
+sources, hands-on experience, simplified ex-
+planations, supportive communities, new de-
+velopers can better access the theoretical prin-
+ciples of programming language theory...
+12
+
+
+
+================================================================================
+ページ 13
+================================================================================
+PankRAG Response
+Making Theoretical Principles Accessible
+to New Developers To facilitate a smoother
+transition for new developers into the com-
+plexities of programming language theory ...
+A structured approach that incorporates sim-
+plifications, practical engagement, interactive
+learning resources, and collaborative support
+will enhance comprehension and retention.
+1. Simplification of Concepts : [...]
+2. Practical Engagement : [...]
+3. Interactive Learning Resources : [...]
+4. Collaborative Learning and Support :
+[...]
+Conclusion: In summary, to make theoret-
+ical principles from programming language
+theory accessible to new developers, a mul-
+tifaceted approach that emphasizes simplifi-
+cation, practical engagement, interactive re-
+sources, and collaborative support...
+LLM Evaluation:
+• Comprehensiveness: “Winner”: "Answer2"
+“Explanation”:
+Answer2(PankRAG) pro-
+vides a detailed breakdown of strategies to
+make theoretical principles accessible, includ-
+ing simplification, practical engagement, inter-
+active resources, and collaborative support. It
+covers various aspects of the topic thoroughly,
+while Answer1(LightRAG) ...
+• Diversity: “Winner”: "Answer2"
+“Explanation”:
+Answer2(PankRAG)
+presents a wider range of strategies and
+methods, including mentorship programs
+and specific examples of interactive tools.
+It emphasizes diverse learning approaches,
+while Answer1(LightRAG) ...
+• Logicality: “Winner”: "Answer2"
+“Explanation”: Answer2(PankRAG) follows
+a clear, structured approach that logically pro-
+gresses from simplification to practical en-
+gagement and collaborative support. Each
+section builds on the previous one, creating a
+cohesive argument. Answer1(LightRAG) ...
+• Relevance: “Winner”: "Answer2"
+“Explanation”: Both answers are relevant to
+the question, but Answer2(PankRAG) main-
+SubQ 1-1: What are
+the key theoretical
+principles from pro-
+gramming language
+theory?
+SubQ 2-1: What are
+effective methods or
+resources for teach-
+ing programming
+language theory to
+beginners?
+SubQ 1-2: What
+challenges do new
+developers face in
+understanding these
+principles?
+SubQ 0-1: How can
+the key theoretical
+principles be simpli-
+fied or presented in
+a way that is more
+approachable for new
+developers?
+SubQ 0-2: What ad-
+ditional support or
+mentoring could be
+beneficial for new
+developers learning
+these concepts?
+Query: How can the-
+oretical principles
+from programming
+language theory be
+made accessible to
+new developers?
+Figure 5: A hierarchical resolution path with global
+awareness of ACQ
+tains a sharper focus on practical strategies
+that directly address how to make theoretical
+principles accessible. Answer1(LightRAG) ...
+• Coherence: “Winner”: "Answer2"
+“Explanation”:Answer2(PankRAG) exhibits
+a high degree of coherence, with each section
+clearly connected to the main theme and to
+each other. The flow of ideas is smooth and
+logical. Answer1(LightRAG) ...
+• Empowerment: “Winner”: "Answer2"
+“Explanation”: Answer2(PankRAG) empow-
+ers the reader by providing actionable strate-
+gies and emphasizing the importance of men-
+torship and collaborative learning. It encour-
+ages new developers to engage actively with
+the material. Answer1(LightRAG) ...
+13
+
