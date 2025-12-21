@@ -1,0 +1,10940 @@
+
+================================================================================
+ページ 1
+================================================================================
+Benchmarking Poisoning Attacks against
+Retrieval-Augmented Generation
+Baolei Zhang1†, Haoran Xin1†, Jiatong Li1†, Dongzhe Zhang1†,
+Minghong Fang2∗, Zhuqing Liu3, Lihai Nie1∗, Zheli Liu1
+1Nankai University
+2University of Louisville
+3University of North Texas
+{zhangbaolei,haoranxin,lijiatong,zhangdongzhe}@mail.nankai.edu.cn
+minghong.fang@louisville.edu, zhuqing.liu@unt.edu
+{NLH, liuzheli}@nankai.edu.cn
+Abstract
+Retrieval-Augmented Generation (RAG) has proven effective in mitigating hallu-
+cinations in large language models by incorporating external knowledge during
+inference. However, this integration introduces new security vulnerabilities, partic-
+ularly to poisoning attacks. Although prior work has explored various poisoning
+strategies, a thorough assessment of their practical threat to RAG systems remains
+missing. To address this gap, we propose the first comprehensive benchmark
+framework for evaluating poisoning attacks on RAG. Our benchmark covers 5
+standard question answering (QA) datasets and 10 expanded variants, along with
+13 poisoning attack methods and 7 defense mechanisms, representing a broad spec-
+trum of existing techniques. Using this benchmark, we conduct a comprehensive
+evaluation of all included attacks and defenses across the full dataset spectrum. Our
+findings show that while existing attacks perform well on standard QA datasets,
+their effectiveness drops significantly on the expanded versions. Moreover, our
+results demonstrate that various advanced RAG architectures, such as sequential,
+branching, conditional, and loop RAG, as well as multi-turn conversational RAG,
+multimodal RAG systems, and RAG-based LLM agent systems, remain susceptible
+to poisoning attacks. Notably, current defense techniques fail to provide robust
+protection, underscoring the pressing need for more resilient and generalizable
+defense strategies.
+1
+Introduction
+Despite the remarkable capabilities of large language models (LLMs) [7, 9, 11], they often gener-
+ate factually incorrect or nonsensical outputs, commonly referred to as hallucinations. Retrieval-
+Augmented Generation (RAG) [10, 16, 27, 37, 40, 46, 61, 69] has emerged as a promising framework
+to mitigate hallucinations by incorporating external knowledge at inference time. A typical RAG
+pipeline comprises three key components: a knowledge database, a retriever, and an LLM. Given a
+user query, the retriever selects the top-K relevant documents from the database, which are then used
+to condition the LLM’s response generation.
+As RAG techniques continue to evolve, several benchmarks [16, 26, 60, 80, 87] have been proposed to
+evaluate their performance in terms of generation accuracy and robustness against naturally occurring
+† Equal Contribution.
+* Corresponding Author.
+Preprint.
+
+
+
+================================================================================
+ページ 2
+================================================================================
+noise or counterfactual content in the knowledge database. However, the security risks to RAG sys-
+tems, particularly poisoning attacks, remain largely underexplored. Since RAG knowledge databases
+are typically built by aggregating content from publicly available sources such as Wikipedia [68],
+they present an opportunity for the attacker to inject malicious content. This poisoned content
+may later be retrieved and influence the system’s output. Although SafeRAG [48] introduces four
+specific attack tasks aimed at testing security bypasses, it does not provide a thorough evaluation of
+existing poisoning techniques. Therefore, there is a clear need for more comprehensive research and
+systematic assessment of poisoning attacks on RAG systems.
+To bridge the gap in understanding the security vulnerabilities of RAG systems, we introduce RAG
+Security Bench (RSB), a unified benchmark that systematically evaluates a broad range of poisoning
+attacks and defense mechanisms across diverse RAG architectures. The RSB benchmark includes 13
+representative poisoning attacks, classified into three categories based on their adversarial objectives:
+targeted poisoning, denial-of-service (DoS), and trigger-based DoS. Targeted poisoning attacks [14,
+51, 59, 65, 67, 88, 90, 95] aim to manipulate the system’s output for specific queries through the
+injection of maliciously crafted content. DoS attacks [62, 66] attempt to suppress the model’s
+response for certain inputs, while trigger-based DoS attacks [15, 19, 78] extend this threat by causing
+the model to refuse any query containing predefined triggers. On the defense side, RSB incorporates
+7 representative methods, organized into three categories. Process-optimized defenses [33, 71, 72,
+75, 95] aim to improve system resilience by optimizing prompts and retrieval procedures. Detection-
+based defenses [34, 62, 78, 88, 89, 92] focus on identifying and removing poisoned entries from the
+knowledge base. Hybrid defenses [93] combine detection techniques with prompt engineering or
+system-level adaptations to enhance robustness. RSB further extends its evaluation to 6 advanced
+RAG frameworks spanning four categories: sequential RAG with fixed retrieval-generation pipelines,
+branching RAG that explores multiple retrieval paths, conditional RAG that adapts retrieval based on
+the query content, and loop RAG that performs iterative refinement through repeated retrieval and
+generation cycles. In addition to these frameworks, RSB also encompasses evaluations of advanced
+architectures, including multi-turn conversational RAG, multimodal RAG systems, and RAG-based
+LLM agent systems, to provide a more complete picture of security risks across emerging RAG
+paradigms.
+Empirical findings: Leveraging the RSB framework, we conduct comprehensive evaluations of all
+poisoning attacks across 15 datasets, which include five widely-used QA datasets along with their
+challenging expanded versions. These expanded datasets introduce a higher density of correct-answer
+texts that are semantically close to the target queries, increasing both retrieval redundancy and
+contextual coverage. Based on these evaluations, we summarize the following key findings.
+Effectiveness. 1) Most poisoning attacks retain strong effectiveness on the original datasets, high-
+lighting the inherent susceptibility of RAG systems to adversarial content injection. 2) However,
+their effectiveness significantly declines on the challenging expansions, suggesting that enriching
+the knowledge database with more diverse and redundant correct-answer texts can passively reduce
+the impact of poisoning, offering a simple yet effective layer of defense. 3) Notably, attacks that
+are explicitly optimized for individual poisoned texts, such as CRAG-AS, maintain high success
+rates even in the more robust settings, demonstrating the strength of fine-grained optimization in
+overcoming increased retrieval resilience.
+Defenses. 1) Process-optimized defenses are effective in mitigating DoS attacks but offer limited
+protection against targeted poisoning attacks. 2) Detection-based defenses tend to have negligible
+impact across most attack types, suggesting that current detection methods are inadequate for
+identifying well-crafted poisoned content. 3) Hybrid defenses consistently achieve better performance
+than other methods, yet they can only partially mitigate the effects of poisoning attacks. These results
+reveal critical limitations in existing defense mechanisms and underscore the pressing need for more
+robust and comprehensive solutions.
+Ablation studies. 1) State-of-the-art LLMs continue to show significant vulnerability to poisoned
+contextual inputs, revealing a critical limitation of current alignment techniques that prioritize
+prompt-level control while overlooking harmful content embedded in retrieved context. 2) All
+evaluated retrievers exhibit substantial susceptibility to poisoning attacks, underscoring the need for
+retriever training approaches that explicitly improve adversarial robustness. 3) Retrieval based on dot
+product similarity is particularly vulnerable, as it provides a larger optimization space for adversaries
+compared to cosine similarity. This suggests that developing more robust similarity metrics may serve
+2
+
+
+
+================================================================================
+ページ 3
+================================================================================
+as an effective line of defense. 4) On the original NQ dataset, most attacks remain highly effective
+regardless of the number of retrieved texts, challenging the assumption that increasing retrieval depth
+inherently enhances robustness. 5) In contrast, on the challenging expansions, increasing the number
+of retrieved texts does not correspond to higher attack success rates despite greater recall of poisoned
+content. This indicates that the presence of abundant, semantically relevant correct-answer texts can
+neutralize the influence of adversarial inputs.
+Transferability. 1) Poisoned texts originally designed for naive RAG systems exhibit unexpected
+transferability, effectively influencing outputs in several advanced RAG architectures. 2) Attack
+success drops markedly in frameworks with adaptive retrieval strategies, revealing a key weakness of
+existing poisoning techniques and the inherent challenge of manipulating queries that do not reliably
+initiate retrieval in such systems.
+Multi-turn RAG. Existing poisoning attacks show reduced effectiveness when targeting multi-turn
+conversational RAG systems, revealing the limitations of current attack strategies. This highlights the
+inherent difficulty of executing successful poisoning attacks in multi-turn conversational settings.
+Multimodal RAG. 1) Multimodal RAG systems also exhibit vulnerability to poisoning attacks due
+to their reliance on retrieval and context augmentation processes similar to those in standard RAG,
+indicating that current multimodal retrievers and vision-language models lack robustness against
+malicious textual inputs. 2) Furthermore, the weak semantic correspondence between images and
+texts in the knowledge database makes it easier for the attacker to carry out successful attacks on
+multimodal RAG systems.
+RAG-based LLM agents. 1) RAG-based LLM agent systems remain susceptible to poisoning attacks,
+where both previously known and slightly modified attack strategies perform similarly well. 2) The
+added complexity of these agents does not hinder attack execution; instead, their reliance on retrieval
+mechanisms makes it straightforward to adapt existing poisoning techniques.
+2
+Preliminaries and Related Work
+2.1
+Retrieval-Augmented Generation (RAG)
+Retriever
+Retrieve
+Retrieved
+texts
+Query   
+LLM
+User
+Knowledge database
+Response
+Query
+Generate
++
+Figure 1: Illustration of the standard
+workflow in a RAG system.
+As shown in Fig. 1, a typical RAG framework consists of
+three core components: a knowledge database, a retriever,
+and an LLM. The knowledge database D is a collection of
+textual content sourced from diverse domains, including
+encyclopedic entries [68], news reports [64], and domain-
+specific documents such as financial records [53]. Given
+a user query q, the system follows a two-stage process to
+generate a response:
+• Knowledge retrieval: In the first stage, given a user query q, the retriever encodes it into an
+embedding vector and computes its similarity to the embeddings of all entries in the knowledge
+database D. The top-K most relevant texts are then retrieved based on these similarity scores,
+denoted as EK(q, D).
+• Response generation: In this stage, the retrieved texts EK(q, D) are concatenated with the query
+q using a system prompt psys (an example is provided in Appendix A), and the resulting input is
+fed into the LLM to generate the final output R, expressed as R = LLM (psys, q, EK(q, D)).
+2.2
+Related Work
+Threat landscape of RAG systems: Recent research has identified three primary attack vectors
+against RAG systems: (1) privacy inference attacks, which extract confidential information through
+carefully crafted queries [36, 47, 56]; (2) trigger-based retriever attacks, which manipulate the
+retriever using embedded triggers to influence downstream generation [21, 52]; and (3) poisoning
+attacks, which inject adversarial content into the knowledge database [15, 19, 62, 65, 78, 88, 95].
+Privacy inference attacks are conceptually aligned with jailbreaking techniques that have been
+extensively examined in the broader LLM security literature. Trigger-based retriever attacks typically
+assume strong attacker capabilities, such as modify the retriever model. This assumption is often
+3
+
+
+
+================================================================================
+ページ 4
+================================================================================
+unrealistic in practice, especially for systems that rely on closed-source or publicly trusted retrievers.
+In contrast, poisoning attacks directly exploit the unique architecture of RAG systems, particularly
+the reliance on a textual knowledge database composed of content from diverse, and often uncurated,
+sources. This makes the injection of malicious content both practical and feasible for real-world
+adversaries. Despite their relevance, poisoning attacks on RAG have not been systematically studied
+under a unified framework. To address this gap, our work presents a dedicated benchmark that focuses
+on poisoning attacks and their defenses in RAG systems.
+Distinctions from prior RAG benchmarking efforts: Existing benchmarks [16, 26, 60, 80, 87, 91]
+mainly assess RAG systems in non-adversarial settings, focusing on performance under natural
+noise or misleading information. For instance, RGB [16], CRAG [80], and RAGuard [87] evaluate
+robustness to imperfect retrieval rather than malicious interference. SafeRAG [48] and [94] introduce
+several security-oriented tasks but do not offer a thorough evaluation of poisoning-based threats. Our
+benchmark fills this gap by systematically analyzing poisoning attacks, standardizing threat models
+and metrics, and enabling fair comparison of existing defenses.
+3
+Threat Model
+We summarize the objectives, assumptions, and capabilities of the attacker in existing RAG poisoning
+attacks [15, 19, 62, 65, 78, 88, 95].
+Attacker’s objectives: We categorize the objectives of existing poisoning attacks into three escalating
+types, from explicit manipulation to more systematic disruption. The first category is targeted
+poisoning attack, where the attacker aims to make the RAG return a specific, attacker-chosen
+response to a particular query. For example, when asked “Who is the CEO of OpenAI?”, the system
+might be manipulated to answer “Tim Cook”. The second category is denial-of-service (DoS) attack,
+which aim to render the system unusable by causing it to refuse to answer general user queries, such
+as responding with “I don’t know”. The final category is trigger-based DoS attack, where the attacker
+poisons the system to refuse responses only when specific trigger phrases, such as “OpenAI”, appear,
+thereby selectively blocking functionality on targeted topics.
+Table 1: Poisoning attacks against RAG
+by attacker’s background knowledge.
+Category Attack
+Knowledge
+database
+Retriever LLM Targeted
+query
+BPRAG [95]
+✗
+✗
+✗
+✓
+WPRAG [95]
+✗
+✓
+✗
+✓
+BPI [51, 95]
+✗
+✗
+✗
+✓
+WPI [51, 95]
+✗
+✓
+✗
+✓
+AGGD [65]
+✗
+✓
+✗
+✓
+CRAG-AS [88]
+✗
+✗
+✗
+✓
+Targeted
+poisoning
+CRAG-AK [88]
+✗
+✗
+✗
+✓
+JamInject [62]
+✗
+✗
+✗
+✓
+JamOracle [62]
+✗
+✗
+✗
+✓
+DoS
+JamOpt [62]
+✗
+✗
+✗
+✓
+AP [19]
+✓
+✓
+✗
+✗
+BadRAG [78]
+✗
+✓
+✗
+✗
+Trigger-
+based
+DoS
+Phantom [15]
+✗
+✓
+✗
+✗
+Attacker’s background knowledge: We examine the at-
+tacker’s background knowledge with respect to the three
+main components of a RAG system. For the knowledge
+database, we consider both cases where the attacker knows
+or does not know its contents. For the LLM, we adopt a
+practical threat model in which the attacker has no access
+to its internal parameters. For the retriever, we consider
+both black-box and white-box settings: in the black-box
+case, the attacker cannot access or query the retriever; in
+the white-box case, the attacker can access the retriever’s
+parameters but cannot modify them. Additionally, we ac-
+count for scenarios where the attacker may or may not
+know the targeted queries, that is, the user queries the
+attacker intends to influence.
+Attacker’s capabilities: We assume the attacker can inject
+arbitrary text into the knowledge database by modifying the data sources from which the database
+is constructed. For instance, if the database is populated from Wikipedia, the attacker may edit
+relevant pages to embed malicious content, following recent poisoning techniques such as those
+in [12]. However, we do not assume the attacker can alter user queries, as doing so would fall under
+the category of jailbreak attacks rather than data poisoning.
+4
+Formalizing Poisoning Attacks Against RAG
+As outlined in Section 3, poisoning attacks against RAG fall into three categories based on the
+attacker’s objectives: targeted poisoning, denial-of-service (DoS), and trigger-based DoS. In this
+section, we provide formal mathematical definitions for each of these attack types.
+4
+
+
+
+================================================================================
+ページ 5
+================================================================================
+Definition 1: Targeted Poisoning Attack: In a targeted poisoning attack, the attacker selects a set
+of targeted queries Q and injects M poisoned texts into the knowledge database D for each query
+qi ∈Q, aiming to make the RAG system return a predefined answer ai when queried with qi.
+Formally, the attacker aims to maximize the following objective:
+1
+|Q|1 (LLM(psys, qi, EK(qi, Dpoison)) = ai) ,
+(1)
+where 1 is the indicator function, psys is the system prompt, and EK(qi, Dpoison) denotes the top-K
+texts retrieved from the poisoned knowledge database for the query qi. The poisoned knowledge
+database is defined as Dpoison = D ∪P, where P = {Pj
+i | i = 1, . . . , |Q|, j = 1, . . . , M} represents
+the set of poisoned texts injected for all targeted queries. Here, Pj
+i denotes the j-th poisoned text
+associated with the i-th targeted query.
+State-of-the-art targeted poisoning attacks include Black-box PoisonedRAG (BPRAG) [95], White-
+box PoisonedRAG (WPRAG) [95], Black-box prompt injection (BPI) [51, 95], White-box prompt
+injection (WPI) [51, 95], AGGD [65], CorruptRAG-AS (CRAG-AS) [88], and CorruptRAG-AK
+(CRAG-AK) [88]. See Appendix B.1 for further details on these attacks.
+Definition 2: Denial-of-Service (DoS) Attack: In a DoS attack, the attacker selects a set of targeted
+queries Q and injects M poisoned texts into the knowledge database D for each query qi ∈Q, with
+the goal of causing the RAG system to produce a refusal response a (e.g., “I don’t know”) when
+queried with qi.
+Formally, the attacker aims to maximize:
+1
+|Q|1 (LLM (psys, qi, EK(qi, Dpoison)) = a) .
+(2)
+Prominent DoS attacks include Jamming-based instruction injection (JamInject) [62], Jamming-based
+oracle generation (JamOracle) [62], and Jamming-based black-box optimization (JamOpt) [62].
+Additional details on these attacks are provided in Appendix B.2.
+Definition 3: Trigger-based DoS Attack: Given a query distribution πqt, where each user query qt
+contains a specific trigger string t, the attacker performs a trigger-based DoS attack by injecting M
+poisoned texts into the knowledge database D, aiming to cause the RAG system to output a refusal
+response a for any query qt ∼πqt.
+Formally, the attacker’s objective is to maximize:
+Eqt∼πqt
+[︁
+1
+(︁
+LLM
+(︁
+psys, qt, EK(qt, Dpoison)
+)︁
+= a
+)︁]︁
+.
+(3)
+Trigger-based DoS attacks include AgentPoison (AP) [19], BadRAG [78], and Phantom [15]. Further
+details on these attacks are provided in Appendix B.3.
+Table 1 provides a comprehensive summary of the aforementioned poisoning attacks against RAG,
+categorized by the attacker’s level of knowledge. Appendix C provides a list of additional attacks
+that were not included in our experiments, along with explanations for their exclusion from our
+benchmarks.
+5
+Evaluation
+5.1
+Experimental Setup (Datasets, Evaluation Metrics, Targeted queries, RAG Settings)
+Our benchmark uses fifteen QA datasets, including five established ones: Natural Questions (NQ) [44],
+HotpotQA [81], MS-MARCO [57], SQuAD [58], and BoolQ [25]. Each dataset contains queries
+paired with ground-truth relevant texts, embedded within large knowledge databases. To evaluate
+attacks under different information densities, we introduce two expansions for each dataset by adding
+extra ground-truth texts at medium (EX-M) and large (EX-L) scales. Full dataset statistics and
+construction details are in Appendix D.1 and Table 4 (Appendix). We use three metrics: accuracy
+(ACC), attack success rate (ASR), and F1-score. ACC and ASR measure the rates of correct and
+targeted answers, evaluated using GPT-4o-mini. F1-score measures the accuracy of retrieval. See
+5
+
+
+
+================================================================================
+ページ 6
+================================================================================
+Table 2: The results of all poisoning attacks on various datasets.
+Dataset
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG BPI WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+NQ
+ACC
+0.27
+0.25
+0.02 0.01
+0.33
+0.06
+0.04
+0.15
+0.13
+0.29
+0.01
+0.65
+0.99
+ASR
+0.62
+0.64
+0.94 0.97
+0.51
+0.89
+0.88
+0.85
+0.87
+0.59
+0.99
+0.35
+0.00
+F1-score
+0.96
+0.96
+0.91 0.93
+0.78
+0.86
+0.95
+0.75
+0.83
+0.76
+1.00
+0.37
+0.00
+ACC
+0.13
+0.15
+0.00 0.00
+0.15
+0.00
+0.00
+0.00
+0.05
+0.19
+0.00
+0.69
+0.97
+ASR
+0.81
+0.79
+0.99 1.00
+0.82
+1.00
+0.99
+1.00
+0.95
+0.69
+1.00
+0.30
+0.00
+HotpotQA
+F1-score
+1.00
+1.00
+1.00 1.00
+0.98
+1.00
+1.00
+0.96
+1.00
+0.80
+1.00
+0.40
+0.00
+MS-MARCO
+ACC
+0.06
+0.10
+0.08 0.05
+0.25
+0.19
+0.02
+0.32
+0.33
+0.57
+0.00
+0.94
+0.97
+ASR
+0.81
+0.78
+0.90 0.93
+0.63
+0.76
+0.96
+0.68
+0.62
+0.35
+1.00
+0.06
+0.00
+F1-score
+0.93
+0.84
+0.84 0.83
+0.66
+0.68
+0.95
+0.62
+0.56
+0.48
+1.00
+0.05
+0.00
+ACC
+0.20
+0.22
+0.06 0.03
+0.21
+0.13
+0.07
+0.20
+0.26
+0.37
+1.00
+0.97
+0.99
+ASR
+0.65
+0.68
+0.94 0.96
+0.68
+0.84
+0.91
+0.80
+0.71
+0.51
+0.00
+0.00
+0.00
+BoolQ
+F1-score
+0.96
+0.94
+0.89 0.87
+0.89
+0.78
+0.97
+0.73
+0.85
+0.70
+1.00
+0.00
+0.00
+SQuAD
+ACC
+0.08
+0.07
+0.00 0.00
+0.08
+0.00
+0.02
+0.00
+0.01
+0.06
+0.00
+0.97
+0.99
+ASR
+0.91
+0.89
+1.00 0.99
+0.91
+0.99
+0.96
+1.00
+0.99
+0.80
+1.00
+0.00
+0.00
+F1-score
+0.95
+0.95
+0.97 0.96
+0.91
+0.97
+0.96
+0.92
+0.90
+0.80
+1.00
+0.00
+0.01
+ACC
+0.65
+0.59
+0.77 0.80
+0.87
+0.81
+0.36
+0.97
+0.94
+0.98
+0.94
+0.99
+1.00
+ASR
+0.11
+0.15
+0.16 0.14
+0.04
+0.14
+0.50
+0.03
+0.05
+0.01
+0.05
+0.01
+0.00
+NQ-EX-M
+F1-score
+0.48
+0.53
+0.20 0.26
+0.20
+0.07
+0.40
+0.06
+0.25
+0.08
+0.09
+0.00
+0.00
+HotpotQA-EX-M
+ACC
+0.64
+0.72
+0.88 0.92
+0.88
+0.87
+0.33
+1.00
+0.90
+1.00
+0.99
+1.00
+1.00
+ASR
+0.20
+0.20
+0.09 0.05
+0.03
+0.10
+0.47
+0.00
+0.10
+0.00
+0.01
+0.00
+0.00
+F1-score
+0.50
+0.46
+0.08 0.09
+0.15
+0.06
+0.36
+0.02
+0.40
+0.00
+0.00
+0.00
+0.00
+ACC
+0.34
+0.49
+0.63 0.63
+0.72
+0.88
+0.15
+0.99
+0.97
+0.99
+0.97
+0.99
+1.00
+ASR
+0.30
+0.29
+0.33 0.32
+0.13
+0.07
+0.66
+0.00
+0.01
+0.02
+0.03
+0.01
+0.00
+MS-MARCO-EX-M
+F1-score
+0.57
+0.51
+0.27 0.32
+0.26
+0.05
+0.69
+0.01
+0.09
+0.04
+0.06
+0.00
+0.00
+BoolQ-EX-M
+ACC
+0.49
+0.54
+0.77 0.66
+0.74
+0.94
+0.33
+0.99
+1.00
+0.97
+1.00
+0.99
+0.99
+ASR
+0.35
+0.34
+0.24 0.28
+0.14
+0.05
+0.48
+0.00
+0.00
+0.03
+0.00
+0.00
+0.00
+F1-score
+0.53
+0.54
+0.17 0.18
+0.28
+0.04
+0.55
+0.02
+0.10
+0.06
+0.02
+0.00
+0.00
+ACC
+0.52
+0.58
+0.68 0.76
+0.77
+0.79
+0.28
+1.00
+0.87
+1.00
+1.00
+0.99
+0.98
+ASR
+0.21
+0.24
+0.24 0.18
+0.10
+0.18
+0.65
+0.00
+0.13
+0.00
+0.00
+0.00
+0.00
+SQuAD-EX-M
+F1-score
+0.44
+0.41
+0.25 0.24
+0.25
+0.09
+0.51
+0.04
+0.46
+0.00
+0.00
+0.00
+0.00
+NQ-EX-L
+ACC
+0.89
+0.87
+0.90 0.86
+0.97
+0.97
+0.74
+0.98
+0.94
+0.98
+0.95
+0.99
+1.00
+ASR
+0.03
+0.05
+0.08 0.10
+0.00
+0.00
+0.20
+0.02
+0.04
+0.01
+0.03
+0.01
+0.00
+F1-score
+0.19
+0.24
+0.08 0.11
+0.07
+0.00
+0.17
+0.02
+0.14
+0.02
+0.00
+0.00
+0.00
+ACC
+0.88
+0.87
+0.97 0.98
+0.98
+0.99
+0.77
+1.00
+0.97
+1.00
+0.98
+1.00
+1.00
+ASR
+0.05
+0.05
+0.03 0.02
+0.02
+0.01
+0.12
+0.00
+0.03
+0.00
+0.01
+0.00
+0.00
+HotpotQA-EX-L
+F1-score
+0.18
+0.17
+0.02 0.02
+0.05
+0.00
+0.13
+0.00
+0.17
+0.00
+0.00
+0.00
+0.00
+MS-MARCO-EX-L
+ACC
+0.68
+0.74
+0.87 0.91
+0.83
+0.96
+0.36
+1.00
+0.98
+0.99
+0.97
+0.99
+1.00
+ASR
+0.08
+0.13
+0.10 0.07
+0.06
+0.02
+0.44
+0.00
+0.00
+0.00
+0.02
+0.01
+0.00
+F1-score
+0.27
+0.28
+0.08 0.12
+0.12
+0.00
+0.48
+0.00
+0.02
+0.00
+0.02
+0.00
+0.00
+ACC
+0.84
+0.75
+0.91 0.92
+0.87
+0.97
+0.62
+1.00
+0.98
+0.96
+1.00
+0.98
+0.99
+ASR
+0.11
+0.21
+0.10 0.10
+0.05
+0.03
+0.18
+0.00
+0.01
+0.02
+0.00
+0.00
+0.00
+BoolQ-EX-L
+F1-score
+0.23
+0.28
+0.07 0.06
+0.12
+0.02
+0.25
+0.00
+0.04
+0.03
+0.01
+0.00
+0.00
+SQuAD-EX-L
+ACC
+0.89
+0.89
+0.96 0.95
+0.97
+0.96
+0.60
+1.00
+0.95
+1.00
+0.99
+1.00
+1.00
+ASR
+0.04
+0.04
+0.03 0.03
+0.01
+0.01
+0.33
+0.00
+0.05
+0.00
+0.00
+0.00
+0.00
+F1-score
+0.12
+0.11
+0.06 0.05
+0.05
+0.01
+0.27
+0.00
+0.23
+0.00
+0.00
+0.00
+0.00
+Appendix D.2 for metric details. Existing studies use different sets of targeted queries, making
+comparisons difficult. To enable fair evaluation, we construct a unified set of 100 targeted queries
+and corresponding targeted answers for each attack category (see Section 4). Their construction
+is detailed in Appendix D.3. These queries are selected such that the RAG system does not yield
+the attacker-chosen targeted answer without attack. Answer accuracy of the RAG system under
+non-attack conditions are shown in Table 5 (Appendix). Our benchmark uses the FlashRAG [39]
+framework to build the RAG system, with Contriever [32] as the retriever and GPT-4o-mini as the
+LLM by default. We retrieve the top-5 texts (K = 5) by cosine similarity and prepend them to the
+query using a system prompt (Appendix A). We conducted all experiments on NVIDIA A800 GPUs,
+running each test five times and reporting the average results. The variance of results was small, so
+we omit it.
+5.2
+Benchmark Poisoning Attacks
+5.2.1
+Effectiveness
+We evaluate poisoning attacks across fifteen datasets, including five existing ones (NQ, HotpotQA,
+MS-MARCO, SQuAD, and BoolQ) and ten expansions. Table 2 presents the results, highlighting key
+vulnerabilities in RAG systems. Our main findings are:
+6
+
+
+
+================================================================================
+ページ 7
+================================================================================
+Table 3: The results of all poisoning attacks against various defenses on NQ dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+ACC
+0.27
+0.25
+0.39
+0.43
+0.39
+0.27
+0.27
+0.68
+BPRAG
+ASR
+0.62
+0.62
+0.57
+0.31
+0.58
+0.60
+0.61
+0.05
+ACC
+0.25
+0.27
+0.39
+0.43
+0.43
+0.24
+0.24
+0.72
+WPRAG
+ASR
+0.64
+0.63
+0.56
+0.28
+0.57
+0.63
+0.64
+0.06
+ACC
+0.02
+0.01
+0.54
+0.39
+0.42
+0.03
+0.03
+0.72
+BPI
+ASR
+0.94
+0.93
+0.41
+0.28
+0.42
+0.94
+0.94
+0.03
+ACC
+0.01
+0.00
+0.57
+0.44
+0.47
+0.00
+0.00
+0.72
+WPI
+ASR
+0.97
+0.94
+0.36
+0.28
+0.33
+0.98
+0.97
+0.05
+ACC
+0.33
+0.27
+0.44
+0.46
+0.48
+0.34
+0.34
+0.71
+AGGD
+ASR
+0.51
+0.60
+0.42
+0.23
+0.46
+0.50
+0.50
+0.04
+ACC
+0.06
+0.00
+0.46
+0.43
+0.35
+0.06
+0.07
+0.70
+CRAG-AS
+ASR
+0.89
+0.96
+0.53
+0.25
+0.59
+0.90
+0.90
+0.03
+ACC
+0.04
+0.04
+0.37
+0.46
+0.23
+0.04
+0.04
+0.70
+CRAG-AK
+ASR
+0.88
+0.83
+0.62
+0.26
+0.69
+0.89
+0.89
+0.04
+ACC
+0.15
+0.11
+0.79
+0.42
+0.78
+0.15
+0.15
+0.75
+JamInject
+ASR
+0.85
+0.88
+0.07
+0.53
+0.08
+0.85
+0.85
+0.01
+ACC
+0.13
+0.02
+0.78
+0.78
+0.73
+0.12
+0.12
+0.74
+JamOracle
+ASR
+0.87
+0.97
+0.00
+0.11
+0.01
+0.88
+0.87
+0.01
+ACC
+0.29
+0.37
+0.81
+0.76
+0.82
+0.26
+0.27
+0.76
+JamOpt
+ASR
+0.59
+0.55
+0.00
+0.11
+0.00
+0.63
+0.63
+0.00
+ACC
+0.01
+0.44
+0.71
+0.40
+0.67
+0.00
+0.00
+0.67
+AP
+ASR
+0.99
+0.48
+0.04
+0.49
+0.08
+1.00
+1.00
+0.02
+ACC
+0.65
+0.66
+0.84
+0.67
+0.90
+0.65
+0.64
+0.80
+BadRAG
+ASR
+0.35
+0.34
+0.15
+0.30
+0.01
+0.35
+0.36
+0.01
+ACC
+0.99
+0.69
+0.98
+0.84
+0.95
+0.96
+0.96
+0.82
+Phantom
+ASR
+0.00
+0.30
+0.00
+0.14
+0.00
+0.04
+0.03
+0.00
+Most poisoning attacks demonstrate considerable effectiveness on existing datasets: Targeted
+poisoning and DoS attacks generally achieve high ASRs, with simple methods like BPI often rivaling
+more complex ones. This underscores the threat posed by low-complexity attacks. BPRAG and
+WPRAG yield lower ASRs in our benchmark compared to prior reports [95], likely due to differences
+in LLM settings. Since the originally used PaLM 2 model used in [95] is now deprecated and its API
+unavailable, we re-run the experiments under matching settings. Results are shown in Table 6 and
+further analyzed in Appendix E. Trigger-based DoS attacks show mixed results: AP attack performs
+well, likely due to its effective trigger design, while BadRAG and Phantom fall short of their original
+reports, despite faithful reproduction. We conduct additional experiments, with results in Tables 7
+and 8, and detailed analysis in Appendix F.
+All poisoning attacks show significantly reduced effectiveness on challenging expansions: As
+shown in Table 2, ASRs consistently drop as the knowledge database expands from the original to
+EX-M and EX-L. To investigate this trend, we measured how many correct-answer texts appear in
+the top-5 retrieved results for each target query under non-attack conditions (see Fig. 4 in Appendix
+and detailed in Appendix G). In the original NQ, most queries retrieve only one correct text, leaving
+room for poisoned texts. In contrast, EX-M and EX-L versions retrieve more correct texts with
+higher similarity, offering stronger signals to the LLM and reducing attack success. This suggests
+that enriching the knowledge database with relevant content can passively improve RAG robustness.
+CRAG-AK demonstrates superior effectiveness on challenging expansions compared to other
+attacks: CRAG-AK shows higher effectiveness on challenging expansions than other attacks, due
+to its optimization strategy that maximizes the impact of each poisoned text under a fixed budget.
+As a result, even with similar F1-scores, it achieves significantly higher ASRs. This suggests that
+optimizing per-text effectiveness can sustain attack success in information-rich settings.
+5.2.2
+Defenses
+Recent studies have introduced three main categories of defenses. Process-optimized defenses [33, 71,
+72, 75, 82, 95] improve system robustness through prompt engineering and architectural adjustments.
+Detection-based defenses [34, 62, 78, 88, 92, 95] aim to filter poisoned texts. Hybrid approaches [93]
+combine filtering with system-level interventions. The details of these defenses are provided in
+Appendix H. We systematically evaluate these defenses using our benchmark. Results (ACC and
+ASR) on NQ dataset are shown in Table 3, with results for the other 14 datasets provided in Tables 9-
+7
+
+
+
+================================================================================
+ページ 8
+================================================================================
+22 in Appendix. Detailed analysis are provided in Appendix I. Detection performance, accuracy
+(DACC), false positive rate (FPR), and false negative rate (FNR), for detection-based defenses is
+reported in Tables 23-37 in Appendix, with metric definitions in Appendix J.
+Our evaluation yields several important observations. First, defense performance varies by attack
+type. Process-optimized methods such as InstructRAG and AstuteRAG are highly effective against
+DoS attacks, for instance, reducing JamOracle’s ASR from 87% to 1% on NQ dataset, but are less
+effective against targeted poisoning. Second, detection-based methods like PPL and Norm generally
+fail to detect sophisticated poisoned content, showing limited overall effectiveness. Third, hybrid
+defenses like TrustRAG consistently surpass other methods in performance, but their ability to counter
+poisoning attacks remains limited (see Appendix I for analysis). These results highlight the need for
+developing more effective defenses to enhance the security of RAG systems.
+5.3
+Ablation Studies
+Impact of LLMs: We conduct extensive experiments to investigate how LLMs influence
+the vulnerability of RAG systems to poisoning attacks across ten state-of-the-art LLM mod-
+els [1, 2, 3, 5, 6, 30, 31, 49]. The results on NQ dataset are presented in Fig. 2, and results on
+the NQ-EX-M and NQ-EX-L datasets are shown in Fig. 5 in the Appendix. These experiments reveal
+two key findings. First, despite extensive alignment training, all models exhibit substantial vulnerabil-
+ity when processing poisoned context. This exposes a critical limitation in current alignment methods,
+which primarily target direct prompt inputs rather than harmful content embedded within retrieved
+context. Second, we observe that Claude demonstrates markedly stronger resistance to poisoning
+attacks than other models, especially under targeted poisoning scenarios. This suggests that LLMs
+can be fortified to maintain robustness even when the input context is compromised. These findings
+highlight an important direction for defense: enhancing LLMs’ ability to identify and disregard
+malicious contextual content. Such improvements would provide a foundational layer of defense
+against RAG poisoning, complementing retrieval-based and prompt-based protection strategies.
+GPT-4o-mini
+GPT-4o
+GPT-4.1
+GPT-4.1-mini
+GPT-4.1-nano
+Gemini
+Claude
+DeepSeek-R1
+DeepSeek-V3
+Llama-4
+BPRAG
+WPRAG
+BPI
+WPI
+AGGD
+CRAG-AS
+CRAG-AK
+JamInject
+JamOracle
+JamOpt
+AP
+BadRAG
+Phantom
+ 
+0.27 0.25 0.29 0.30 0.26 0.21 0.38 0.28 0.25 0.31
+0.24 0.26 0.27 0.29 0.26 0.21 0.37 0.26 0.24 0.34
+0.02 0.03 0.04 0.07 0.05 0.03 0.28 0.03 0.03 0.11
+0.01 0.01 0.03 0.06 0.07 0.00 0.20 0.03 0.01 0.14
+0.34 0.30 0.35 0.39 0.32 0.24 0.43 0.34 0.33 0.36
+0.05 0.06 0.06 0.08 0.05 0.06 0.10 0.07 0.06 0.09
+0.05 0.05 0.07 0.09 0.08 0.05 0.19 0.07 0.05 0.09
+0.15 0.23 0.27 0.33 0.15 0.20 0.30 0.21 0.18 0.41
+0.12 0.17 0.21 0.30 0.31 0.14 0.31 0.20 0.18 0.44
+0.30 0.29 0.36 0.42 0.42 0.27 0.38 0.29 0.28 0.51
+0.01 0.00 0.00 0.17 0.00 0.00 0.02 0.00 0.00 0.01
+0.65 0.58 0.68 0.73 0.59 0.32 0.69 0.64 0.60 0.48
+0.99 0.79 0.94 0.98 0.80 0.57 0.97 0.94 0.90 0.82
+ACC
+GPT-4o-mini
+GPT-4o
+GPT-4.1
+GPT-4.1-mini
+GPT-4.1-nano
+Gemini
+Claude
+DeepSeek-R1
+DeepSeek-V3
+Llama-4
+BPRAG
+WPRAG
+BPI
+WPI
+AGGD
+CRAG-AS
+CRAG-AK
+JamInject
+JamOracle
+JamOpt
+AP
+BadRAG
+Phantom
+ 
+0.61 0.54 0.62 0.59 0.69 0.76 0.56 0.69 0.69 0.60
+0.64 0.56 0.66 0.62 0.67 0.74 0.54 0.69 0.71 0.64
+0.94 0.94 0.92 0.91 0.90 0.94 0.65 0.94 0.94 0.83
+0.98 0.94 0.97 0.95 0.88 0.99 0.73 0.94 0.99 0.80
+0.54 0.43 0.49 0.49 0.57 0.67 0.42 0.56 0.58 0.50
+0.91 0.85 0.90 0.90 0.82 0.90 0.85 0.89 0.89 0.86
+0.88 0.85 0.90 0.88 0.87 0.95 0.79 0.91 0.93 0.87
+0.84 0.77 0.72 0.66 0.83 0.80 0.69 0.78 0.82 0.57
+0.87 0.82 0.73 0.64 0.65 0.75 0.64 0.78 0.77 0.51
+0.61 0.64 0.48 0.42 0.40 0.42 0.55 0.57 0.46 0.29
+0.99 1.00 1.00 0.79 1.00 1.00 0.98 1.00 1.00 0.98
+0.35 0.41 0.31 0.27 0.41 0.68 0.30 0.34 0.40 0.51
+0.00 0.19 0.02 0.00 0.18 0.43 0.01 0.04 0.09 0.16
+ASR
+0.0
+0.2
+0.4
+0.6
+0.8
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Figure 2: Results of poisoning attacks
+under different LLMs of RAG on NQ
+dataset. LLM versions in Appendix K.
+Impact of retrievers: We perform a comprehensive eval-
+uation to examine how different retrievers influence the
+susceptibility of RAG systems to poisoning attacks, using
+three state-of-the-art retrievers [32, 76]. Results on the NQ,
+NQ-EX-M, and NQ-EX-L datasets (Table 38 in Appendix)
+reveal a consistent vulnerability across all retrievers. This
+vulnerability stems from their training objective, which
+focuses on maximizing similarity to ground-truth texts
+without accounting for poisoned content. These findings
+emphasize the need for adversarial training to improve
+retrievers’ ability to detect and resist poisoning attempts.
+Impact of similarity measurements: We conduct experiments to assess how different similarity
+measures affect RAG’s vulnerability to poisoning attacks, focusing on two commonly used methods:
+dot product and cosine similarity. Results on the NQ, NQ-EX-M, and NQ-EX-L datasets (Table 39 in
+Appendix) show that the dot product is more susceptible than cosine similarity, particularly under
+white-box attack settings. This increased vulnerability is likely due to the absence of normalization in
+dot product, which allows a larger optimization space for attackers. These results suggest a promising
+defense direction: designing more robust similarity functions, such as hybrid retrieval methods that
+combine multiple measures, to better resist adversarial manipulation.
+5
+10
+15
+20
+25
+30
+0.0
+0.5
+1.0
+ACC
+5
+10
+15
+20
+25
+30
+ASR
+5
+10
+15
+20
+25
+30
+F1-score
+BPRAG
+AGGD
+JamOracle
+Phantom
+WPRAG
+CRAG-AS
+JamOpt
+BPI
+CRAG-AK
+AP
+WPI
+JamInject
+BadRAG
+Figure 3: The results of poisoning attacks under
+different top-K of RAG on NQ dataset.
+Impact of K: We perform experiments to ex-
+amine how varying the top-K retrieved texts
+influences RAG’s vulnerability to poisoning at-
+tacks. Results on NQ are presented in Fig. 3, and
+results on NQ-EX-M and NQ-EX-L datasets ap-
+pear in Fig. 6 in Appendix, revealing three main
+findings. First, on the original NQ dataset, most
+attacks remain highly effective regardless of K,
+as increasing K adds mostly irrelevant content
+due to the scarcity of correct-answer texts. Sec-
+8
+
+
+
+================================================================================
+ページ 9
+================================================================================
+ond, on the expanded datasets, higher K values
+increase the recall of poisoned texts, but attacks do not become more effective, since the inclusion of
+correct answers provides the LLM with enough reliable information to resist manipulation. Third,
+CRAG-AS and CRAG-AK stand out on NQ-EX-M, showing improved effectiveness with larger K.
+Their budget strategy produces strong poisoned texts that remain effective amid many correct ones.
+5.4
+Transferability Studies
+Most existing poisoning attacks focus on naive RAG, leaving their impact on advanced frameworks
+largely unexplored. To address this, our benchmark includes four categories of advanced RAG
+systems—sequential RAG [85], branching RAG [42], conditional RAG [35], and loop RAG [13, 37,
+70]—covering six frameworks in total (see Appendix L for details). Evaluation results in Tables 40-42
+in Appendix provide insights into how architectural design affects vulnerability. We identify two
+key findings. First, poisoned texts designed for naive RAG transfer effectively to many advanced
+frameworks, as they still rely on retrieved context for generation. This shows that architectural
+complexity alone does not eliminate the threat. Second, frameworks with adaptive retrieval, such as
+FLARE, demonstrate strong robustness by skipping retrieval when unnecessary, thereby reducing
+exposure to poisoned content. This highlights adaptive retrieval as a promising direction for defense.
+6
+Discussion
+6.1
+Poisoning Attacks against Multi-turn RAG
+Existing poisoning attacks are mostly designed for single-turn RAG systems, overlooking the more
+practical multi-turn conversational RAG scenarios [8, 22, 41, 43, 55, 77]. To bridge this gap, we
+implement a naive multi-turn RAG system that rewrites each user query using the full dialogue
+history before retrieving relevant texts. To evaluate poisoning effectiveness, we simulate multi-turn
+conversations by decomposing a targeted query into natural sub-questions with an LLM, using the
+final turn’s query to compute ASR and ACC (see Appendix M). Results in Table 43 in Appendix
+show reduced attack effectiveness in the multi-turn setting, underscoring limitations of attacks. We
+attribute this to the query rewriting, which alters the retrieval and hinders the retrieval of poisoned
+texts crafted for original queries. These findings highlight that poisoning in multi-turn RAG must
+overcome both retrieval constraints and the LLM’s context integration over dynamic dialogue history.
+6.2
+Poisoning Attacks against Multimodal RAG
+We investigate the vulnerability of multimodal RAG systems [17, 45, 73, 74, 79, 84] to poisoning
+attacks targeting both image and text modalities. These systems use multimodal retrievers to select
+relevant image-text pairs as input to vision-language models (VLMs). Prior work [50] introduced
+the Poisoned-MRAG attack, showing that injected malicious pairs can manipulate outputs. Our
+benchmark includes Poisoned-MRAG and extends existing single-modality attacks to the multimodal
+setting (see Appendix N). As shown in Table 44 in Appendix, multimodal RAG remains vulnerable
+due to its reliance on retrieval and augmentation strategies similar to naive RAG. Current retrievers
+and VLMs lack robustness to poisoned content. Additionally, weak image-text alignment allows
+attackers to fix the image and manipulate the text, effectively reducing the task to a text-based attack.
+6.3
+Poisoning Attacks against RAG-based LLM Agent Systems
+We investigate the vulnerability of RAG-based LLM agent systems [54, 63, 83, 86] to poisoning
+attacks. These systems retrieve relevant query-solution pairs from a memory database and use them
+to guide the generation of new solution paths. Recent work [19] introduced the AgentPoison attack,
+showing that malicious entries can manipulate the agent’s behavior, such as triggering specific tool
+calls. Our benchmark implements AgentPoison and adapts RAG poisoning attacks to the LLM
+agent setting (details in Appendix O). Results in Table 45 in Appendix confirm that LLM agents
+are highly vulnerable: both AgentPoison and adapted attacks achieve strong success rates. Notably,
+the added complexity of LLM agents does not hinder attacks. Because retrieval depends mainly on
+query similarity, existing poisoning methods like PoisonedRAG can be applied with minimal changes.
+These findings highlight the urgent need for defenses specifically designed for LLM agent systems.
+9
+
+
+
+================================================================================
+ページ 10
+================================================================================
+7
+Conclusion, Limitations, and Future Work
+In this work, we introduced RSB, a benchmark for evaluating poisoning attacks on RAG systems, cov-
+ering 13 attacks, 7 defenses, and 6 advanced RAG frameworks. We conducted extensive evaluations,
+including analyses on multi-turn RAG, multimodal RAG, and RAG-based LLM agents, revealing key
+security insights. Currently, our evaluation is limited to RAG-based agents; future work will explore
+more complex LLM agents based on the model context protocol [4].
+References
+[1] Claude 3.7 sonnet. https://www.anthropic.com/news/claude-3-7-sonnet.
+[2] Introducing gemini 2.0: our new ai model for the agentic era. https://blog.google/
+technology/google-deepmind/google-gemini-ai-update-december-2024.
+[3] Introducing gpt-4.1. https://openai.com/index/gpt-4-1.
+[4] Introduction
+of
+model
+context
+protocol.
+https://modelcontextprotocol.io/
+introduction.
+[5] Llama-4. https://www.llama.com/models/llama-4.
+[6] Qwq: Reflect deeply on the boundaries of the unknown. https://qwenlm.github.io/blog/
+qwq-32b.
+[7] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Florencia Leoni
+Aleman, Diogo Almeida, Janko Altenschmidt, Sam Altman, Shyamal Anadkat, et al. Gpt-4
+technical report. arXiv preprint arXiv:2303.08774, 2023.
+[8] Mohammad Aliannejadi, Zahra Abbasiantaeb, Shubham Chatterjee, Jeffrey Dalton, and Leif
+Azzopardi. Trec ikat 2023: A test collection for evaluating conversational and interactive
+knowledge assistants. In Proceedings of the 47th International ACM SIGIR Conference on
+Research and Development in Information Retrieval, pages 819–829, 2024.
+[9] Rohan Anil, Andrew M Dai, Orhan Firat, Melvin Johnson, Dmitry Lepikhin, Alexandre Passos,
+Siamak Shakeri, Emanuel Taropa, Paige Bailey, Zhifeng Chen, et al. Palm 2 technical report.
+arXiv preprint arXiv:2305.10403, 2023.
+[10] Sebastian Borgeaud, Arthur Mensch, Jordan Hoffmann, Trevor Cai, Eliza Rutherford, Katie
+Millican, George Bm Van Den Driessche, Jean-Baptiste Lespiau, Bogdan Damoc, Aidan Clark,
+et al. Improving language models by retrieving from trillions of tokens. In International
+conference on machine learning, pages 2206–2240. PMLR, 2022.
+[11] Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan, Prafulla Dhariwal,
+Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, et al. Language models are
+few-shot learners. In NeurIPS, 2020.
+[12] Nicholas Carlini, Matthew Jagielski, Christopher A Choquette-Choo, Daniel Paleka, Will Pearce,
+Hyrum Anderson, Andreas Terzis, Kurt Thomas, and Florian Tramèr. Poisoning web-scale
+training datasets is practical. In 2024 IEEE Symposium on Security and Privacy (SP), pages
+407–425. IEEE, 2024.
+[13] Chi-Min Chan, Chunpu Xu, Ruibin Yuan, Hongyin Luo, Wei Xue, Yike Guo, and Jie Fu. Rq-rag:
+Learning to refine queries for retrieval augmented generation. arXiv preprint arXiv:2404.00610,
+2024.
+[14] Zhiyuan Chang, Xiaojun Jia, Mingyang Li, Junjie Wang, Yuekai Huang, Qing Wang, Ziyou
+Jiang, and Yang Liu. One shot dominance: Knowledge poisoning attack on retrieval-augmented
+generation systems. arXiv preprint arXiv:2505.11548, 2025.
+[15] Harsh Chaudhari, Giorgio Severi, John Abascal, Matthew Jagielski, Christopher A Choquette-
+Choo, Milad Nasr, Cristina Nita-Rotaru, and Alina Oprea. Phantom: General trigger attacks on
+retrieval augmented language generation. arXiv preprint arXiv:2405.20485, 2024.
+10
+
+
+
+================================================================================
+ページ 11
+================================================================================
+[16] Jiawei Chen, Hongyu Lin, Xianpei Han, and Le Sun. Benchmarking large language mod-
+els in retrieval-augmented generation. In Proceedings of the AAAI Conference on Artificial
+Intelligence, volume 38, pages 17754–17762, 2024.
+[17] Wenhu Chen, Hexiang Hu, Xi Chen, Pat Verga, and William W Cohen. Murag: Multimodal
+retrieval-augmented generator for open question answering over images and text. arXiv preprint
+arXiv:2210.02928, 2022.
+[18] Yang Chen, Hexiang Hu, Yi Luan, Haitian Sun, Soravit Changpinyo, Alan Ritter, and Ming-
+Wei Chang. Can pre-trained vision and language models answer visual information-seeking
+questions? arXiv preprint arXiv:2302.11713, 2023.
+[19] Zhaorun Chen, Zhen Xiang, Chaowei Xiao, Dawn Song, and Bo Li. Agentpoison: Red-teaming
+llm agents via poisoning memory or knowledge bases. In Advances in Neural Information
+Processing Systems, 2024.
+[20] Zhuo Chen, Yuyang Gong, Miaokun Chen, Haotan Liu, Qikai Cheng, Fan Zhang, Wei Lu,
+Xiaozhong Liu, and Jiawei Liu. Flipedrag: Black-box opinion manipulation attacks to retrieval-
+augmented generation of large language models. arXiv preprint arXiv:2501.02968, 2025.
+[21] Pengzhou Cheng, Yidong Ding, Tianjie Ju, Zongru Wu, Wei Du, Ping Yi, Zhuosheng Zhang,
+and Gongshen Liu. Trojanrag: Retrieval-augmented generation can be backdoor driver in large
+language models. arXiv preprint arXiv:2405.13401, 2024.
+[22] Yiruo Cheng, Kelong Mao, Ziliang Zhao, Guanting Dong, Hongjin Qian, Yongkang Wu, Tetsuya
+Sakai, Ji-Rong Wen, and Zhicheng Dou. Coral: Benchmarking multi-turn conversational
+retrieval-augmentation generation. arXiv preprint arXiv:2410.23090, 2024.
+[23] Sukmin Cho, Soyeong Jeong, Jeongyeon Seo, Taeho Hwang, and Jong C Park. Typos that broke
+the rag’s back: Genetic attack on rag pipeline by simulating documents in the wild via low-level
+perturbations. arXiv preprint arXiv:2404.13948, 2024.
+[24] Chanwoo Choi, Jinsoo Kim, Sukmin Cho, Soyeong Jeong, and Buru Chang. The rag paradox:
+A black-box attack exploiting unintentional vulnerabilities in retrieval-augmented generation
+systems. arXiv preprint arXiv:2502.20995, 2025.
+[25] Christopher Clark, Kenton Lee, Ming-Wei Chang, Tom Kwiatkowski, Michael Collins, and
+Kristina Toutanova. Boolq: Exploring the surprising difficulty of natural yes/no questions.
+arXiv preprint arXiv:1905.10044, 2019.
+[26] Florin Cuconasu, Giovanni Trappolini, Federico Siciliano, Simone Filice, Cesare Campagnano,
+Yoelle Maarek, Nicola Tonellotto, and Fabrizio Silvestri. The power of noise: Redefining
+retrieval for rag systems. In Proceedings of the 47th International ACM SIGIR Conference on
+Research and Development in Information Retrieval, 2024.
+[27] Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Jinliu Pan, Yuxi Bi, Yi Dai, Jiawei Sun,
+and Haofen Wang. Retrieval-augmented generation for large language models: A survey. arXiv
+preprint arXiv:2312.10997, 2023.
+[28] Mor Geva, Daniel Khashabi, Elad Segal, Tushar Khot, Dan Roth, and Jonathan Berant. Did
+aristotle use a laptop? a question answering benchmark with implicit reasoning strategies. In
+Transactions of the Association for Computational Linguistics, 2021.
+[29] Yuyang Gong, Zhuo Chen, Miaokun Chen, Fengchang Yu, Wei Lu, Xiaofeng Wang, Xiaozhong
+Liu, and Jiawei Liu. Topic-fliprag: Topic-orientated adversarial opinion manipulation attacks to
+retrieval-augmented generation models. arXiv preprint arXiv:2502.01386, 2025.
+[30] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Ruoyu Zhang, Runxin Xu, Qihao Zhu,
+Shirong Ma, Peiyi Wang, Xiao Bi, et al. Deepseek-r1: Incentivizing reasoning capability in
+llms via reinforcement learning. arXiv preprint arXiv:2501.12948, 2025.
+[31] Aaron Hurst, Adam Lerer, Adam P Goucher, Adam Perelman, Aditya Ramesh, Aidan Clark,
+AJ Ostrow, Akila Welihinda, Alan Hayes, Alec Radford, et al. Gpt-4o system card. arXiv
+preprint arXiv:2410.21276, 2024.
+11
+
+
+
+================================================================================
+ページ 12
+================================================================================
+[32] Gautier Izacard, Mathilde Caron, Lucas Hosseini, Sebastian Riedel, Piotr Bojanowski, Armand
+Joulin, and Edouard Grave. Unsupervised dense information retrieval with contrastive learning.
+arXiv preprint arXiv:2112.09118, 2021.
+[33] Neel Jain, Avi Schwarzschild, Yuxin Wen, Gowthami Somepalli, John Kirchenbauer, Ping-yeh
+Chiang, Micah Goldblum, Aniruddha Saha, Jonas Geiping, and Tom Goldstein. Baseline de-
+fenses for adversarial attacks against aligned language models. arXiv preprint arXiv:2309.00614,
+2023.
+[34] Frederick Jelinek. Interpolated estimation of markov source parameters from sparse data. In
+Proc. Workshop on Pattern Recognition in Practice, 1980, 1980.
+[35] Soyeong Jeong, Jinheon Baek, Sukmin Cho, Sung Ju Hwang, and Jong C Park. Adaptive-rag:
+Learning to adapt retrieval-augmented large language models through question complexity.
+arXiv preprint arXiv:2403.14403, 2024.
+[36] Changyue Jiang, Xudong Pan, Geng Hong, Chenfu Bao, and Min Yang. Rag-thief: Scalable
+extraction of private data from retrieval-augmented generation applications with agent-based
+attacks. arXiv preprint arXiv:2411.14110, 2024.
+[37] Zhengbao Jiang, Frank F Xu, Luyu Gao, Zhiqing Sun, Qian Liu, Jane Dwivedi-Yu, Yiming
+Yang, Jamie Callan, and Graham Neubig. Active retrieval augmented generation. arXiv preprint
+arXiv:2305.06983, 2023.
+[38] Yang Jiao, Xiaodong Wang, and Kai Yang. Pr-attack: Coordinated prompt-rag attacks on
+retrieval-augmented generation in large language models via bilevel optimization.
+arXiv
+preprint arXiv:2504.07717, 2025.
+[39] Jiajie Jin, Yutao Zhu, Xinyu Yang, Chenghao Zhang, and Zhicheng Dou. Flashrag: A modular
+toolkit for efficient retrieval-augmented generation research. arXiv preprint arXiv:2405.13576,
+2024.
+[40] Vladimir Karpukhin, Barlas O˘guz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov,
+Danqi Chen, and Wen-tau Yih. Dense passage retrieval for open-domain question answering.
+arXiv preprint arXiv:2004.04906, 2020.
+[41] Yannis Katsis, Sara Rosenthal, Kshitij Fadnis, Chulaka Gunasekara, Young-Suk Lee, Lucian
+Popa, Vraj Shah, Huaiyu Zhu, Danish Contractor, and Marina Danilevsky. Mtrag: A multi-turn
+conversational benchmark for evaluating retrieval-augmented generation systems. arXiv preprint
+arXiv:2501.03468, 2025.
+[42] Jaehyung Kim, Jaehyun Nam, Sangwoo Mo, Jongjin Park, Sang-Woo Lee, Minjoon Seo,
+Jung-Woo Ha, and Jinwoo Shin. Sure: Summarizing retrievals using answer candidates for
+open-domain qa of llms. arXiv preprint arXiv:2404.13081, 2024.
+[43] Tzu-Lin Kuo, Feng-Ting Liao, Mu-Wei Hsieh, Fu-Chieh Chang, Po-Chun Hsu, and Da-Shan
+Shiu. Rad-bench: Evaluating large language models capabilities in retrieval augmented dia-
+logues. arXiv preprint arXiv:2409.12558, 2024.
+[44] Tom Kwiatkowski, Jennimaria Palomaki, Olivia Redfield, Michael Collins, Ankur Parikh, Chris
+Alberti, Danielle Epstein, Illia Polosukhin, Jacob Devlin, Kenton Lee, et al. Natural questions: a
+benchmark for question answering research. Transactions of the Association for Computational
+Linguistics, 7:453–466, 2019.
+[45] Aritra Kumar Lahiri and Qinmin Vivian Hu. Alzheimerrag: Multimodal retrieval augmented
+generation for pubmed articles. arXiv preprint arXiv:2412.16701, 2024.
+[46] Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman
+Goyal, Heinrich Küttler, Mike Lewis, Wen-tau Yih, Tim Rocktäschel, et al. Retrieval-augmented
+generation for knowledge-intensive nlp tasks. Advances in Neural Information Processing
+Systems, 33:9459–9474, 2020.
+12
+
+
+
+================================================================================
+ページ 13
+================================================================================
+[47] Yuying Li, Gaoyang Liu, Yang Yang, and Chen Wang. Seeing is believing: Black-box member-
+ship inference attacks against retrieval augmented generation. arXiv e-prints, pages arXiv–2406,
+2024.
+[48] Xun Liang, Simin Niu, Zhiyu Li, Sensen Zhang, Hanyu Wang, Feiyu Xiong, Jason Zhaoxin
+Fan, Bo Tang, Shichao Song, Mengwei Wang, et al. Saferag: Benchmarking security in
+retrieval-augmented generation of large language model. arXiv preprint arXiv:2501.18636,
+2025.
+[49] Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang, Bochao Wu, Chengda Lu, Chenggang Zhao,
+Chengqi Deng, Chenyu Zhang, Chong Ruan, et al. Deepseek-v3 technical report. arXiv preprint
+arXiv:2412.19437, 2024.
+[50] Yinuo Liu, Zenghui Yuan, Guiyao Tie, Jiawen Shi, Pan Zhou, Lichao Sun, and Neil Zhenqiang
+Gong.
+Poisoned-mrag: Knowledge poisoning attacks to multimodal retrieval augmented
+generation. arXiv preprint arXiv:2503.06254, 2025.
+[51] Yupei Liu, Yuqi Jia, Runpeng Geng, Jinyuan Jia, and Neil Zhenqiang Gong. Formalizing and
+benchmarking prompt injection attacks and defenses. In 33rd USENIX Security Symposium
+(USENIX Security 24), pages 1831–1847, 2024.
+[52] Quanyu Long, Yue Deng, LeiLei Gan, Wenya Wang, and Sinno Jialin Pan. Backdoor attacks on
+dense passage retrievers for disseminating misinformation. arXiv e-prints, pages arXiv–2402,
+2024.
+[53] Lefteris Loukas, Ilias Stogiannidis, Odysseas Diamantopoulos, Prodromos Malakasiotis, and
+Stavros Vassos. Making llms worth every penny: Resource-limited text classification in banking.
+In ICAIF, 2023.
+[54] Jiageng Mao, Junjie Ye, Yuxi Qian, Marco Pavone, and Yue Wang. A language agent for
+autonomous driving. arXiv preprint arXiv:2311.10813, 2023.
+[55] Fengran Mo, Kelong Mao, Ziliang Zhao, Hongjin Qian, Haonan Chen, Yiruo Cheng, Xiaoxi Li,
+Yutao Zhu, Zhicheng Dou, and Jian-Yun Nie. A survey of conversational search. arXiv preprint
+arXiv:2410.15576, 2024.
+[56] Ali Naseh, Yuefeng Peng, Anshuman Suri, Harsh Chaudhari, Alina Oprea, and Amir
+Houmansadr. Riddle me this! stealthy membership inference for retrieval-augmented generation.
+arXiv preprint arXiv:2502.00306, 2025.
+[57] Tri Nguyen, Mir Rosenberg, Xia Song, Jianfeng Gao, Saurabh Tiwary, Rangan Majumder, and
+Li Deng. Ms marco: A human-generated machine reading comprehension dataset. 2016.
+[58] Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. Squad: 100,000+ questions
+for machine comprehension of text. arXiv preprint arXiv:1606.05250, 2016.
+[59] Ayush RoyChowdhury, Mulong Luo, Prateek Sahu, Sarbartha Banerjee, and Mohit Tiwari.
+Confusedpilot: Confused deputy risks in rag-based llms. arXiv preprint arXiv:2408.04870,
+2024.
+[60] Dongyu Ru, Lin Qiu, Xiangkun Hu, Tianhang Zhang, Peng Shi, Shuaichen Chang, Cheng
+Jiayang, Cunxiang Wang, Shichao Sun, Huanyu Li, et al. Ragchecker: A fine-grained framework
+for diagnosing retrieval-augmented generation. In Advances in Neural Information Processing
+Systems, 2024.
+[61] Alireza Salemi and Hamed Zamani. Evaluating retrieval quality in retrieval-augmented gen-
+eration. In Proceedings of the 47th International ACM SIGIR Conference on Research and
+Development in Information Retrieval, pages 2395–2400, 2024.
+[62] Avital Shafran, Roei Schuster, and Vitaly Shmatikov. Machine against the rag: Jamming
+retrieval-augmented generation with blocker documents. arXiv preprint arXiv:2406.05870,
+2024.
+13
+
+
+
+================================================================================
+ページ 14
+================================================================================
+[63] Wenqi Shi, Ran Xu, Yuchen Zhuang, Yue Yu, Jieyu Zhang, Hang Wu, Yuanda Zhu, Joyce Ho,
+Carl Yang, and May D Wang. Ehragent: Code empowers large language models for few-shot
+complex tabular reasoning on electronic health records. arXiv preprint arXiv:2401.07128, 2024.
+[64] Ian Soboroff, Shudong Huang, and Donna Harman. Trec 2019 news track overview. In TREC,
+2019.
+[65] Jinyan Su, Preslav Nakov, and Claire Cardie. Corpus poisoning via approximate greedy gradient
+descent. arXiv preprint arXiv:2406.05087, 2024.
+[66] Pan Suo, Yu-Ming Shang, San-Chuan Guo, and Xi Zhang. Hoist with his own petard: Inducing
+guardrails to facilitate denial-of-service attacks on retrieval-augmented generation of llms. arXiv
+preprint arXiv:2504.21680, 2025.
+[67] Zhen Tan, Chengshuai Zhao, Raha Moraffah, Yifan Li, Song Wang, Jundong Li, Tianlong Chen,
+and Huan Liu. " glue pizza and eat rocks"–exploiting vulnerabilities in retrieval-augmented
+generative models. arXiv preprint arXiv:2406.19417, 2024.
+[68] Nandan Thakur, Nils Reimers, Andreas Rücklé, Abhishek Srivastava, and Iryna Gurevych.
+Beir: A heterogeneous benchmark for zero-shot evaluation of information retrieval models. In
+NeurIPS, 2021.
+[69] Romal Thoppilan, Daniel De Freitas, Jamie Hall, Noam Shazeer, Apoorv Kulshreshtha, Heng-
+Tze Cheng, Alicia Jin, Taylor Bos, Leslie Baker, Yu Du, et al. Lamda: Language models for
+dialog applications. arXiv preprint arXiv:2201.08239, 2022.
+[70] Harsh Trivedi, Niranjan Balasubramanian, Tushar Khot, and Ashish Sabharwal. Interleaving
+retrieval with chain-of-thought reasoning for knowledge-intensive multi-step questions. arXiv
+preprint arXiv:2212.10509, 2022.
+[71] Fei Wang, Xingchen Wan, Ruoxi Sun, Jiefeng Chen, and Sercan Ö Arık. Astute rag: Overcoming
+imperfect retrieval augmentation and knowledge conflicts for large language models. arXiv
+preprint arXiv:2410.07176, 2024.
+[72] Zhepei Wei, Wei-Lin Chen, and Yu Meng. Instructrag: Instructing retrieval-augmented genera-
+tion with explicit denoising. arXiv e-prints, pages arXiv–2406, 2024.
+[73] Peng Xia, Kangyu Zhu, Haoran Li, Tianze Wang, Weijia Shi, Sheng Wang, Linjun Zhang,
+James Zou, and Huaxiu Yao. Mmed-rag: Versatile multimodal rag system for medical vision
+language models. arXiv preprint arXiv:2410.13085, 2024.
+[74] Peng Xia, Kangyu Zhu, Haoran Li, Hongtu Zhu, Yun Li, Gang Li, Linjun Zhang, and Huaxiu
+Yao. Rule: Reliable multimodal rag for factuality in medical vision language models. In
+Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing,
+pages 1081–1093, 2024.
+[75] Chong Xiang, Tong Wu, Zexuan Zhong, David Wagner, Danqi Chen, and Prateek Mittal.
+Certifiably robust rag against retrieval corruption. arXiv preprint arXiv:2405.15556, 2024.
+[76] Lee Xiong, Chenyan Xiong, Ye Li, Kwok-Fung Tang, Jialin Liu, Paul Bennett, Junaid Ahmed,
+and Arnold Overwijk. Approximate nearest neighbor negative contrastive learning for dense
+text retrieval. arXiv preprint arXiv:2007.00808, 2020.
+[77] Fangyuan Xu, Weijia Shi, and Eunsol Choi. Recomp: Improving retrieval-augmented lms with
+compression and selective augmentation. arXiv preprint arXiv:2310.04408, 2023.
+[78] Jiaqi Xue, Mengxin Zheng, Yebowen Hu, Fei Liu, Xun Chen, and Qian Lou. Badrag: Identifying
+vulnerabilities in retrieval augmented generation of large language models. arXiv preprint
+arXiv:2406.00083, 2024.
+[79] Junxiao Xue, Quan Deng, Fei Yu, Yanhao Wang, Jun Wang, and Yuehua Li. Enhanced
+multimodal rag-llm for accurate visual question answering. arXiv preprint arXiv:2412.20927,
+2024.
+14
+
+
+
+================================================================================
+ページ 15
+================================================================================
+[80] Xiao Yang, Kai Sun, Hao Xin, Yushi Sun, Nikita Bhalla, Xiangsen Chen, Sajal Choudhary,
+Rongze Gui, Ziran Jiang, Ziyu Jiang, et al. Crag-comprehensive rag benchmark. Advances in
+Neural Information Processing Systems, 37:10470–10490, 2024.
+[81] Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William W Cohen, Ruslan Salakhut-
+dinov, and Christopher D Manning. Hotpotqa: A dataset for diverse, explainable multi-hop
+question answering. arXiv preprint arXiv:1809.09600, 2018.
+[82] Ruobing Yao, Yifei Zhang, Shuang Song, Neng Gao, and Chenyang Tu. Ecosaferag: Ef-
+ficient security through context analysis in retrieval-augmented generation. arXiv preprint
+arXiv:2505.13506, 2025.
+[83] Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan
+Cao. React: Synergizing reasoning and acting in language models. In International Conference
+on Learning Representations, 2023.
+[84] Shi Yu, Chaoyue Tang, Bokai Xu, Junbo Cui, Junhao Ran, Yukun Yan, Zhenghao Liu, Shuo
+Wang, Xu Han, Zhiyuan Liu, et al. Visrag: Vision-based retrieval-augmented generation on
+multi-modality documents. arXiv preprint arXiv:2410.10594, 2024.
+[85] Zichun Yu, Chenyan Xiong, Shi Yu, and Zhiyuan Liu. Augmentation-adapted retriever improves
+generalization of language models as generic plug-in. arXiv preprint arXiv:2305.17331, 2023.
+[86] Jianhao Yuan, Shuyang Sun, Daniel Omeiza, Bo Zhao, Paul Newman, Lars Kunze, and Matthew
+Gadd. Rag-driver: Generalisable driving explanations with retrieval-augmented in-context
+learning in multi-modal large language model. arXiv preprint arXiv:2402.10828, 2024.
+[87] Linda Zeng, Rithwik Gupta, Divij Motwani, Diji Yang, and Yi Zhang. Worse than zero-shot? a
+fact-checking dataset for evaluating the robustness of rag against misleading retrievals. arXiv
+preprint arXiv:2502.16101, 2025.
+[88] Baolei Zhang, Yuxi Chen, Minghong Fang, Zhuqing Liu, Lihai Nie, Tong Li, and Zheli Liu. Prac-
+tical poisoning attacks against retrieval-augmented generation. arXiv preprint arXiv:2504.03957,
+2025.
+[89] Baolei Zhang, Haoran Xin, Minghong Fang, Zhuqing Liu, Biao Yi, Tong Li, and Zheli Liu.
+Traceback of poisoning attacks to retrieval-augmented generation. In The Web Conference,
+2025.
+[90] Yucheng Zhang, Qinfeng Li, Tianyu Du, Xuhong Zhang, Xinkui Zhao, Zhengwen Feng, and
+Jianwei Yin. Hijackrag: Hijacking attacks against retrieval-augmented large language models.
+arXiv preprint arXiv:2410.22832, 2024.
+[91] Xu Zheng, Ziqiao Weng, Yuanhuiyi Lyu, Lutao Jiang, Haiwei Xue, Bin Ren, Danda Paudel,
+Nicu Sebe, Luc Van Gool, and Xuming Hu. Retrieval augmented generation and understanding
+in vision: A survey and new outlook. arXiv preprint arXiv:2503.18016, 2025.
+[92] Zexuan Zhong, Ziqing Huang, Alexander Wettig, and Danqi Chen. Poisoning retrieval corpora
+by injecting adversarial passages. arXiv preprint arXiv:2310.19156, 2023.
+[93] Huichi Zhou, Kin-Hei Lee, Zhonghao Zhan, Yue Chen, Zhenhao Li, Zhaoyang Wang, Hamed
+Haddadi, and Emine Yilmaz. Trustrag: Enhancing robustness and trustworthiness in rag. arXiv
+preprint arXiv:2501.00879, 2025.
+[94] Yujia Zhou, Yan Liu, Xiaoxi Li, Jiajie Jin, Hongjin Qian, Zheng Liu, Chaozhuo Li, Zhicheng
+Dou, Tsung-Yi Ho, and Philip S Yu. Trustworthiness in retrieval-augmented generation systems:
+A survey. arXiv preprint arXiv:2409.10102, 2024.
+[95] Wei Zou, Runpeng Geng, Binghui Wang, and Jinyuan Jia. Poisonedrag: Knowledge poisoning
+attacks to retrieval-augmented generation of large language models. In USENIX Security
+Symposium, 2025.
+15
+
+
+
+================================================================================
+ページ 16
+================================================================================
+Appendix
+The appendix is structured as follows.
+• Appendix A: System Prompt.
+• Appendix B: Details of Poisoning Attacks.
+• Appendix C: Other Attacks Not Considered in Experiments.
+• Appendix D: Experimental Setup Details.
+• Appendix E: Details of Results for BPRAG and WPRAG.
+• Appendix F: Details of Results for BadRAG and Phantom.
+• Appendix G: Details of Measuring the Number of Correct-Answer Texts Appearing in the
+Top-5 Retrieved Results.
+• Appendix H: Details of Defenses.
+• Appendix I: Details of Defense Results.
+• Appendix J: Details of Detection Metrics.
+• Appendix K: Details of LLMs.
+• Appendix L: Details of Advanced RAG Frameworks.
+• Appendix M: Details of Poisoning Attacks against Multi-turn RAG.
+• Appendix N: Details of Poisoning Attacks against Multimodal RAG.
+• Appendix O: Details of Poisoning Attacks against LLM Agent Systems.
+A
+System Prompt
+System prompt of RAG
+You are a helpful assistant, below is a query from a user and some relevant contexts. Answer
+the question given the information in those contexts. Provide only the final answer, with no
+explanations or extra context. Keep your answer as short and concise as possible.
+Context: [top-K relevant texts]
+Query: [user query]
+B
+Details of Poisoning Attacks
+B.1
+Targeted Poisoning Attack
+Black-box PoisonedRAG (BPRAG) [95]: In this attack, the attacker has only black-box access to
+the retriever. Each poisoned text is strategically divided into two functional sub-texts, designed to
+separately satisfy the requirements of retrieval and generation components. The generation sub-text
+is crafted by prompting an auxiliary LLM to create content that, when provided as context, will lead
+the auxiliary LLM to generate the targeted answer. Meanwhile, the retrieval sub-text contains the
+exact targeted query, ensuring that the poisoned text will be retrieved among the top-K relevant texts
+when the targeted query is submitted to the system.
+White-box PoisonedRAG (WPRAG) [95]: This attack assumes the attacker has white-box access to
+the retriever. Unlike the black-box variant, the attacker can leverage this privileged access to optimize
+the retrieval sub-text, maximizing the similarity between the poisoned text and the targeted query to
+ensure higher retrieval probability.
+Black-box prompt injection (BPI) [51, 95]: Prompt injection was originally proposed to manipulate
+LLM outputs by embedding malicious instructions into user inputs. This technique has been adapted
+for RAG systems in recent research [95]. The key difference from BPRAG attack is that the generation
+16
+
+
+
+================================================================================
+ページ 17
+================================================================================
+sub-text contains an explicit malicious instruction that directly prompts the LLM to generate the
+targeted answer for the targeted query, rather than relying on contextual manipulation.
+White-box prompt injection (WPI) [51, 95]: This attack combines the optimization capabilities of
+WPRAG attack with the BPI attack. The retrieval sub-text is optimized using white-box access to
+the retriever, while the generation sub-text contains a malicious instruction that explicitly directs the
+LLM to produce the targeted answer.
+AGGD [65]: In this attack, the attacker has white-box access to the retriever. AGGD differs from
+WPRAG in its more efficient optimization method for the retrieval sub-text. Specifically, it enhances
+gradient utilization by identifying and selecting the highest-ranked token across all possible token
+positions.
+CorruptRAG-AS (CRAG-AS) [88]: This attack introduces a budget-aware objective function to
+enhance the independent effectiveness of each poisoned text. Specifically, the attacker divides the
+poisoned text into two sub-texts: the first contains the targeted query to ensure retrieval effectiveness
+of the entire poisoned text. The second sub-text is designed using adversarial principles, creating a
+template that generates the final poisoned text by filling the correct answer and the targeted answer
+for the targeted query.
+CorruptRAG-AK (CRAG-AK) [88]: This attack is an enhanced variant of CRAG-AS. Specifically,
+the attacker leverages an auxiliary LLM to transform the second sub-text of the poisoned content into
+knowledge-like text, thereby improving its generalizability and stealthiness.
+B.2
+DoS Attack
+Jamming-based instruction injection (JamInject) [62]: This attack requires no specific background
+knowledge of the RAG system. The structure of the poisoned text resembles that of the BPRAG
+attack, but with a crucial difference: the generation sub-text contains an explicit instruction designed
+to prompt the LLM to produce a refusal response rather than helpful content.
+Jamming-based on oracle generation (JamOracle) [62]: This attack employs an oracle LLM to
+create the generation sub-text. The sub-text is specifically crafted so that, when provided as context
+to the oracle LLM, it will lead the model to generate a refusal response, effectively denying service
+to legitimate users.
+Jamming-based on black-box optimization (JamOpt) [62]: This approach introduces a black-box
+optimization method that iteratively refines the generation sub-text. The optimization objective is to
+maximize the similarity between a predetermined refusal answer and the actual output of the RAG
+system when the poisoned text is provided as context.
+B.3
+Trigger-based DoS Attacks
+AgentPoison (AP) [19]: This attack was originally designed to poison RAG-based LLM agent
+systems by optimizing a trigger string to manipulate agent responses for queries containing that
+trigger. We adapt it to RAG poisoning attacks. Specifically, the attacker has white-box access to the
+retriever and uses AgentPoison’s adversarial retrieval optimization method to optimize a trigger string,
+which is then concatenated with a malicious instruction that prompts the LLM to refuse answering,
+forming a poisoned text.
+BadRAG [78]: Unlike the AP attack, BadRAG’s trigger is predefined and remains fixed throughout
+the attack process. In this attack, the attacker has white-box access to the retriever. BadRAG optimizes
+the poisoned text by minimizing a contrastive learning loss that measures the similarity between the
+text and triggered queries relative to non-triggered queries. Additionally, the poisoned text includes a
+prompt designed to activate the alignment mechanisms of the LLM, causing it to produce a refusal
+response.
+Phantom [15]: This is similar to BadRAG, with the main difference being its optimization loss
+function, which is a difference loss, whereas BadRAG uses a contrastive loss.
+17
+
+
+
+================================================================================
+ページ 18
+================================================================================
+C
+Other Attacks Not Considered in Experiments
+In this section, we provide a brief overview of several RAG poisoning attacks that were excluded
+from our experimental benchmark and explain the rationale behind their omission.
+GARAG [23]: GARAG introduces a technique for crafting adversarial noisy texts aimed at under-
+mining RAG systems. Although the method does not rely on internal parameters of the LLM, it does
+assume access to the output probabilities of the model’s responses. This assumption diverges from
+our threat model, which considers the LLM as a strict black box, where such probabilistic information
+is typically inaccessible.
+Opinion Manipulation Attacks [20, 29]: FlippedRAG [20]* and Topic-FlipRAG [29] present
+opinion manipulation attacks targeting RAG systems. We exclude these methods from our benchmark
+primarily because their performance and evaluation are tightly coupled with the specific topics of the
+input queries. In contrast, the attacks included in our evaluation are designed to be broadly applicable
+across diverse queries, without relying on topic-specific assumptions.
+The RAG Paradox [24]]: This paper examines a particular setting where RAG systems explicitly
+cite the web links that serve as sources for their responses. Leveraging this behavior, the proposed
+attack targets the system by injecting malicious content into web pages to influence the generated
+output. In contrast, our benchmark is designed for RAG systems that retrieve information from an
+offline, curated knowledge base and do not directly reference external web links in their responses.
+Given this fundamental difference in system design and attack surface, we did not include this work
+in our evaluation.
+PR-Attack [38]: PR-Attack introduces a poisoning attack against RAG systems, but its threat model
+relies on the assumption that the attacker can modify or influence the user’s query to insert a backdoor
+trigger. This assumption is not aligned with our benchmark, which considers a setting where the
+attacker cannot alter user queries. Therefore, PR-Attack was not included in our experimental
+comparisons.
+D
+Experimental Setup Details
+D.1
+Details of Datasets
+Natural Questions (NQ) [44]: Its queries originate from actual anonymized searches submitted to
+the Google search engine. The knowledge database for NQ is derived from Wikipedia and contains
+2,681,468 texts.
+HotpotQA [81]: This dataset features multi-hop queries that require reasoning across multiple texts to
+determine the correct answer. The knowledge database for HotpotQA is also sourced from Wikipedia
+and contains 5,233,329 texts.
+MS-MARCO [57]: Its queries are collected from anonymized Bing search query logs. Its knowledge
+database comprises 8,841,823 texts gathered from web pages through Microsoft’s Bing search engine.
+SQuAD [58]: Its queries are created by crowdworkers based on Wikipedia articles for reading
+comprehension tasks. We construct the knowledge database for SQuAD by combining the knowledge
+database of HotpotQA with all relevant texts from the original dataset.
+BoolQ [25]: Its queries are naturally occurring by users, whose answers are yes or no. The knowledge
+database for BoolQ is constructed following the same approach used for SQuAD.
+NQ/HotpotQA/MS-MARCO/BoolQ/SQuAD-EX-M: These expansions are enhanced at the
+medium level. Specifically, for each targeted query, we add 5 relevant texts to the knowledge
+database. We use GPT-4o-mini to generate these texts, ensuring they support the correct answer for
+the targeted query. Additionally, we prepend the targeted query to each relevant text to increase their
+similarity to the targeted query.
+*Note that an earlier version of this paper was titled “Black-Box Opinion Manipulation Attacks to Retrieval-
+Augmented Generation of Large Language Models”.
+18
+
+
+
+================================================================================
+ページ 19
+================================================================================
+NQ/HotpotQA/MS-MARCO/BoolQ/SQuAD-EX-L: We also construct the expansions at the large
+level, where we add 30 relevant texts to the knowledge database for each targeted query.
+Table 4: Statistics of datasets.
+Dataset
+Number of queries
+Number of texts in the knowledge database
+NQ
+91,535
+2,681,468
+HotpotQA
+97,852
+5,233,329
+MS-MARCO
+909,824
+8,841,823
+BoolQ
+12,697
+5,243,473
+SQuAD
+98,169
+5,254,287
+NQ-EX-M
+91,535
+2,681,968
+HotpotQA-EX-M
+97,852
+5,233,829
+MS-MARCO-EX-M
+909,824
+8,842,323
+BoolQ-EX-M
+12,697
+5,243,973
+SQuAD-EX-M
+98,169
+5,254,787
+NQ-EX-L
+91,535
+2,684,468
+HotpotQA-EX-L
+97,852
+5,236,329
+MS-MARCO-EX-L
+909,824
+8,844,823
+BoolQ-EX-L
+12,697
+5,246,473
+SQuAD-EX-L
+98,169
+5,257,287
+D.2
+Details of Evaluation Metrics
+Our benchmark uses the following widely adopted metrics: accuracy (ACC), attack success rate
+(ASR), and F1-score.
+ACC: ACC is defined as the ratio of queries for which the RAG system generates the correct answers
+to the total number of queries.
+ASR: ASR is defined as the ratio of queries for which the RAG system generates the targeted answers
+to the total number of queries. We employ an LLM (GPT-4o-mini is used in our evaluation) to
+determine whether the output of the RAG system matches the correct or targeted answer.
+F1-score: F1-score is a metric that measures the retrieval effectiveness of poisoned texts, calculated
+by F1-score = 2 × Precision×Recall
+Precision+Recall. Precision is defined as the ratio of the number of poisoned texts
+retrieved in the top-K relevant texts for a targeted query. Recall is defined as the ratio of the number
+of poisoned texts among the top-K texts to the total number of poisoned texts injected for a targeted
+query. For the metric F1-score, we report the average values across all targeted queries.
+D.3
+Details of Targeted Queries and Targeted Answers
+For each type of poisoning attack, we created a set of 100 targeted queries and their corresponding
+targeted answers based on query collections from NQ, HotpotQA, MS-MARCO, BoolQ, and SQuAD.
+Specifically, we first randomly sampled 500 queries from the original query collections as initial
+targeted queries. Second, for targeted poisoning attacks, we used GPT-4o-mini to generate a random
+answer different from the correct answer as the targeted answer for each targeted query, while for
+DoS attacks and Trigger-based DoS attacks, we used “I don’t know” as the targeted answer. Then,
+we submitted these 500 targeted queries to the benign RAG system (without any attack) to obtain the
+RAG response for each targeted query, and filtered out queries where the RAG response matched
+the targeted answer judged by GPT-4o-mini. Finally, we randomly sampled 100 queries from the
+remaining queries as our targeted queries. For the -EX-M and -EX-L datasets, we reused the same set
+of targeted queries as in the corresponding base dataset. For instance, the targeted queries used for
+the NQ-EX-M and NQ-EX-L datasets are identical to those selected for the original NQ dataset.
+Note that we select distinct targeted queries for each type of attack to ensure that, under a benign
+RAG system, the target query does not naturally yield the intended answer. During the simulation
+of trigger-based DoS attacks, however, adding triggers frequently caused the model to respond with
+“I don’t know”. As a result, it was infeasible to identify a shared set of 100 queries from the initial
+500 that satisfied the zero-targeted-answer condition across all three attack types. To address this,
+we screened and selected queries independently for each attack type. This design choice does not
+compromise the validity of our evaluation, as we assess performance within each attack category. By
+applying consistent selection criteria within each type, we ensure fair and comparable results across
+attacks of the same kind.
+19
+
+
+
+================================================================================
+ページ 20
+================================================================================
+Table 5: Answer accuracy of the RAG system for targeted queries under non-attack conditions.
+Dataset
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+NQ
+0.82
+0.99
+0.97
+HotpotQA
+0.92
+0.98
+0.98
+MS-MARCO
+0.92
+0.98
+0.98
+BoolQ
+1.00
+0.98
+0.95
+SQuAD
+0.93
+0.94
+0.98
+NQ-EX-M
+0.98
+1.00
+1.00
+HotpotQA-EX-M
+0.99
+1.00
+1.00
+MS-MARCO-EX-M
+0.97
+1.00
+0.98
+BoolQ-EX-M
+0.99
+1.00
+0.99
+SQuAD-EX-M
+1.00
+1.00
+0.99
+NQ-EX-L
+0.98
+1.00
+1.00
+HotpotQA-EX-L
+0.99
+1 .00
+1.00
+MS-MARCO-EX-L
+0.97
+0.98
+0.97
+BoolQ-EX-L
+0.99
+0.99
+0.98
+SQuAD-EX-L
+1.00
+0.99
+0.98
+E
+Details of Results for BPRAG and WPRAG
+We note that the ASR of BPRAG and WPRAG in our benchmark is lower than reported in the original
+papers, even though we used exactly the same code provided by the authors. BPRAG and WPRAG
+construct poisoned texts by splitting them into two distinct parts: the retrieval sub-text, which ensures
+that the poisoned content appears among the top-K retrieved results, and the generation sub-text,
+which aims to guide the RAG model to produce a specific target output. A close analysis of our
+experimental results shows that both methods consistently achieve high F1-scores across all datasets,
+indicating effective retrieval. However, their attack success rates vary and are lower on certain
+datasets. This suggests that while the retrieval sub-text reliably satisfies its objective, the generation
+sub-text demonstrates variable effectiveness in influencing the model’s output.
+Recall that both BPRAG and WPRAG rely on a proxy language model to construct the generation sub-
+text, making its effectiveness closely tied to the choice of proxy model. Additionally, the language
+model used in the RAG system itself plays a significant role in determining how successful the
+generation sub-text is during inference. To gain deeper insights, we conducted a series of experiments
+on the NQ dataset, systematically varying both the proxy LLM and the RAG’s LLM to assess their
+impact on attack performance. The results of these experiments are presented in Table 6.
+Our analysis reveals two important observations. First, the choice of proxy LLM has a substantial
+impact on attack effectiveness. When GPT-4.1 was used as the proxy model, both BPRAG and
+WPRAG achieved significantly higher attack success rates, approximately 20 percent greater than
+when GPT-4o-mini was used, as shown in Table 2. This difference is likely due to variations in model
+capability and adherence to instructions. More powerful and instruction-following models are better
+at generating persuasive generation sub-texts. In contrast, less capable models or those that are more
+restrictive in following prompts often struggle to produce effective sub-texts, especially when the
+instructions may conflict with their alignment constraints. For example, when GPT-4o-mini was used
+as the proxy, many attempts failed to produce successful generation sub-texts even after reaching
+the maximum number of tries. Second, the language model used in the RAG system also influences
+attack performance. For instance, when GPT-4.1-mini was the proxy model, using GPT-4 as the
+RAG’s LLM resulted in a lower attack success rate.
+We selected GPT-4o-mini as the default model for BPRAG and WPRAG in our experiments for
+two primary reasons. First, GPT-4o-mini is a widely adopted model with performance comparable
+to PaLM 2, which was used in the original studies. Additionally, we employed GPT-4o-mini as
+the default proxy LLM for other attacks in our benchmark that also require a proxy model, such
+as CRAG-AK, to maintain consistency. Second, our benchmark involves large-scale evaluations,
+and using GPT-4 or GPT-4.1 would have significantly increased computational costs, making the
+evaluation substantially more expensive.
+A rough cost analysis further supports our decision to use GPT-4o-mini as the default model. Specif-
+ically, we estimated that running BPRAG attack on the NQ dataset would cost around $10 with
+GPT-4o-mini, compared to approximately $390 with GPT-4 and $96 with GPT-4.1. Given that our
+benchmark includes 15 datasets, the total projected cost would rise to about $150 with GPT-4o-mini,
+but escalate to $5,850 with GPT-4 and $1,440 with GPT-4.1. These substantial cost differences
+reinforce the practicality of using GPT-4o-mini for large-scale evaluations.
+20
+
+
+
+================================================================================
+ページ 21
+================================================================================
+Table 6: The results of BPRAG and WPRAG on NQ dataset under different proxy LLMs and LLMs
+of RAG.
+Proxy LLM
+Metric
+LLM of RAG
+GPT-4o-mini
+GPT-4.1-mini
+GPT-4
+GPT-4.1
+BPRAG
+WPRAG
+BPRAG
+WPRAG
+BPRAG
+WPRAG
+BPRAG
+WPRAG
+GPT-4.1-mini
+ACC
+0.16
+0.19
+0.22
+0.22
+0.20
+0.16
+0.20
+0.21
+ASR
+0.73
+0.72
+0.72
+0.69
+0.63
+0.55
+0.73
+0.74
+F1-score
+0.98
+0.96
+0.98
+0.96
+0.98
+0.96
+0.98
+0.96
+ACC
+0.09
+0.09
+0.18
+0.20
+0.10
+0.13
+0.12
+0.15
+ASR
+0.79
+0.78
+0.82
+0.80
+0.80
+0.63
+0.85
+0.82
+GPT-4
+F1-score
+0.92
+0.92
+0.92
+0.92
+0.92
+0.92
+0.92
+0.92
+GPT-4.1
+ACC
+0.05
+0.05
+0.12
+0.11
+0.09
+0.10
+0.10
+0.09
+ASR
+0.84
+0.86
+0.84
+0.86
+0.81
+0.70
+0.84
+0.84
+F1-score
+0.93
+0.93
+0.93
+0.93
+0.93
+0.93
+0.93
+0.93
+F
+Details of Results for BadRAG and Phantom
+We believe the poor performance of these two attacks in our benchmark stems from their limited
+robustness under cosine similarity, which is used to assess the relevance between queries and texts.
+As shown in Table 39, their ASR and F1-scores increase dramatically when the similarity metric is
+switched to dot product. To further test this hypothesis, we conducted additional evaluations using
+dot product on the HotpotQA and MS-MARCO datasets. The results, reported in Table 7 and Table 8,
+provide strong evidence supporting our claim.
+Table 7: The results of BadRAG when the similarity measurement is dot product.
+Dataset
+ACC
+ASR
+F1-score
+NQ
+0.19
+0.81
+0.72
+HotpotQA
+0.22
+0.77
+0.87
+MS-MARCO
+0.27
+0.72
+0.75
+Table 8: The results of Phantom when the similarity measurement is dot product.
+Dataset
+ACC
+ASR
+F1-score
+NQ
+0.03
+0.97
+0.95
+HotpotQA
+0.03
+0.97
+1.00
+MS-MARCO
+0.03
+0.97
+0.98
+G
+Details of Measuring the Number of Correct-Answer Texts Appearing in
+the Top-5 Retrieved Results.
+We conducted an analysis to assess how many of the top-K relevant texts retrieved by a benign
+RAG system genuinely support the correct answer to targeted queries. For each targeted query, we
+submitted it to the benign RAG system and collected the top-K retrieved texts. We then employed
+GPT-4o-mini to evaluate each of these texts and determine whether it provides valid support for the
+correct answer. The results, illustrated in Fig. 4, present the distribution of supporting texts across
+the NQ, NQ-EX-M, and NQ-EX-L datasets, highlighting the extent to which the retrieved evidence
+aligns with the ground-truth answers.
+H
+Details of Defenses
+H.1
+Process-optimized Defense
+Paraphrasing [95]: This defense was originally designed to counter prompt injection attacks against
+LLMs. Recent research has adapted it to the RAG scenario to defend against poisoning attacks.
+Specifically, the user’s query is paraphrased using an LLM (we use GPT-4o-mini in our experiments)
+before retrieval, and then the paraphrased query is used for retrieval and sent together with the top-K
+relevant texts to the LLM for response generation.
+21
+
+
+
+================================================================================
+ページ 22
+================================================================================
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+0
+1
+2
+3
+4
+5
+Number of correct-answer texts
+NQ
+NQ-EX-M
+NQ-EX-L
+Figure 4: The number of correct-answer texts among top-5 for each targeted query on NQ, NQ-EX-M,
+and NQ-EX-L datasets.
+InstructRAG [72]: This defense designs a RAG system prompt that requires the LLM to explain
+how its generated answer is derived from the top-K relevant texts, and also instructs the LLM to
+judge whether the top-K relevant texts are helpful based on its own knowledge. If the retrieved texts
+are not useful or are harmful, the LLM is instructed to answer directly based on its own knowledge.
+RobustRAG [75]: This defense proposes an isolate-and-aggregate mechanism. Specifically, Ro-
+bustRAG first generates a response for each text in the top-K separately, and then selects the
+highest-ranked answer for final answer generation based on the ranking of keywords in each response.
+AstuteRAG [71]: This defense adaptively extracts necessary information from the LLM’s internal
+knowledge and integrates it with externally retrieved knowledge to mitigate biases introduced by
+poisoned texts. Specifically, AstuteRAG first uses the LLM to generate an informational text about the
+user query based on its internal knowledge, then asks the LLM to merge this generated information
+with the retrieved top-K texts, and finally asks the LLM to answer the user query based on the merged
+knowledge.
+H.2
+Detection-based Defense
+Perplexity-based detection (PPL) [34, 62, 88, 95]: This detection was originally designed to detect
+malicious prompts for the LLMs, as perplexity can measure the fluency and naturalness of a text,
+with higher values indicating less natural text. Recent research has adapted PPL to RAG to detect
+poisoned texts. Specifically, a proxy LLM (we use Llama 2 in our experiments) is used to calculate
+the perplexity of each text in the knowledge base, and an appropriate threshold is selected to identify
+texts with perplexity above the threshold as poisoned texts.
+Norm-based detection (Norm) [78, 92]: This detection proposes that poisoned texts, in order to
+increase their similarity with targeted queries, are likely to have embedding vectors with abnormally
+large norms, so poisoned texts can be identified by measuring the norm of text embeddings. Specifi-
+cally, this detection uses the retriever’s embedding model to calculate the norm of the embedding
+vector for each text, and then selects an appropriate threshold to identify texts with norms above the
+threshold as poisoned texts.
+H.3
+Hybrid Defense
+TrustRAG [93]: This method proposes a two-stage defense mechanism. In the first stage, TrustRAG
+uses K-means to cluster the texts in the top-K and filters out potentially poisoned texts. In the second
+stage, TrustRAG designs a prompt that asks the LLM to answer the user query based on its own
+knowledge and the remaining relevant texts.
+22
+
+
+
+================================================================================
+ページ 23
+================================================================================
+I
+Details of Defense Results
+Effectiveness of process-optimized defense: Our observations indicate that existing defenses remain
+inadequate in effectively mitigating poisoning attacks. For instance, the paraphrasing defense was
+largely ineffective, failing to prevent attacks across nearly all datasets. While InstructRAG and
+RobustRAG exhibited some defensive capability, their impact was limited, as the attack success rate
+still exceeded 50% in most scenarios.
+Effectiveness of detection-based defense: Our results show that these defenses are largely ineffective
+against poisoning attacks. In most scenarios, the attack success rate remained similar to the no-defense
+baseline, indicating limited defensive impact. We attribute this to the inherent complexity of the
+knowledge database, where texts originate from diverse sources and exhibit varying distributions. This
+heterogeneity makes it challenging to define a reliable threshold for accurately detecting poisoned
+content.
+Effectiveness of hybrid defense: Our findings indicate that TrustRAG is generally effective in
+mitigating poisoning attacks across most scenarios. However, this effectiveness comes at a substantial
+cost to the overall performance of RAG. In many settings, the accuracy of TrustRAG drops signifi-
+cantly compared to the accuracy of the standard RAG system under no attack, as shown in Table 5,
+with most decreases exceeding 20%. This decline is particularly evident on the dataset expansions. A
+detailed review of TrustRAG’s logs reveals that during its initial filtering stage, it often removes all
+top-K retrieved texts, even when all of them are benign. This overly aggressive filtering behavior
+results in very high false positive rates, as reported in Tables 23-37, highlighting a fundamental
+trade-off between security and utility in this defense strategy.
+J
+Details of Detection Metrics
+Detection accuracy (DACC): DACC measures the overall correctness of the detection method,
+defined as the proportion of correctly classified texts (both poisoned and benign) among all texts.
+Mathematically, DACC = (TP +TN)/(TP +TN +FP +FN), where TP represents the number
+of correctly identified poisoned texts, FP represents the number of benign texts misclassified as
+poisoned, TN represents the number of correctly identified benign texts, FN represents the number
+of poisoned texts misclassified as benign. Higher DACC values indicate better overall detection
+performance, with a perfect detector achieving a DACC of 1.0.
+False positive rate (FPR): False positive rate quantifies the proportion of benign texts incorrectly
+classified as poisoned, calculated as FPR = FP/(FP + TN). A high FPR suggests the detector is
+overly sensitive and frequently flags benign content as malicious, which can significantly degrade the
+utility of the RAG system by unnecessarily filtering out valuable information.
+False negative rate (FNR): False negative rate measures the proportion of poisoned texts incorrectly
+classified as benign, defined as FNR = FN/(FN + TP). A high FNR indicates the detector is
+failing to identify poisoned content, allowing malicious texts to bypass the defense mechanism and
+potentially compromise the RAG system’s outputs.
+K
+Details of LLMs
+We provide further details on the LLMs used in Fig. 2 and Fig. 5. Specifically, the Claude model
+refers to claude-3-7-Sonnet, Gemini corresponds to gemini-2.0-flash, and Llama-4 denotes Llama-4-
+Scout-17B-16E-Instruct. All models were accessed via their respective API endpoints. To ensure
+consistent and stable responses across different experimental settings, the temperature parameter was
+set to 0.1.
+23
+
+
+
+================================================================================
+ページ 24
+================================================================================
+L
+Details of Advanced RAG Frameworks
+L.1
+Sequential RAG
+AAR [85]: This framework follows the same process as the naive RAG, namely the retrieve-then-
+generate mechanism. AAR primarily introduces an augmentation-adapted retriever that can effectively
+generalize to unseen LLMs and achieves high retrieval performance.
+L.2
+Branching RAG
+SuRe [85]: This framework proposes a branch mechanism. Specifically, SuRe first generates multiple
+candidate answers based on the retrieved relevant texts. Then, it uses an LLM to generate a summary
+for each candidate answer based on the retrieved relevant texts. Finally, it selects the highest-ranked
+candidate answer as the response based on these summaries.
+L.3
+Conditional RAG
+Adaptive-RAG [35]: Unlike the naive RAG, this framework first determines whether a user query
+requires retrieval. Specifically, Adaptive-RAG uses a classifier to judge whether the user’s query
+needs retrieval. If retrieval is deemed necessary, it executes the same process as the naive RAG; if
+not, it directly generates a response using the LLM.
+L.4
+Loop RAG
+IRCoT [70]: This framework proposes an iterative retrieve-then-generate mechanism. Specifically,
+IRCoT first retrieves the top-K relevant texts based on the user’s query and generates a response. It
+then determines whether this response contains the answer; if not, it uses this response to continue
+retrieving relevant texts and generate a new response. This iterative process continues until the
+response contains the answer.
+FLARE [37]: This framework is also an iterative retrieve-then-generate mechanism, but it employs
+an adaptive retrieval judgment method. Specifically, for a user query, FLARE first directly asks
+the LLM to generate a response. It then calculates the generation probability of this response; if it
+exceeds a threshold, it determines that no further retrieval is needed. If it falls below this threshold,
+the retrieval mechanism is activated.
+RQRAG [13]: This framework proposes a mechanism that integrates multiple operations such as
+query decomposition and disambiguation. Specifically, RQRAG first determines whether the user
+query requires retrieval. It then breaks down the user’s query into multiple sub-queries. Finally, it
+eliminates ambiguities in the queries and responses.
+M
+Details of Poisoning Attacks against Multi-turn RAG
+Since no prior work has explored the effectiveness of poisoning attacks in multi-turn RAG, there is
+currently no existing framework suitable for direct use. To address this gap, we designed a simulated
+evaluation setup for multi-turn poisoning attacks, which consists of the following key components.
+Conversation construction: To generate a multi-turn dialogue scenario, we crafted a prompt that
+instructs the LLM to simulate a conversation between a human and an intelligent assistant based on
+a targeted query and its correct answer. The prompt specifically requires that the final turn of the
+conversation includes only the human’s query, and that the entire dialogue history, when combined
+with this final query, remains aligned with the intent of the original targeted query. The full prompt is
+presented below.
+24
+
+
+
+================================================================================
+ページ 25
+================================================================================
+Prompt for conversation construction
+Task: Based on the provided target question and answer, create a 5-turn dialogue between a
+human and an AI assistant with the following requirements:
+1. Dialogue format requirements:
+- Each turn consists of a human question and an AI assistant response
+- The first 4 turns include both human questions and AI assistant responses
+- The 5th turn contains only the human question, with no AI assistant response
+2. Dialogue content requirements:
+- The dialogue should be natural and fluent, resembling a realistic conversation
+- Earlier turns should gradually lead toward the target question
+- The dialogue content should maintain consistency and coherence
+- Human questions should be diverse (including open-ended questions, requests for explana-
+tions, seeking advice, etc.)
+- AI responses should be professional, helpful, and informative
+3. Naming and reference requirements:
+- The key nouns and entities from the target question should appear explicitly in the human
+questions within the first 4 turns, establishing clear context
+- In the 5th turn, the human question should avoid directly repeating these key nouns; instead,
+it should use pronouns or other referring expressions to maintain naturalness and reduce
+redundancy
+- Despite the change in wording, the 5th turn human question must preserve the original intent
+and goal of the target question
+4. Final turn requirements:
+- The human question in the 5th turn must achieve the same goal as the provided target
+question
+- However, this final question should be significantly different in wording and structure from
+the target question
+- The final question should be concise and leverage the context established in previous turns
+- Much of the information contained in the target question should already be established in
+the dialogue history
+- This approach should allow the final question to be shorter and more contextually appropriate
+Poisoning attacks to multi-turn RAG: The approach for generating poisoned texts and the strategy
+for injecting them into the knowledge database follow the same procedures as those used in the
+standard RAG setting.
+Workflow of multi-turn RAG: For each user query, we begin by rewriting it to include the preceding
+conversation context, using the prompt provided below.
+Prompt for conversation construction
+Given the following conversation, please reword the final utterance from the human into a
+single utterance that does not need the history to understand the human’s intent. Output in
+proper JSON format indicating the "class" (standalone or non-standalone) and the "reworded
+version" of the last utterance.
+In your rewording of the last utterance, do not do any unnecessary rephrasing or introduction
+of new terms or concepts that were not mentioned in the prior part of the conversation. Be
+minimal, by staying as close as possible to the shape and meaning of the last user utterance.
+If the last user utterance is already clear and standalone, the reworded version should be THE
+SAME as the last user utterance, and the class should be ’standalone’.
+Next, we use the rewritten query to retrieve the top-K most relevant texts. Once retrieved, we
+combine the conversation history, the top-K texts, and the original user query, and submit them to
+the LLM to generate a response.
+25
+
+
+
+================================================================================
+ページ 26
+================================================================================
+N
+Details of Poisoning Attacks against Multimodal RAG
+We implemented a multimodal RAG based on the FlashRAG [39] framework. Following work [50],
+we used InfoSeek [18] for evaluation, which includes a knowledge database containing 481,782
+image-text pairs and a collection of 17,593 image-text queries. In our benchmark, similar to work [50],
+we randomly selected 50 queries as targeted queries and used a vision large model (VLM) to generate
+targeted answers that differ from the correct answers. For adapted JamInject and JamOracle attacks,
+we set their targeted answer to “I do not know”. We evaluated the dirty-label attack proposed in
+work [50] and adapted existing poisoning attacks to the multimodal RAG setting. We introduce these
+attack methods as follows.
+Dirty-label attack [50]: This attack begins by using the image associated with the targeted query
+as the image in the malicious image-text pair to preserve high retrieval similarity. Then, it utilizes a
+vision-language model (VLM) to generate a textual description of the image, conditioned on both
+the targeted query and the intended answer. This ensures that, when the description is retrieved as
+context, the VLM will produce the targeted answer. The resulting description is then used as the text
+component of the malicious image-text pair.
+Adaptive attack: For the four poisoning attacks, namely BPRAG, BPI, JamInject, and JamOracle,
+we adapted each method using a consistent two-step process. First, we assigned the image from the
+targeted query as the image in the malicious image-text pair to maintain retrieval relevance. Second,
+following the original attack designs, we generated the corresponding text content to serve as the
+textual component of the malicious pair.
+O
+Details of Poisoning Attacks against LLM Agent Systems
+Following AgentPoison [19], a poisoning attack designed for LLM agent systems, we adopted the
+ReAct-StrategyQA [83, 28] agent task for evaluation. This task involves a knowledge database
+of 10,000 key-value pairs along with a set of multi-step commonsense reasoning queries. In our
+benchmark, we randomly selected 100 queries as targeted queries and used GPT-4o-mini to generate
+targeted answers that intentionally contradicted the correct ones. For AgentPoison, as well as the
+adapted JamInject and JamOracle attacks, we defined the targeted answer as “I do not know”. We
+then evaluated both the original AgentPoison method and the adapted poisoning attacks within this
+LLM agent setting. The details of these attack methods are introduced below.
+AgentPoison attack [19]: This attack targets the knowledge database by injecting malicious key-
+value pairs, with the goal of manipulating the LLM agent to produce targeted answers when queries
+include a specific trigger. The process begins by optimizing a trigger using training set queries,
+ensuring that any query containing this trigger exhibits high embedding similarity. Then, the attacker
+uses the embedding vector of the optimized trigger as the key and pairs it with a malicious instruction
+as the value, designed to prompt the LLM agent to generate the targeted response.
+Adaptive attack: For the six poisoning attacks, including BPRAG, BPI, CRAG-AS, CRAG-AK,
+JamInject, and JamOracle, we adapted each method using a unified procedure. First, we extracted the
+embedding vector of the targeted query to serve as the key in the malicious key-value pair. Second,
+consistent with the design of each original attack, we generated the corresponding textual content to
+serve as the value associated with that key.
+26
+
+
+
+================================================================================
+ページ 27
+================================================================================
+Table 9: The results of all poisoning attacks against various defenses on HotpotQA dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.13
+0.16
+0.27
+0.40
+0.29
+0.12
+0.12
+0.60
+ASR
+0.81
+0.79
+0.63
+0.36
+0.71
+0.83
+0.82
+0.06
+ACC
+0.15
+0.15
+0.31
+0.42
+0.28
+0.15
+0.13
+0.56
+WPRAG
+ASR
+0.79
+0.80
+0.53
+0.33
+0.73
+0.79
+0.80
+0.06
+BPI
+ACC
+0.00
+0.01
+0.34
+0.32
+0.39
+0.01
+0.01
+0.58
+ASR
+0.99
+0.99
+0.57
+0.40
+0.60
+0.99
+0.99
+0.08
+ACC
+0.00
+0.00
+0.37
+0.36
+0.39
+0.00
+0.00
+0.61
+WPI
+ASR
+1.00
+0.99
+0.47
+0.37
+0.58
+1.00
+1.00
+0.06
+AGGD
+ACC
+0.15
+0.16
+0.32
+0.41
+0.25
+0.25
+0.13
+0.60
+ASR
+0.82
+0.78
+0.55
+0.33
+0.73
+0.70
+0.83
+0.06
+ACC
+0.00
+0.00
+0.08
+0.35
+0.08
+0.02
+0.00
+0.58
+CRAG-AS
+ASR
+1.00
+0.99
+0.75
+0.38
+0.92
+0.98
+1.00
+0.07
+CRAG-AK
+ACC
+0.00
+0.00
+0.09
+0.32
+0.03
+0.00
+0.00
+0.60
+ASR
+0.99
+0.99
+0.86
+0.38
+0.97
+0.99
+0.99
+0.09
+ACC
+0.00
+0.00
+0.54
+0.19
+0.53
+0.00
+0.00
+0.60
+JamInject
+ASR
+1.00
+1.00
+0.28
+0.75
+0.37
+1.00
+1.00
+0.00
+JamOracle
+ACC
+0.05
+0.04
+0.73
+0.59
+0.60
+0.05
+0.05
+0.60
+ASR
+0.95
+0.96
+0.03
+0.22
+0.11
+0.95
+0.95
+0.00
+ACC
+0.19
+0.13
+0.73
+0.58
+0.74
+0.39
+0.19
+0.58
+JamOpt
+ASR
+0.69
+0.73
+0.00
+0.24
+0.00
+0.51
+0.68
+0.00
+AP
+ACC
+0.00
+0.68
+0.57
+0.30
+0.70
+0.38
+0.00
+0.63
+ASR
+1.00
+0.25
+0.25
+0.67
+0.13
+0.57
+1.00
+0.03
+ACC
+0.69
+0.86
+0.80
+0.80
+0.86
+0.99
+0.68
+0.54
+BadRAG
+ASR
+0.30
+0.12
+0.08
+0.18
+0.02
+0.01
+0.31
+0.02
+Phantom
+ACC
+0.97
+0.84
+0.86
+0.85
+0.93
+0.98
+0.96
+0.59
+ASR
+0.00
+0.15
+0.00
+0.13
+0.00
+0.02
+0.03
+0.00
+Table 10: The results of all poisoning attacks against various defenses on MS-MARCO dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.06
+0.14
+0.27
+0.57
+0.23
+0.08
+0.07
+0.77
+ASR
+0.81
+0.73
+0.60
+0.31
+0.75
+0.81
+0.80
+0.07
+ACC
+0.10
+0.14
+0.27
+0.58
+0.27
+0.10
+0.10
+0.79
+WPRAG
+ASR
+0.78
+0.65
+0.58
+0.31
+0.69
+0.76
+0.76
+0.11
+BPI
+ACC
+0.08
+0.06
+0.34
+0.53
+0.44
+0.08
+0.09
+0.79
+ASR
+0.90
+0.87
+0.58
+0.26
+0.52
+0.90
+0.90
+0.10
+ACC
+0.05
+0.09
+0.50
+0.50
+0.54
+0.17
+0.06
+0.80
+WPI
+ASR
+0.93
+0.78
+0.45
+0.28
+0.38
+0.77
+0.92
+0.08
+AGGD
+ACC
+0.25
+0.28
+0.38
+0.54
+0.36
+0.26
+0.24
+0.78
+ASR
+0.63
+0.59
+0.49
+0.28
+0.58
+0.60
+0.64
+0.10
+ACC
+0.19
+0.14
+0.37
+0.60
+0.42
+0.38
+0.20
+0.76
+CRAG-AS
+ASR
+0.76
+0.77
+0.49
+0.18
+0.53
+0.56
+0.76
+0.10
+CRAG-AK
+ACC
+0.02
+0.03
+0.20
+0.33
+0.17
+0.03
+0.03
+0.77
+ASR
+0.96
+0.88
+0.68
+0.55
+0.77
+0.96
+0.95
+0.07
+ACC
+0.32
+0.48
+0.82
+0.56
+0.84
+0.36
+0.35
+0.81
+JamInject
+ASR
+0.68
+0.50
+0.10
+0.42
+0.10
+0.64
+0.65
+0.00
+JamOracle
+ACC
+0.33
+0.40
+0.76
+0.77
+0.70
+0.35
+0.34
+0.80
+ASR
+0.62
+0.57
+0.00
+0.15
+0.00
+0.60
+0.61
+0.00
+ACC
+0.57
+0.72
+0.89
+0.85
+0.83
+0.75
+0.57
+0.80
+JamOpt
+ASR
+0.35
+0.23
+0.00
+0.11
+0.00
+0.18
+0.34
+0.00
+AP
+ACC
+0.00
+0.63
+0.80
+0.32
+0.78
+0.57
+0.01
+0.71
+ASR
+1.00
+0.32
+0.04
+0.66
+0.09
+0.40
+0.99
+0.01
+ACC
+0.94
+0.71
+0.95
+0.73
+0.94
+0.99
+0.92
+0.67
+BadRAG
+ASR
+0.06
+0.25
+0.02
+0.27
+0.01
+0.01
+0.08
+0.02
+Phantom
+ACC
+0.97
+0.75
+0.97
+0.74
+0.90
+0.99
+0.99
+0.69
+ASR
+0.00
+0.22
+0.00
+0.26
+0.01
+0.01
+0.01
+0.02
+27
+
+
+
+================================================================================
+ページ 28
+================================================================================
+Table 11: The results of all poisoning attacks against various defenses on BoolQ dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.20
+0.28
+0.33
+0.55
+0.61
+0.18
+0.18
+0.79
+ASR
+0.65
+0.52
+0.56
+0.25
+0.19
+0.60
+0.60
+0.09
+ACC
+0.22
+0.32
+0.32
+0.58
+0.65
+0.21
+0.22
+0.77
+WPRAG
+ASR
+0.68
+0.54
+0.56
+0.26
+0.16
+0.59
+0.61
+0.10
+BPI
+ACC
+0.06
+0.01
+0.46
+0.62
+0.83
+0.05
+0.05
+0.81
+ASR
+0.94
+0.95
+0.46
+0.03
+0.10
+0.94
+0.94
+0.10
+ACC
+0.03
+0.01
+0.52
+0.64
+0.82
+0.03
+0.03
+0.80
+WPI
+ASR
+0.96
+0.93
+0.44
+0.06
+0.12
+0.96
+0.96
+0.09
+AGGD
+ACC
+0.21
+0.28
+0.32
+0.55
+0.69
+0.21
+0.19
+0.76
+ASR
+0.68
+0.55
+0.50
+0.25
+0.20
+0.57
+0.60
+0.08
+ACC
+0.13
+0.01
+0.36
+0.63
+0.76
+0.13
+0.12
+0.82
+CRAG-AS
+ASR
+0.84
+0.94
+0.59
+0.05
+0.16
+0.84
+0.85
+0.10
+CRAG-AK
+ACC
+0.07
+0.06
+0.23
+0.48
+0.69
+0.04
+0.04
+0.78
+ASR
+0.91
+0.87
+0.69
+0.45
+0.21
+0.91
+0.91
+0.09
+ACC
+0.20
+0.03
+0.81
+0.46
+0.89
+0.20
+0.20
+0.92
+JamInject
+ASR
+0.80
+0.97
+0.09
+0.52
+0.07
+0.80
+0.80
+0.00
+JamOracle
+ACC
+0.26
+0.17
+0.90
+0.83
+0.74
+0.25
+0.25
+0.89
+ASR
+0.71
+0.82
+0.00
+0.12
+0.03
+0.71
+0.71
+0.00
+ACC
+0.37
+0.41
+0.89
+0.86
+0.87
+0.43
+0.39
+0.92
+JamOpt
+ASR
+0.51
+0.52
+0.00
+0.08
+0.00
+0.47
+0.52
+0.00
+AP
+ACC
+0.00
+0.18
+0.78
+0.01
+0.70
+0.14
+0.00
+0.82
+ASR
+1.00
+0.81
+0.16
+0.99
+0.25
+0.86
+1.00
+0.04
+ACC
+0.97
+0.91
+0.88
+0.81
+0.95
+0.95
+0.99
+0.91
+BadRAG
+ASR
+0.00
+0.09
+0.00
+0.12
+0.00
+0.04
+0.01
+0.01
+Phantom
+ACC
+0.99
+0.90
+0.89
+0.80
+0.95
+0.96
+0.98
+0.90
+ASR
+0.00
+0.10
+0.00
+0.12
+0.00
+0.04
+0.01
+0.01
+Table 12: The results of all poisoning attacks against various defenses on SQuAD dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.08
+0.09
+0.22
+0.24
+0.20
+0.07
+0.07
+0.49
+ASR
+0.91
+0.84
+0.79
+0.50
+0.78
+0.89
+0.88
+0.07
+ACC
+0.07
+0.09
+0.22
+0.23
+0.23
+0.07
+0.07
+0.48
+WPRAG
+ASR
+0.89
+0.89
+0.77
+0.53
+0.76
+0.88
+0.88
+0.06
+BPI
+ACC
+0.00
+0.00
+0.25
+0.21
+0.26
+0.00
+0.00
+0.47
+ASR
+1.00
+0.95
+0.69
+0.48
+0.70
+0.99
+1.00
+0.05
+ACC
+0.00
+0.00
+0.26
+0.18
+0.29
+0.00
+0.00
+0.50
+WPI
+ASR
+0.99
+0.95
+0.67
+0.51
+0.62
+0.98
+0.99
+0.02
+AGGD
+ACC
+0.08
+0.08
+0.19
+0.24
+0.23
+0.07
+0.07
+0.52
+ASR
+0.91
+0.89
+0.80
+0.50
+0.78
+0.93
+0.93
+0.05
+ACC
+0.00
+0.00
+0.14
+0.20
+0.15
+0.00
+0.00
+0.53
+CRAG-AS
+ASR
+0.99
+0.97
+0.78
+0.50
+0.83
+0.99
+0.99
+0.05
+CRAG-AK
+ACC
+0.02
+0.03
+0.12
+0.19
+0.12
+0.02
+0.02
+0.52
+ASR
+0.96
+0.91
+0.82
+0.49
+0.86
+0.96
+0.96
+0.05
+ACC
+0.00
+0.00
+0.50
+0.10
+0.45
+0.00
+0.00
+0.52
+JamInject
+ASR
+1.00
+1.00
+0.26
+0.86
+0.40
+1.00
+1.00
+0.05
+JamOracle
+ACC
+0.01
+0.00
+0.54
+0.45
+0.44
+0.00
+0.00
+0.52
+ASR
+0.99
+1.00
+0.02
+0.41
+0.16
+1.00
+1.00
+0.07
+ACC
+0.06
+0.04
+0.54
+0.41
+0.59
+0.21
+0.05
+0.53
+JamOpt
+ASR
+0.80
+0.83
+0.00
+0.46
+0.02
+0.66
+0.80
+0.04
+AP
+ACC
+0.00
+0.74
+0.49
+0.02
+0.54
+0.35
+0.00
+0.47
+ASR
+1.00
+0.19
+0.28
+0.98
+0.17
+0.64
+1.00
+0.04
+ACC
+0.97
+0.80
+0.94
+0.71
+0.96
+0.97
+0.99
+0.56
+BadRAG
+ASR
+0.00
+0.19
+0.00
+0.26
+0.00
+0.03
+0.01
+0.08
+Phantom
+ACC
+0.99
+0.81
+0.96
+0.73
+0.95
+0.99
+0.96
+0.58
+ASR
+0.00
+0.17
+0.00
+0.25
+0.00
+0.01
+0.04
+0.08
+28
+
+
+
+================================================================================
+ページ 29
+================================================================================
+Table 13: The results of all poisoning attacks against various defenses on NQ-EX-M dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.65
+0.59
+0.82
+0.69
+0.79
+0.64
+0.63
+0.71
+ASR
+0.11
+0.17
+0.15
+0.11
+0.01
+0.13
+0.11
+0.04
+ACC
+0.59
+0.66
+0.79
+0.64
+0.73
+0.64
+0.63
+0.73
+WPRAG
+ASR
+0.15
+0.12
+0.17
+0.13
+0.03
+0.15
+0.15
+0.06
+BPI
+ACC
+0.77
+0.85
+0.87
+0.76
+0.90
+0.77
+0.76
+0.72
+ASR
+0.16
+0.07
+0.12
+0.07
+0.09
+0.17
+0.17
+0.05
+ACC
+0.80
+0.84
+0.88
+0.78
+0.87
+0.78
+0.78
+0.69
+WPI
+ASR
+0.14
+0.07
+0.13
+0.06
+0.09
+0.14
+0.16
+0.04
+AGGD
+ACC
+0.87
+0.86
+0.97
+0.73
+0.96
+0.88
+0.88
+0.67
+ASR
+0.04
+0.07
+0.02
+0.04
+0.05
+0.03
+0.03
+0.03
+ACC
+0.81
+0.82
+0.93
+0.83
+0.97
+0.82
+0.81
+0.71
+CRAG-AS
+ASR
+0.14
+0.11
+0.04
+0.03
+0.04
+0.13
+0.13
+0.06
+CRAG-AK
+ACC
+0.36
+0.36
+0.71
+0.72
+0.70
+0.37
+0.37
+0.71
+ASR
+0.50
+0.42
+0.29
+0.08
+0.31
+0.47
+0.47
+0.05
+ACC
+0.97
+0.95
+0.97
+0.88
+0.96
+0.97
+0.97
+0.76
+JamInject
+ASR
+0.03
+0.04
+0.00
+0.10
+0.00
+0.03
+0.03
+0.01
+JamOracle
+ACC
+0.94
+0.92
+0.94
+0.88
+0.95
+0.95
+0.95
+0.74
+ASR
+0.05
+0.06
+0.00
+0.09
+0.00
+0.05
+0.05
+0.01
+ACC
+0.98
+0.97
+0.97
+0.86
+0.98
+0.98
+0.98
+0.74
+JamOpt
+ASR
+0.01
+0.03
+0.00
+0.10
+0.00
+0.00
+0.00
+0.01
+AP
+ACC
+0.94
+0.91
+0.98
+0.71
+0.99
+0.95
+0.94
+0.65
+ASR
+0.05
+0.07
+0.00
+0.24
+0.00
+0.05
+0.05
+0.02
+ACC
+0.99
+0.97
+1.00
+0.90
+1.00
+0.69
+0.99
+0.75
+BadRAG
+ASR
+0.01
+0.03
+0.00
+0.10
+0.00
+0.30
+0.01
+0.03
+Phantom
+ACC
+1.00
+0.98
+1.00
+0.90
+0.99
+0.94
+0.99
+0.72
+ASR
+0.00
+0.02
+0.00
+0.10
+0.00
+0.06
+0.01
+0.03
+Table 14: The results of all poisoning attacks against various defenses on HotpotQA-EX-M dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.64
+0.58
+0.69
+0.72
+0.84
+0.67
+0.62
+0.57
+ASR
+0.20
+0.17
+0.15
+0.15
+0.05
+0.21
+0.20
+0.07
+ACC
+0.72
+0.62
+0.77
+0.70
+0.82
+0.70
+0.67
+0.60
+WPRAG
+ASR
+0.20
+0.17
+0.13
+0.15
+0.03
+0.18
+0.19
+0.10
+BPI
+ACC
+0.88
+0.83
+0.90
+0.82
+0.96
+0.88
+0.88
+0.59
+ASR
+0.09
+0.12
+0.02
+0.04
+0.03
+0.10
+0.10
+0.05
+ACC
+0.92
+0.89
+0.89
+0.82
+0.97
+0.91
+0.92
+0.60
+WPI
+ASR
+0.05
+0.07
+0.03
+0.05
+0.03
+0.06
+0.05
+0.07
+AGGD
+ACC
+0.88
+0.89
+0.86
+0.81
+0.94
+0.91
+0.89
+0.62
+ASR
+0.03
+0.05
+0.03
+0.07
+0.05
+0.03
+0.03
+0.08
+ACC
+0.87
+0.81
+0.84
+0.85
+0.96
+0.87
+0.86
+0.62
+CRAG-AS
+ASR
+0.10
+0.12
+0.03
+0.03
+0.03
+0.10
+0.09
+0.06
+CRAG-AK
+ACC
+0.33
+0.37
+0.59
+0.75
+0.72
+0.33
+0.32
+0.61
+ASR
+0.47
+0.38
+0.21
+0.10
+0.25
+0.48
+0.47
+0.06
+ACC
+1.00
+0.99
+0.95
+0.86
+0.99
+0.99
+0.99
+0.60
+JamInject
+ASR
+0.00
+0.01
+0.00
+0.12
+0.00
+0.00
+0.00
+0.00
+JamOracle
+ACC
+0.90
+0.86
+0.85
+0.82
+0.93
+0.90
+0.90
+0.60
+ASR
+0.10
+0.14
+0.01
+0.14
+0.02
+0.10
+0.10
+0.00
+ACC
+1.00
+0.98
+0.95
+0.84
+0.98
+0.99
+0.99
+0.60
+JamOpt
+ASR
+0.00
+0.01
+0.00
+0.13
+0.00
+0.00
+0.01
+0.00
+AP
+ACC
+0.99
+0.96
+0.90
+0.78
+0.98
+0.98
+0.98
+0.60
+ASR
+0.01
+0.01
+0.00
+0.16
+0.01
+0.00
+0.01
+0.03
+ACC
+1.00
+0.97
+0.94
+0.87
+1.00
+0.71
+0.99
+0.54
+BadRAG
+ASR
+0.00
+0.02
+0.00
+0.12
+0.01
+0.29
+0.01
+0.01
+Phantom
+ACC
+1.00
+0.98
+0.95
+0.86
+1.00
+0.99
+0.99
+0.57
+ASR
+0.00
+0.01
+0.00
+0.12
+0.01
+0.01
+0.01
+0.02
+29
+
+
+
+================================================================================
+ページ 30
+================================================================================
+Table 15: The results of all poisoning attacks against various defenses on MS-MARCO-EX-M
+dataset.
+Attacks
+Metrics
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.34
+0.52
+0.49
+0.71
+0.66
+0.30
+0.30
+0.79
+ASR
+0.30
+0.24
+0.23
+0.19
+0.17
+0.35
+0.30
+0.08
+ACC
+0.49
+0.62
+0.54
+0.76
+0.72
+0.49
+0.44
+0.79
+WPRAG
+ASR
+0.29
+0.12
+0.22
+0.12
+0.13
+0.28
+0.27
+0.08
+BPI
+ACC
+0.63
+0.78
+0.84
+0.79
+0.83
+0.64
+0.62
+0.79
+ASR
+0.33
+0.19
+0.13
+0.07
+0.13
+0.32
+0.35
+0.11
+ACC
+0.63
+0.82
+0.87
+0.76
+0.83
+0.72
+0.64
+0.79
+WPI
+ASR
+0.32
+0.11
+0.11
+0.11
+0.10
+0.23
+0.33
+0.08
+AGGD
+ACC
+0.72
+0.75
+0.75
+0.80
+0.72
+0.65
+0.68
+0.78
+ASR
+0.13
+0.08
+0.12
+0.10
+0.20
+0.18
+0.17
+0.12
+ACC
+0.88
+0.88
+0.93
+0.89
+0.88
+0.92
+0.88
+0.81
+CRAG-AS
+ASR
+0.07
+0.06
+0.04
+0.01
+0.04
+0.05
+0.06
+0.07
+CRAG-AK
+ACC
+0.15
+0.29
+0.38
+0.50
+0.41
+0.15
+0.14
+0.77
+ASR
+0.66
+0.40
+0.37
+0.40
+0.56
+0.66
+0.65
+0.10
+ACC
+0.99
+0.98
+0.98
+0.94
+0.90
+1.00
+1.00
+0.78
+JamInject
+ASR
+0.00
+0.02
+0.00
+0.05
+0.00
+0.00
+0.00
+0.00
+JamOracle
+ACC
+0.97
+0.91
+0.96
+0.94
+0.86
+0.97
+0.97
+0.86
+ASR
+0.01
+0.06
+0.00
+0.05
+0.00
+0.02
+0.02
+0.01
+ACC
+0.99
+0.96
+0.99
+0.93
+0.89
+0.99
+1.00
+0.82
+JamOpt
+ASR
+0.02
+0.04
+0.00
+0.07
+0.00
+0.00
+0.00
+0.00
+AP
+ACC
+0.97
+0.82
+0.96
+0.83
+0.94
+0.97
+0.95
+0.72
+ASR
+0.03
+0.11
+0.00
+0.16
+0.00
+0.02
+0.03
+0.00
+ACC
+0.99
+0.97
+0.97
+0.77
+0.95
+0.99
+0.99
+0.68
+BadRAG
+ASR
+0.01
+0.02
+0.00
+0.22
+0.00
+0.01
+0.01
+0.01
+Phantom
+ACC
+1.00
+0.96
+0.95
+0.78
+0.95
+0.99
+0.99
+0.71
+ASR
+0.00
+0.03
+0.00
+0.22
+0.00
+0.01
+0.01
+0.03
+Table 16: The results of all poisoning attacks against various defenses on BoolQ-EX-M dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.49
+0.56
+0.67
+0.81
+0.83
+0.46
+0.44
+0.79
+ASR
+0.35
+0.16
+0.23
+0.12
+0.10
+0.18
+0.19
+0.10
+ACC
+0.54
+0.57
+0.63
+0.84
+0.75
+0.49
+0.46
+0.78
+WPRAG
+ASR
+0.34
+0.16
+0.21
+0.11
+0.13
+0.17
+0.16
+0.10
+BPI
+ACC
+0.77
+0.83
+0.90
+0.88
+0.86
+0.73
+0.75
+0.78
+ASR
+0.24
+0.12
+0.05
+0.02
+0.05
+0.24
+0.23
+0.11
+ACC
+0.66
+0.85
+0.89
+0.94
+0.89
+0.66
+0.67
+0.79
+WPI
+ASR
+0.28
+0.09
+0.04
+0.03
+0.07
+0.26
+0.26
+0.07
+AGGD
+ACC
+0.74
+0.71
+0.77
+0.84
+0.77
+0.69
+0.73
+0.79
+ASR
+0.14
+0.11
+0.14
+0.08
+0.12
+0.11
+0.10
+0.08
+ACC
+0.94
+0.94
+0.95
+0.92
+0.83
+0.91
+0.91
+0.75
+CRAG-AS
+ASR
+0.05
+0.03
+0.02
+0.00
+0.05
+0.03
+0.04
+0.10
+CRAG-AK
+ACC
+0.33
+0.50
+0.62
+0.67
+0.79
+0.30
+0.29
+0.80
+ASR
+0.48
+0.19
+0.26
+0.26
+0.10
+0.41
+0.41
+0.10
+ACC
+0.99
+0.96
+0.95
+0.97
+0.99
+1.00
+1.00
+0.93
+JamInject
+ASR
+0.00
+0.02
+0.00
+0.03
+0.00
+0.00
+0.00
+0.01
+JamOracle
+ACC
+1.00
+0.96
+0.92
+0.97
+0.97
+1.00
+1.00
+0.92
+ASR
+0.00
+0.03
+0.00
+0.02
+0.00
+0.00
+0.00
+0.00
+ACC
+0.97
+0.97
+0.95
+0.97
+0.98
+0.98
+0.97
+0.96
+JamOpt
+ASR
+0.03
+0.01
+0.00
+0.03
+0.00
+0.02
+0.03
+0.00
+AP
+ACC
+1.00
+0.88
+0.89
+0.80
+0.95
+0.82
+0.92
+0.81
+ASR
+0.00
+0.09
+0.00
+0.17
+0.01
+0.07
+0.05
+0.05
+ACC
+0.99
+0.99
+0.90
+0.83
+0.93
+0.98
+0.99
+0.86
+BadRAG
+ASR
+0.00
+0.00
+0.00
+0.12
+0.00
+0.02
+0.00
+0.00
+Phantom
+ACC
+0.99
+0.99
+0.88
+0.82
+0.94
+0.97
+0.99
+0.86
+ASR
+0.00
+0.00
+0.00
+0.15
+0.00
+0.03
+0.00
+0.01
+30
+
+
+
+================================================================================
+ページ 31
+================================================================================
+Table 17: The results of all poisoning attacks against various defenses on SQuAD-EX-M dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.52
+0.59
+0.76
+0.63
+0.68
+0.52
+0.54
+0.53
+ASR
+0.21
+0.20
+0.23
+0.10
+0.15
+0.25
+0.25
+0.05
+ACC
+0.58
+0.57
+0.79
+0.66
+0.73
+0.57
+0.56
+0.49
+WPRAG
+ASR
+0.24
+0.17
+0.19
+0.12
+0.11
+0.24
+0.21
+0.06
+BPI
+ACC
+0.68
+0.77
+0.87
+0.67
+0.94
+0.66
+0.67
+0.51
+ASR
+0.24
+0.11
+0.08
+0.11
+0.06
+0.26
+0.26
+0.03
+ACC
+0.76
+0.83
+0.92
+0.67
+0.96
+0.72
+0.71
+0.51
+WPI
+ASR
+0.18
+0.07
+0.07
+0.10
+0.03
+0.17
+0.17
+0.03
+AGGD
+ACC
+0.77
+0.75
+0.86
+0.72
+0.78
+0.75
+0.76
+0.49
+ASR
+0.10
+0.07
+0.12
+0.06
+0.05
+0.12
+0.12
+0.04
+ACC
+0.79
+0.81
+0.97
+0.81
+0.98
+0.79
+0.78
+0.51
+CRAG-AS
+ASR
+0.18
+0.10
+0.01
+0.00
+0.02
+0.16
+0.18
+0.05
+CRAG-AK
+ACC
+0.28
+0.36
+0.46
+0.54
+0.57
+0.28
+0.28
+0.53
+ASR
+0.65
+0.52
+0.37
+0.20
+0.43
+0.65
+0.65
+0.06
+ACC
+1.00
+0.98
+1.00
+0.78
+0.98
+1.00
+1.00
+0.57
+JamInject
+ASR
+0.00
+0.02
+0.00
+0.20
+0.00
+0.00
+0.00
+0.07
+JamOracle
+ACC
+0.87
+0.82
+0.88
+0.82
+0.90
+0.88
+0.88
+0.53
+ASR
+0.13
+0.18
+0.01
+0.14
+0.00
+0.12
+0.12
+0.03
+ACC
+1.00
+0.97
+1.00
+0.84
+0.98
+1.00
+1.00
+0.52
+JamOpt
+ASR
+0.00
+0.03
+0.00
+0.14
+0.00
+0.00
+0.00
+0.07
+AP
+ACC
+1.00
+0.98
+0.96
+0.74
+0.98
+0.99
+1.00
+0.49
+ASR
+0.00
+0.02
+0.00
+0.21
+0.00
+0.00
+0.00
+0.09
+ACC
+0.99
+0.94
+0.99
+0.75
+1.00
+0.97
+1.00
+0.52
+BadRAG
+ASR
+0.00
+0.05
+0.00
+0.24
+0.00
+0.02
+0.00
+0.09
+Phantom
+ACC
+0.98
+0.96
+0.99
+0.75
+1.00
+0.99
+0.99
+0.51
+ASR
+0.00
+0.03
+0.00
+0.25
+0.00
+0.00
+0.00
+0.10
+Table 18: The results of all poisoning attacks against various defenses on NQ-EX-L dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.89
+0.86
+0.94
+0.82
+0.97
+0.87
+0.87
+0.73
+ASR
+0.03
+0.04
+0.04
+0.04
+0.03
+0.03
+0.03
+0.03
+ACC
+0.87
+0.89
+0.91
+0.80
+0.93
+0.86
+0.86
+0.72
+WPRAG
+ASR
+0.05
+0.02
+0.07
+0.04
+0.07
+0.04
+0.04
+0.05
+BPI
+ACC
+0.90
+0.91
+0.89
+0.78
+0.92
+0.89
+0.89
+0.71
+ASR
+0.08
+0.04
+0.09
+0.04
+0.06
+0.08
+0.08
+0.04
+ACC
+0.86
+0.91
+0.91
+0.78
+0.92
+0.87
+0.87
+0.70
+WPI
+ASR
+0.10
+0.03
+0.09
+0.05
+0.07
+0.09
+0.09
+0.04
+AGGD
+ACC
+0.97
+0.92
+0.97
+0.82
+0.98
+0.96
+0.96
+0.71
+ASR
+0.00
+0.01
+0.02
+0.02
+0.01
+0.00
+0.00
+0.04
+ACC
+0.97
+0.92
+0.96
+0.82
+0.98
+0.97
+0.97
+0.72
+CRAG-AS
+ASR
+0.00
+0.02
+0.01
+0.01
+0.01
+0.00
+0.00
+0.04
+CRAG-AK
+ACC
+0.74
+0.73
+0.82
+0.79
+0.83
+0.72
+0.73
+0.71
+ASR
+0.20
+0.17
+0.13
+0.07
+0.16
+0.23
+0.23
+0.06
+ACC
+0.98
+0.97
+0.97
+0.84
+0.98
+0.98
+0.98
+0.75
+JamInject
+ASR
+0.02
+0.02
+0.00
+0.13
+0.00
+0.02
+0.02
+0.01
+JamOracle
+ACC
+0.94
+0.92
+0.96
+0.87
+0.98
+0.96
+0.97
+0.73
+ASR
+0.04
+0.06
+0.00
+0.11
+0.00
+0.04
+0.03
+0.01
+ACC
+0.98
+0.96
+0.98
+0.86
+0.98
+0.98
+0.98
+0.73
+JamOpt
+ASR
+0.01
+0.02
+0.00
+0.11
+0.00
+0.01
+0.00
+0.01
+AP
+ACC
+0.95
+0.93
+0.99
+0.72
+1.00
+0.94
+0.96
+0.65
+ASR
+0.03
+0.05
+0.00
+0.24
+0.00
+0.06
+0.04
+0.01
+ACC
+0.99
+0.97
+1.00
+0.91
+1.00
+0.99
+0.99
+0.75
+BadRAG
+ASR
+0.01
+0.03
+0.00
+0.09
+0.00
+0.01
+0.01
+0.03
+Phantom
+ACC
+1.00
+0.98
+1.00
+0.91
+1.00
+0.99
+0.99
+0.75
+ASR
+0.00
+0.02
+0.00
+0.09
+0.00
+0.01
+0.01
+0.03
+31
+
+
+
+================================================================================
+ページ 32
+================================================================================
+Table 19: The results of all poisoning attacks against various defenses on HotpotQA-EX-L dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.88
+0.90
+0.87
+0.82
+0.94
+0.86
+0.86
+0.59
+ASR
+0.05
+0.04
+0.08
+0.05
+0.05
+0.04
+0.04
+0.09
+ACC
+0.87
+0.90
+0.89
+0.82
+0.94
+0.87
+0.89
+0.59
+WPRAG
+ASR
+0.05
+0.06
+0.05
+0.04
+0.05
+0.05
+0.05
+0.07
+BPI
+ACC
+0.97
+0.95
+0.88
+0.86
+0.96
+0.96
+0.96
+0.59
+ASR
+0.03
+0.04
+0.04
+0.03
+0.04
+0.03
+0.03
+0.08
+ACC
+0.98
+0.95
+0.90
+0.85
+0.97
+0.97
+0.97
+0.56
+WPI
+ASR
+0.02
+0.04
+0.05
+0.03
+0.04
+0.02
+0.02
+0.06
+AGGD
+ACC
+0.98
+0.97
+0.90
+0.84
+0.96
+0.98
+0.98
+0.59
+ASR
+0.02
+0.02
+0.05
+0.03
+0.04
+0.01
+0.02
+0.07
+ACC
+0.99
+0.98
+0.91
+0.84
+0.98
+0.99
+0.98
+0.62
+CRAG-AS
+ASR
+0.01
+0.01
+0.04
+0.03
+0.02
+0.01
+0.01
+0.08
+CRAG-AK
+ACC
+0.77
+0.78
+0.79
+0.81
+0.90
+0.75
+0.75
+0.60
+ASR
+0.12
+0.12
+0.11
+0.05
+0.10
+0.14
+0.13
+0.09
+ACC
+1.00
+0.99
+0.95
+0.84
+0.99
+0.99
+1.00
+0.61
+JamInject
+ASR
+0.00
+0.01
+0.00
+0.13
+0.01
+0.00
+0.00
+0.01
+JamOracle
+ACC
+0.97
+0.92
+0.96
+0.84
+0.97
+0.97
+0.97
+0.59
+ASR
+0.03
+0.08
+0.00
+0.13
+0.00
+0.03
+0.03
+0.01
+ACC
+1.00
+0.99
+0.94
+0.84
+0.98
+1.00
+1.00
+0.59
+JamOpt
+ASR
+0.00
+0.01
+0.00
+0.13
+0.00
+0.00
+0.00
+0.00
+AP
+ACC
+0.98
+0.96
+0.90
+0.80
+0.94
+0.98
+0.97
+0.63
+ASR
+0.01
+0.01
+0.00
+0.15
+0.01
+0.00
+0.00
+0.04
+ACC
+1.00
+0.98
+0.96
+0.87
+1.00
+1.00
+1.00
+0.58
+BadRAG
+ASR
+0.00
+0.01
+0.00
+0.12
+0.00
+0.00
+0.00
+0.01
+Phantom
+ACC
+1.00
+0.99
+0.95
+0.88
+1.00
+1.00
+1.00
+0.55
+ASR
+0.00
+0.00
+0.00
+0.12
+0.00
+0.00
+0.00
+0.01
+Table 20: The results of all poisoning attacks against various defenses on MS-MARCO-EX-L dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.68
+0.71
+0.78
+0.82
+0.75
+0.70
+0.69
+0.76
+ASR
+0.08
+0.06
+0.04
+0.11
+0.23
+0.09
+0.07
+0.08
+ACC
+0.74
+0.77
+0.77
+0.86
+0.75
+0.73
+0.76
+0.72
+WPRAG
+ASR
+0.13
+0.07
+0.06
+0.06
+0.20
+0.06
+0.10
+0.09
+BPI
+ACC
+0.87
+0.89
+0.93
+0.84
+0.86
+0.89
+0.88
+0.79
+ASR
+0.10
+0.06
+0.05
+0.05
+0.13
+0.10
+0.10
+0.10
+ACC
+0.91
+0.90
+0.93
+0.85
+0.85
+0.91
+0.90
+0.76
+WPI
+ASR
+0.07
+0.02
+0.03
+0.02
+0.09
+0.06
+0.08
+0.10
+AGGD
+ACC
+0.83
+0.86
+0.87
+0.86
+0.82
+0.81
+0.83
+0.78
+ASR
+0.06
+0.03
+0.05
+0.07
+0.14
+0.07
+0.06
+0.11
+ACC
+0.96
+0.93
+0.96
+0.88
+0.90
+0.97
+0.96
+0.74
+CRAG-AS
+ASR
+0.02
+0.02
+0.02
+0.02
+0.06
+0.01
+0.02
+0.11
+CRAG-AK
+ACC
+0.36
+0.67
+0.50
+0.55
+0.58
+0.36
+0.37
+0.75
+ASR
+0.44
+0.18
+0.29
+0.35
+0.36
+0.42
+0.44
+0.09
+ACC
+1.00
+0.96
+0.99
+0.91
+0.91
+0.99
+0.99
+0.80
+JamInject
+ASR
+0.00
+0.03
+0.00
+0.09
+0.00
+0.01
+0.00
+0.00
+JamOracle
+ACC
+0.98
+0.96
+0.99
+0.91
+0.93
+0.99
+1.00
+0.80
+ASR
+0.00
+0.02
+0.00
+0.08
+0.00
+0.00
+0.00
+0.00
+ACC
+0.99
+0.97
+0.99
+0.89
+0.94
+1.00
+1.00
+0.79
+JamOpt
+ASR
+0.00
+0.02
+0.00
+0.09
+0.00
+0.00
+0.00
+0.00
+AP
+ACC
+0.97
+0.84
+0.96
+0.85
+0.95
+0.96
+0.96
+0.71
+ASR
+0.02
+0.12
+0.00
+0.14
+0.00
+0.03
+0.02
+0.00
+ACC
+0.99
+0.97
+0.98
+0.78
+0.97
+0.99
+0.99
+0.68
+BadRAG
+ASR
+0.01
+0.03
+0.00
+0.22
+0.00
+0.01
+0.01
+0.02
+Phantom
+ACC
+1.00
+0.98
+0.99
+0.79
+0.96
+0.99
+0.99
+0.70
+ASR
+0.00
+0.02
+0.00
+0.21
+0.00
+0.01
+0.01
+0.00
+32
+
+
+
+================================================================================
+ページ 33
+================================================================================
+Table 21: The results of all poisoning attacks against various defenses on BoolQ-EX-L dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.84
+0.80
+0.91
+0.88
+0.82
+0.81
+0.81
+0.81
+ASR
+0.11
+0.08
+0.07
+0.06
+0.08
+0.04
+0.05
+0.09
+ACC
+0.75
+0.78
+0.85
+0.87
+0.83
+0.75
+0.74
+0.83
+WPRAG
+ASR
+0.21
+0.08
+0.09
+0.05
+0.05
+0.08
+0.09
+0.08
+BPI
+ACC
+0.91
+0.94
+0.91
+0.87
+0.86
+0.88
+0.89
+0.79
+ASR
+0.10
+0.03
+0.04
+0.01
+0.06
+0.08
+0.08
+0.10
+ACC
+0.92
+0.94
+0.95
+0.92
+0.91
+0.88
+0.87
+0.81
+WPI
+ASR
+0.10
+0.03
+0.01
+0.03
+0.03
+0.07
+0.07
+0.09
+AGGD
+ACC
+0.87
+0.86
+0.89
+0.87
+0.88
+0.87
+0.86
+0.81
+ASR
+0.05
+0.04
+0.03
+0.05
+0.05
+0.04
+0.03
+0.09
+ACC
+0.97
+0.97
+0.95
+0.90
+0.87
+0.94
+0.95
+0.83
+CRAG-AS
+ASR
+0.03
+0.01
+0.01
+0.03
+0.05
+0.01
+0.01
+0.09
+CRAG-AK
+ACC
+0.62
+0.81
+0.81
+0.82
+0.87
+0.63
+0.60
+0.80
+ASR
+0.18
+0.07
+0.13
+0.10
+0.06
+0.16
+0.16
+0.09
+ACC
+1.00
+0.98
+0.95
+0.94
+0.97
+0.99
+1.00
+0.94
+JamInject
+ASR
+0.00
+0.02
+0.00
+0.03
+0.00
+0.00
+0.00
+0.00
+JamOracle
+ACC
+0.98
+0.96
+0.94
+0.94
+0.96
+1.00
+1.00
+0.93
+ASR
+0.01
+0.02
+0.00
+0.04
+0.00
+0.00
+0.00
+0.01
+ACC
+0.96
+0.97
+0.95
+0.93
+0.96
+0.98
+0.98
+0.91
+JamOpt
+ASR
+0.02
+0.02
+0.00
+0.04
+0.00
+0.01
+0.02
+0.01
+AP
+ACC
+1.00
+0.92
+0.92
+0.83
+0.94
+0.95
+0.94
+0.81
+ASR
+0.00
+0.05
+0.00
+0.12
+0.01
+0.03
+0.04
+0.05
+ACC
+0.98
+0.99
+0.93
+0.91
+0.94
+0.97
+0.99
+0.91
+BadRAG
+ASR
+0.00
+0.00
+0.00
+0.06
+0.00
+0.00
+0.00
+0.01
+Phantom
+ACC
+0.99
+0.99
+0.91
+0.90
+0.92
+0.98
+0.98
+0.87
+ASR
+0.00
+0.00
+0.00
+0.06
+0.00
+0.00
+0.00
+0.01
+Table 22: The results of all poisoning attacks against various defenses on SQuAD-EX-L dataset.
+Attack
+Metric
+No defense
+Paraphrasing
+InstructRAG
+RobustRAG
+AstuteRAG
+PPL
+Norm
+TrustRAG
+BPRAG
+ACC
+0.89
+0.86
+0.93
+0.79
+0.87
+0.87
+0.88
+0.53
+ASR
+0.04
+0.04
+0.06
+0.01
+0.03
+0.04
+0.05
+0.06
+ACC
+0.89
+0.85
+0.98
+0.79
+0.89
+0.88
+0.90
+0.52
+WPRAG
+ASR
+0.04
+0.06
+0.02
+0.03
+0.02
+0.03
+0.03
+0.05
+BPI
+ACC
+0.96
+0.94
+0.96
+0.79
+0.91
+0.96
+0.95
+0.54
+ASR
+0.03
+0.03
+0.02
+0.02
+0.01
+0.03
+0.04
+0.07
+ACC
+0.95
+0.93
+0.98
+0.79
+0.91
+0.96
+0.95
+0.56
+WPI
+ASR
+0.03
+0.03
+0.01
+0.02
+0.02
+0.03
+0.04
+0.05
+AGGD
+ACC
+0.97
+0.94
+0.97
+0.80
+0.90
+0.96
+0.96
+0.48
+ASR
+0.01
+0.03
+0.02
+0.02
+0.00
+0.01
+0.01
+0.03
+ACC
+0.96
+0.96
+1.00
+0.80
+0.99
+0.96
+0.96
+0.51
+CRAG-AS
+ASR
+0.01
+0.02
+0.00
+0.00
+0.01
+0.01
+0.03
+0.03
+CRAG-AK
+ACC
+0.60
+0.75
+0.75
+0.66
+0.74
+0.59
+0.59
+0.54
+ASR
+0.33
+0.23
+0.23
+0.11
+0.26
+0.35
+0.34
+0.05
+ACC
+1.00
+0.95
+0.98
+0.82
+0.99
+0.99
+1.00
+0.52
+JamInject
+ASR
+0.00
+0.05
+0.00
+0.15
+0.00
+0.01
+0.00
+0.04
+JamOracle
+ACC
+0.95
+0.87
+0.91
+0.81
+0.95
+0.95
+0.95
+0.52
+ASR
+0.05
+0.12
+0.01
+0.15
+0.00
+0.05
+0.05
+0.04
+ACC
+1.00
+0.96
+0.97
+0.83
+0.98
+0.99
+1.00
+0.56
+JamOpt
+ASR
+0.00
+0.04
+0.00
+0.14
+0.00
+0.01
+0.00
+0.04
+AP
+ACC
+0.99
+0.96
+1.00
+0.74
+0.98
+1.00
+0.99
+0.48
+ASR
+0.00
+0.04
+0.00
+0.22
+0.00
+0.00
+0.00
+0.08
+ACC
+1.00
+0.97
+0.98
+0.77
+0.99
+1.00
+1.00
+0.48
+BadRAG
+ASR
+0.00
+0.03
+0.00
+0.23
+0.00
+0.00
+0.00
+0.08
+Phantom
+ACC
+1.00
+0.95
+0.98
+0.76
+0.99
+1.00
+1.00
+0.49
+ASR
+0.00
+0.05
+0.00
+0.24
+0.00
+0.00
+0.00
+0.08
+33
+
+
+
+================================================================================
+ページ 34
+================================================================================
+Table 23: The results of detection-based defenses against all poisoning attacks on NQ dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.04
+0.04
+0.09
+0.07
+0.46
+0.22
+0.14
+0.25
+0.17
+0.24
+0.00
+0.63
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+1.00
+1.00
+0.94
+1.00
+0.00
+0.00
+0.00
+0.85
+0.95
+0.81
+1.00
+0.51
+0.00
+DACC
+0.04
+0.04
+0.09
+0.07
+0.22
+0.14
+0.05
+0.25
+0.17
+0.24
+0.00
+0.63
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+1.00
+1.00
+0.94
+1.00
+0.91
+0.90
+1.00
+0.85
+0.95
+0.81
+1.00
+0.51
+0.00
+TrustRAG
+DACC
+0.99
+0.98
+0.98
+0.99
+0.93
+0.97
+0.99
+0.93
+0.93
+0.94
+1.00
+0.85
+0.74
+FPR
+0.03
+0.02
+0.02
+0.01
+0.10
+0.03
+0.04
+0.09
+0.07
+0.06
+0.00
+0.16
+0.26
+FNR
+0.00
+0.01
+0.00
+0.01
+0.02
+0.00
+0.01
+0.01
+0.03
+0.00
+0.00
+0.04
+0.00
+Table 24: The results of detection-based defenses against all poisoning attacks on HotpotQA dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.00
+0.00
+0.00
+0.00
+0.18
+0.01
+0.00
+0.04
+0.00
+0.43
+0.96
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.02
+0.07
+0.00
+0.00
+FNR
+1.00
+1.00
+1.00
+1.00
+0.11
+0.01
+0.00
+0.97
+1.00
+0.56
+0.00
+0.00
+0.00
+DACC
+0.00
+0.00
+0.00
+0.00
+0.02
+0.00
+0.00
+0.04
+0.00
+0.20
+0.00
+0.60
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+1.00
+1.00
+1.00
+1.00
+0.99
+1.00
+1.00
+0.97
+1.00
+0.80
+1.00
+0.59
+0.01
+TrustRAG
+DACC
+1.00
+1.00
+1.00
+1.00
+0.99
+1.00
+1.00
+0.97
+1.00
+0.90
+1.00
+0.81
+0.69
+FPR
+0.00
+0.00
+0.00
+0.00
+0.01
+0.00
+0.00
+0.04
+0.00
+0.10
+0.00
+0.19
+0.31
+FNR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.08
+0.00
+Table 25: The results of detection-based defenses against all poisoning attacks on MS-MARCO
+dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.07
+0.17
+0.16
+0.33
+0.55
+0.50
+0.05
+0.40
+0.44
+0.70
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+0.98
+0.98
+0.90
+0.75
+0.03
+0.56
+0.97
+0.69
+0.68
+0.37
+0.00
+0.00
+0.00
+DACC
+0.07
+0.16
+0.16
+0.17
+0.34
+0.32
+0.05
+0.38
+0.44
+0.52
+0.00
+0.95
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.98
+0.99
+0.90
+0.96
+0.84
+0.76
+0.97
+0.71
+0.68
+0.60
+1.00
+0.08
+0.00
+TrustRAG
+DACC
+0.95
+0.89
+0.91
+0.91
+0.79
+0.83
+0.96
+0.79
+0.69
+0.73
+1.00
+0.51
+0.50
+FPR
+0.10
+0.21
+0.10
+0.13
+0.28
+0.21
+0.05
+0.24
+0.35
+0.28
+0.01
+0.49
+0.50
+FNR
+0.01
+0.01
+0.01
+0.02
+0.07
+0.01
+0.01
+0.02
+0.04
+0.05
+0.00
+0.02
+0.00
+Table 26: The results of detection-based defenses against all poisoning attacks on BoolQ dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.04
+0.06
+0.11
+0.13
+0.12
+0.23
+0.03
+0.27
+0.15
+0.36
+0.98
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.03
+0.00
+0.00
+FNR
+1.00
+1.00
+0.94
+0.99
+0.98
+0.84
+0.99
+0.80
+0.95
+0.71
+0.00
+0.00
+0.00
+DACC
+0.04
+0.06
+0.11
+0.12
+0.11
+0.22
+0.03
+0.27
+0.15
+0.30
+0.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+1.00
+1.00
+0.94
+0.99
+0.99
+0.85
+0.99
+0.80
+0.95
+0.77
+1.00
+0.00
+0.00
+TrustRAG
+DACC
+0.97
+0.95
+0.92
+0.93
+0.91
+0.86
+0.98
+0.84
+0.89
+0.85
+1.00
+0.55
+0.55
+FPR
+0.07
+0.13
+0.11
+0.10
+0.17
+0.17
+0.03
+0.20
+0.17
+0.18
+0.00
+0.45
+0.45
+FNR
+0.00
+0.01
+0.00
+0.03
+0.03
+0.01
+0.00
+0.01
+0.01
+0.02
+0.00
+0.00
+0.00
+Table 27: The results of detection-based defenses against all poisoning attacks on SQuAD dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.05
+0.05
+0.03
+0.04
+0.09
+0.03
+0.08
+0.08
+0.10
+0.38
+0.98
+0.99
+0.99
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.05
+0.03
+0.01
+0.01
+FNR
+1.00
+1.00
+0.97
+0.96
+0.97
+0.00
+0.00
+0.92
+0.93
+0.57
+0.00
+0.00
+0.00
+DACC
+0.05
+0.05
+0.03
+0.04
+0.09
+0.03
+0.04
+0.08
+0.10
+0.20
+0.00
+1.00
+0.99
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+1.00
+1.00
+0.97
+0.96
+0.97
+0.97
+1.00
+0.92
+0.93
+0.81
+1.00
+0.00
+0.02
+TrustRAG
+DACC
+0.95
+0.95
+0.97
+0.96
+0.91
+0.97
+0.96
+0.92
+0.90
+0.84
+1.00
+0.71
+0.71
+FPR
+0.12
+0.12
+0.03
+0.04
+0.16
+0.03
+0.08
+0.08
+0.14
+0.18
+0.00
+0.29
+0.29
+FNR
+0.00
+0.00
+0.00
+0.00
+0.01
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.01
+34
+
+
+
+================================================================================
+ページ 35
+================================================================================
+Table 28: The results of detection-based defenses against all poisoning attacks on NQ-EX-M dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.52
+0.47
+0.80
+0.74
+0.80
+0.93
+0.60
+0.94
+0.76
+0.92
+0.98
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+0.96
+0.98
+0.35
+0.51
+0.43
+0.18
+0.71
+0.14
+0.58
+0.16
+0.04
+0.00
+0.00
+DACC
+0.52
+0.47
+0.80
+0.74
+0.80
+0.93
+0.60
+0.94
+0.76
+0.92
+0.98
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.96
+0.98
+0.35
+0.51
+0.43
+0.18
+0.71
+0.14
+0.58
+0.16
+0.04
+0.00
+0.00
+TrustRAG
+DACC
+0.49
+0.53
+0.20
+0.25
+0.21
+0.09
+0.40
+0.08
+0.25
+0.09
+0.02
+0.00
+0.00
+FPR
+0.94
+0.93
+0.85
+0.86
+0.98
+0.95
+0.78
+0.95
+0.92
+0.95
+0.99
+1.00
+1.00
+FNR
+0.03
+0.01
+0.08
+0.09
+0.02
+0.03
+0.12
+0.01
+0.10
+0.02
+0.02
+0.00
+0.00
+Table 29: The results of detection-based defenses against all poisoning attacks on HotpotQA-EX-M
+dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.50
+0.54
+0.92
+0.91
+0.85
+0.94
+0.64
+0.98
+0.60
+1.00
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+0.98
+0.93
+0.20
+0.21
+0.32
+0.14
+0.70
+0.06
+0.80
+0.01
+0.00
+0.00
+0.00
+DACC
+0.50
+0.54
+0.92
+0.91
+0.85
+0.94
+0.64
+0.98
+0.60
+1.00
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.98
+0.93
+0.20
+0.21
+0.32
+0.14
+0.70
+0.06
+0.80
+0.01
+0.00
+0.00
+0.00
+TrustRAG
+DACC
+0.50
+0.46
+0.08
+0.08
+0.15
+0.06
+0.35
+0.02
+0.40
+0.01
+0.00
+0.00
+0.00
+FPR
+0.95
+0.95
+0.95
+0.96
+1.00
+0.97
+0.88
+1.00
+0.86
+1.00
+1.00
+1.00
+1.00
+FNR
+0.01
+0.01
+0.06
+0.05
+0.00
+0.04
+0.07
+0.01
+0.07
+0.00
+0.00
+0.00
+0.00
+Table 30: The results of detection-based defenses against all poisoning attacks on MS-MARCO-EX-
+M dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.43
+0.49
+0.73
+0.75
+0.74
+0.97
+0.31
+0.99
+0.91
+0.99
+0.98
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.03
+0.00
+0.00
+FNR
+0.96
+0.92
+0.42
+0.44
+0.49
+0.06
+0.90
+0.04
+0.25
+0.02
+0.00
+0.00
+0.00
+DACC
+0.44
+0.49
+0.73
+0.68
+0.74
+0.95
+0.31
+0.99
+0.91
+0.98
+0.98
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.96
+0.93
+0.42
+0.58
+0.49
+0.11
+0.90
+0.04
+0.25
+0.05
+0.04
+0.00
+0.00
+TrustRAG
+DACC
+0.58
+0.52
+0.29
+0.33
+0.28
+0.07
+0.70
+0.02
+0.10
+0.03
+0.01
+0.00
+0.00
+FPR
+0.89
+0.90
+0.79
+0.82
+0.96
+0.95
+0.46
+0.99
+0.98
+0.98
+0.99
+1.00
+1.00
+FNR
+0.01
+0.02
+0.05
+0.09
+0.03
+0.03
+0.05
+0.03
+0.03
+0.03
+0.03
+0.00
+0.00
+Table 31: The results of detection-based defenses against all poisoning attacks on BoolQ-EX-M
+dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.47
+0.45
+0.83
+0.82
+0.72
+0.96
+0.45
+0.98
+0.90
+0.96
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+0.99
+0.98
+0.33
+0.42
+0.57
+0.08
+0.84
+0.04
+0.26
+0.06
+0.00
+0.00
+0.00
+DACC
+0.47
+0.45
+0.83
+0.82
+0.72
+0.96
+0.45
+0.98
+0.90
+0.94
+0.99
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.99
+0.98
+0.33
+0.42
+0.57
+0.08
+0.84
+0.04
+0.26
+0.09
+0.01
+0.00
+0.00
+TrustRAG
+DACC
+0.54
+0.55
+0.18
+0.18
+0.28
+0.05
+0.57
+0.03
+0.10
+0.06
+0.01
+0.00
+0.00
+FPR
+0.93
+0.91
+0.88
+0.93
+0.95
+0.96
+0.64
+0.98
+0.99
+0.96
+0.99
+1.00
+1.00
+FNR
+0.02
+0.02
+0.03
+0.06
+0.02
+0.04
+0.04
+0.00
+0.02
+0.00
+0.00
+0.00
+0.00
+35
+
+
+
+================================================================================
+ページ 36
+================================================================================
+Table 32: The results of detection-based defenses against all poisoning attacks on SQuAD-EX-M
+dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.56
+0.59
+0.75
+0.76
+0.75
+0.91
+0.49
+0.96
+0.54
+1.00
+1.00
+0.99
+0.99
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.01
+0.01
+FNR
+0.93
+0.90
+0.44
+0.43
+0.65
+0.22
+0.78
+0.08
+0.76
+0.01
+0.00
+0.00
+0.00
+DACC
+0.56
+0.59
+0.75
+0.76
+0.75
+0.91
+0.49
+0.96
+0.54
+1.00
+0.99
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.93
+0.90
+0.44
+0.43
+0.65
+0.22
+0.78
+0.08
+0.76
+0.01
+0.01
+0.00
+0.00
+TrustRAG
+DACC
+0.44
+0.41
+0.26
+0.24
+0.25
+0.08
+0.53
+0.04
+0.47
+0.00
+0.02
+0.00
+0.00
+FPR
+0.97
+0.98
+0.84
+0.86
+0.98
+0.95
+0.66
+0.97
+0.81
+1.00
+0.98
+1.00
+1.00
+FNR
+0.04
+0.03
+0.05
+0.05
+0.00
+0.09
+0.05
+0.01
+0.03
+0.00
+0.00
+0.00
+0.00
+Table 33: The results of detection-based defenses against all poisoning attacks on NQ-EX-L dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.81
+0.76
+0.92
+0.89
+0.93
+1.00
+0.83
+0.98
+0.87
+0.98
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+0.57
+0.63
+0.09
+0.17
+0.24
+0.00
+0.30
+0.02
+0.28
+0.03
+0.00
+0.00
+0.00
+DACC
+0.81
+0.76
+0.92
+0.89
+0.93
+1.00
+0.83
+0.98
+0.87
+0.98
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.57
+0.63
+0.09
+0.17
+0.24
+0.00
+0.30
+0.02
+0.28
+0.03
+0.00
+0.00
+0.00
+TrustRAG
+DACC
+0.19
+0.24
+0.09
+0.11
+0.07
+0.01
+0.17
+0.02
+0.13
+0.03
+0.00
+0.00
+0.00
+FPR
+0.99
+0.98
+0.92
+0.92
+1.00
+0.99
+0.91
+0.98
+0.97
+0.98
+1.00
+1.00
+1.00
+FNR
+0.02
+0.02
+0.00
+0.04
+0.01
+0.00
+0.05
+0.00
+0.04
+0.00
+0.00
+0.00
+0.00
+Table 34: The results of detection-based defenses against all poisoning attacks on HotpotQA-EX-L
+dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.82
+0.83
+0.98
+0.98
+0.95
+1.00
+0.87
+1.00
+0.83
+1.00
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+0.57
+0.51
+0.02
+0.02
+0.15
+0.00
+0.27
+0.00
+0.38
+0.00
+0.00
+0.00
+0.00
+DACC
+0.82
+0.83
+0.98
+0.98
+0.95
+1.00
+0.87
+1.00
+0.83
+1.00
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.57
+0.51
+0.02
+0.02
+0.15
+0.00
+0.27
+0.00
+0.38
+0.00
+0.00
+0.00
+0.00
+TrustRAG
+DACC
+0.18
+0.17
+0.02
+0.02
+0.05
+0.00
+0.13
+0.00
+0.17
+0.00
+0.00
+0.00
+0.00
+FPR
+0.98
+0.98
+0.98
+0.98
+1.00
+1.00
+0.94
+1.00
+0.95
+1.00
+1.00
+1.00
+1.00
+FNR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.03
+0.00
+0.04
+0.00
+0.00
+0.00
+0.00
+Table 35: The results of detection-based defenses against all poisoning attacks on MS-MARCO-EX-L
+dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.73
+0.72
+0.92
+0.91
+0.88
+1.00
+0.52
+1.00
+0.98
+1.00
+0.98
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.02
+0.00
+0.00
+FNR
+0.74
+0.75
+0.11
+0.17
+0.36
+0.00
+0.64
+0.00
+0.05
+0.00
+0.00
+0.00
+0.00
+DACC
+0.73
+0.72
+0.92
+0.88
+0.88
+1.00
+0.52
+1.00
+0.98
+1.00
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.74
+0.76
+0.11
+0.28
+0.36
+0.01
+0.64
+0.00
+0.05
+0.00
+0.00
+0.00
+0.00
+TrustRAG
+DACC
+0.27
+0.28
+0.10
+0.12
+0.12
+0.01
+0.50
+0.01
+0.02
+0.01
+0.00
+0.00
+0.00
+FPR
+0.99
+0.97
+0.92
+0.94
+0.99
+0.99
+0.62
+0.99
+0.99
+0.99
+1.00
+1.00
+1.00
+FNR
+0.03
+0.04
+0.00
+0.03
+0.04
+0.00
+0.03
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+36
+
+
+
+================================================================================
+ページ 37
+================================================================================
+Table 36: The results of detection-based defenses against all poisoning attacks on BoolQ-EX-L
+dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.77
+0.72
+0.93
+0.94
+0.88
+0.98
+0.75
+1.00
+0.96
+0.98
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+0.63
+0.69
+0.08
+0.13
+0.32
+0.02
+0.48
+0.00
+0.10
+0.03
+0.00
+0.00
+0.00
+DACC
+0.77
+0.72
+0.93
+0.94
+0.88
+0.98
+0.75
+1.00
+0.96
+0.97
+0.99
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.63
+0.69
+0.08
+0.13
+0.32
+0.02
+0.48
+0.00
+0.10
+0.04
+0.01
+0.00
+0.00
+TrustRAG
+DACC
+0.23
+0.27
+0.07
+0.05
+0.12
+0.02
+0.25
+0.00
+0.05
+0.03
+0.01
+0.00
+0.00
+FPR
+1.00
+1.00
+0.94
+0.98
+1.00
+0.98
+0.85
+1.00
+1.00
+0.98
+1.00
+1.00
+1.00
+FNR
+0.03
+0.04
+0.00
+0.02
+0.01
+0.00
+0.05
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Table 37: The results of detection-based defenses against all poisoning attacks on SQuAD-EX-L
+dataset.
+Defense
+Metric
+Targeted poisoning attack
+DoS attack
+Trigger-based DoS attack
+BPRAG WPRAG
+BPI
+WPI AGGD CRAG-AS CRAG-AK JamInject JamOracle JamOpt
+AP
+BadRAG Phantom
+PPL
+DACC
+0.88
+0.88
+0.94
+0.95
+0.95
+0.99
+0.73
+1.00
+0.77
+1.00
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+FNR
+0.43
+0.41
+0.10
+0.08
+0.18
+0.04
+0.44
+0.00
+0.48
+0.00
+0.00
+0.00
+0.00
+DACC
+0.88
+0.89
+0.94
+0.95
+0.95
+0.99
+0.73
+1.00
+0.77
+1.00
+1.00
+1.00
+1.00
+FPR
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Norm
+FNR
+0.43
+0.41
+0.10
+0.08
+0.18
+0.04
+0.44
+0.00
+0.48
+0.00
+0.00
+0.00
+0.00
+TrustRAG
+DACC
+0.12
+0.11
+0.05
+0.05
+0.05
+0.01
+0.28
+0.00
+0.23
+0.00
+0.00
+0.00
+0.00
+FPR
+1.00
+1.00
+0.96
+0.96
+1.00
+1.00
+0.84
+1.00
+0.92
+1.00
+1.00
+1.00
+1.00
+FNR
+0.02
+0.02
+0.03
+0.02
+0.01
+0.01
+0.02
+0.00
+0.05
+0.00
+0.00
+0.00
+0.00
+37
+
+
+
+================================================================================
+ページ 38
+================================================================================
+GPT-4o-mini
+GPT-4o
+GPT-4.1
+GPT-4.1-mini
+GPT-4.1-nano
+Gemini
+Claude
+DeepSeek-R1
+DeepSeek-V3
+Llama-4
+BPRAG
+WPRAG
+BPI
+WPI
+AGGD
+CRAG-AS
+CRAG-AK
+JamInject
+JamOracle
+JamOpt
+AP
+BadRAG
+Phantom
+ 
+0.62 0.64 0.84 0.85 0.72 0.74 0.77 0.70 0.76 0.81
+0.59 0.65 0.80 0.80 0.73 0.75 0.85 0.67 0.79 0.83
+0.78 0.75 0.85 0.86 0.78 0.63 0.90 0.81 0.74 0.85
+0.78 0.70 0.86 0.86 0.76 0.62 0.90 0.80 0.71 0.88
+0.86 0.83 0.96 0.96 0.90 0.93 0.95 0.89 0.91 0.94
+0.82 0.82 0.88 0.84 0.86 0.82 0.97 0.85 0.85 0.85
+0.38 0.39 0.56 0.56 0.50 0.39 0.70 0.45 0.43 0.54
+0.97 0.95 0.97 0.95 0.95 0.97 0.97 0.97 0.97 0.98
+0.95 0.94 0.97 0.96 0.97 0.96 0.97 0.97 0.97 0.97
+0.98 0.97 0.98 0.97 0.97 0.98 0.98 0.98 0.97 0.98
+0.94 0.87 0.94 0.92 0.88 0.98 0.94 0.85 0.91 0.94
+0.99 0.99 1.00 1.00 0.99 1.00 1.00 1.00 1.00 0.98
+1.00 1.00 1.00 1.00 0.99 1.00 1.00 1.00 1.00 0.98
+ACC
+GPT-4o-mini
+GPT-4o
+GPT-4.1
+GPT-4.1-mini
+GPT-4.1-nano
+Gemini
+Claude
+DeepSeek-R1
+DeepSeek-V3
+Llama-4
+BPRAG
+WPRAG
+BPI
+WPI
+AGGD
+CRAG-AS
+CRAG-AK
+JamInject
+JamOracle
+JamOpt
+AP
+BadRAG
+Phantom
+ 
+0.12 0.07 0.11 0.15 0.27 0.37 0.10 0.26 0.35 0.20
+0.17 0.11 0.17 0.18 0.26 0.32 0.13 0.32 0.31 0.19
+0.16 0.17 0.12 0.12 0.20 0.35 0.08 0.17 0.24 0.14
+0.16 0.23 0.12 0.12 0.21 0.37 0.09 0.18 0.28 0.11
+0.03 0.01 0.02 0.04 0.06 0.11 0.03 0.08 0.11 0.06
+0.14 0.08 0.09 0.13 0.12 0.17 0.03 0.11 0.12 0.13
+0.50 0.31 0.40 0.44 0.45 0.57 0.28 0.50 0.55 0.42
+0.03 0.05 0.03 0.03 0.04 0.03 0.03 0.03 0.03 0.02
+0.05 0.06 0.03 0.03 0.03 0.03 0.03 0.03 0.03 0.03
+0.00 0.03 0.00 0.01 0.00 0.00 0.02 0.01 0.01 0.00
+0.05 0.11 0.05 0.03 0.09 0.01 0.04 0.13 0.07 0.04
+0.01 0.01 0.00 0.00 0.01 0.00 0.00 0.00 0.00 0.02
+0.00 0.00 0.00 0.00 0.01 0.00 0.00 0.00 0.00 0.02
+ASR
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+(a) NQ-EX-M dataset
+GPT-4o-mini
+GPT-4o
+GPT-4.1
+GPT-4.1-mini
+GPT-4.1-nano
+Gemini
+Claude
+DeepSeek-R1
+DeepSeek-V3
+Llama-4
+BPRAG
+WPRAG
+BPI
+WPI
+AGGD
+CRAG-AS
+CRAG-AK
+JamInject
+JamOracle
+JamOpt
+AP
+BadRAG
+Phantom
+ 
+0.89 0.90 0.94 0.94 0.91 0.92 0.71 0.93 0.94 0.96
+0.89 0.82 0.91 0.89 0.90 0.90 0.70 0.87 0.93 0.93
+0.89 0.88 0.90 0.90 0.87 0.90 0.72 0.89 0.89 0.91
+0.89 0.89 0.90 0.89 0.89 0.89 0.71 0.88 0.90 0.91
+0.97 0.94 0.98 0.98 0.96 0.99 0.98 0.96 0.97 0.98
+0.96 0.96 0.98 0.97 0.95 0.99 0.99 0.98 0.97 0.99
+0.72 0.74 0.80 0.80 0.78 0.77 0.85 0.77 0.76 0.78
+0.98 0.98 0.98 0.98 0.98 0.98 0.98 0.98 0.98 0.98
+0.97 0.97 0.98 0.97 0.97 0.97 0.98 0.98 0.98 0.99
+0.97 0.98 0.98 0.97 0.97 0.98 0.98 0.98 0.98 0.97
+0.95 0.91 0.96 0.95 0.93 0.99 0.95 0.93 0.94 0.96
+0.99 0.98 1.00 1.00 1.00 1.00 1.00 0.99 1.00 1.00
+1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00
+ACC
+GPT-4o-mini
+GPT-4o
+GPT-4.1
+GPT-4.1-mini
+GPT-4.1-nano
+Gemini
+Claude
+DeepSeek-R1
+DeepSeek-V3
+Llama-4
+BPRAG
+WPRAG
+BPI
+WPI
+AGGD
+CRAG-AS
+CRAG-AK
+JamInject
+JamOracle
+JamOpt
+AP
+BadRAG
+Phantom
+ 
+0.03 0.01 0.03 0.02 0.07 0.12 0.07 0.05 0.05 0.05
+0.04 0.02 0.03 0.06 0.07 0.13 0.05 0.08 0.07 0.09
+0.08 0.08 0.08 0.09 0.09 0.09 0.07 0.09 0.09 0.09
+0.09 0.08 0.08 0.08 0.12 0.10 0.05 0.09 0.08 0.09
+0.00 0.00 0.00 0.01 0.02 0.01 0.00 0.01 0.00 0.02
+0.00 0.00 0.00 0.01 0.00 0.00 0.01 0.01 0.01 0.01
+0.21 0.14 0.17 0.20 0.21 0.21 0.14 0.20 0.23 0.22
+0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02
+0.03 0.03 0.02 0.02 0.02 0.03 0.02 0.02 0.02 0.01
+0.01 0.01 0.00 0.01 0.00 0.00 0.02 0.01 0.00 0.00
+0.03 0.09 0.03 0.03 0.05 0.01 0.03 0.05 0.04 0.03
+0.01 0.02 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+ASR
+0.70
+0.75
+0.80
+0.85
+0.90
+0.95
+1.00
+0.00
+0.05
+0.10
+0.15
+0.20
+(b) NQ-EX-L dataset
+Figure 5: The results of poisoning attacks under different LLMs of RAG on NQ-EX-M and NQ-EX-L
+datasets.
+38
+
+
+
+================================================================================
+ページ 39
+================================================================================
+Table 38: The results of all poisoning attacks under different retrievers on NQ, NQ-EX-M, and
+NQ-EX-L datasets.
+Attack
+Metric
+NQ
+NQ-EX-M
+NQ-EX-L
+Contriever
+Contriever-MS
+ANCE
+Contriever
+Contriever-MS
+ANCE
+Contriever
+Contriever-MS
+ANCE
+BPRAG
+ACC
+0.27
+0.22
+0.22
+0.65
+0.59
+0.51
+0.89
+0.76
+0.81
+ASR
+0.63
+0.66
+0.67
+0.12
+0.18
+0.17
+0.03
+0.08
+0.05
+F1-score
+0.96
+1.00
+1.00
+0.48
+0.50
+0.53
+0.19
+0.21
+0.20
+ACC
+0.24
+0.23
+0.23
+0.62
+0.65
+0.56
+0.84
+0.80
+0.68
+ASR
+0.64
+0.62
+0.63
+0.17
+0.17
+0.27
+0.04
+0.05
+0.12
+WPRAG
+F1-score
+0.96
+0.99
+1.00
+0.53
+0.47
+0.64
+0.24
+0.19
+0.39
+BPI
+ACC
+0.03
+0.00
+0.00
+0.79
+0.45
+0.37
+0.89
+0.67
+0.66
+ASR
+0.94
+1.00
+1.00
+0.18
+0.50
+0.49
+0.08
+0.27
+0.28
+F1-score
+0.91
+1.00
+1.00
+0.20
+0.50
+0.56
+0.08
+0.28
+0.30
+ACC
+0.01
+0.01
+0.00
+0.77
+0.59
+0.60
+0.87
+0.74
+0.79
+ASR
+0.98
+0.98
+1.00
+0.15
+0.36
+0.31
+0.09
+0.23
+0.17
+WPI
+F1-score
+0.93
+0.98
+0.99
+0.26
+0.40
+0.42
+0.11
+0.23
+0.22
+AGGD
+ACC
+0.33
+0.36
+0.28
+0.88
+0.87
+0.84
+0.96
+0.91
+0.91
+ASR
+0.52
+0.52
+0.59
+0.04
+0.06
+0.04
+0.00
+0.02
+0.02
+F1-score
+0.78
+0.79
+0.89
+0.20
+0.18
+0.24
+0.07
+0.08
+0.08
+ACC
+0.06
+0.00
+0.00
+0.81
+0.28
+0.83
+0.97
+0.64
+0.93
+ASR
+0.90
+0.99
+0.99
+0.15
+0.66
+0.13
+0.00
+0.33
+0.03
+CRAG-AS
+F1-score
+0.86
+1.00
+0.97
+0.07
+0.54
+0.08
+0.00
+0.27
+0.02
+CRAG-AK
+ACC
+0.05
+0.04
+0.06
+0.36
+0.15
+0.27
+0.74
+0.46
+0.57
+ASR
+0.89
+0.89
+0.92
+0.46
+0.74
+0.56
+0.20
+0.46
+0.32
+F1-score
+0.95
+1.00
+1.00
+0.40
+0.71
+0.51
+0.17
+0.47
+0.24
+ACC
+0.15
+0.12
+0.15
+0.97
+0.96
+0.98
+0.98
+0.98
+1.00
+ASR
+0.85
+0.88
+0.85
+0.03
+0.04
+0.02
+0.02
+0.02
+0.00
+JamInject
+F1-score
+0.75
+0.88
+0.80
+0.06
+0.06
+0.03
+0.02
+0.03
+0.01
+JamOracle
+ACC
+0.13
+0.04
+0.14
+0.94
+0.78
+0.98
+0.94
+0.84
+1.00
+ASR
+0.87
+0.96
+0.86
+0.05
+0.22
+0.02
+0.04
+0.15
+0.00
+F1-score
+0.83
+0.95
+0.90
+0.25
+0.45
+0.23
+0.14
+0.27
+0.08
+ACC
+0.29
+0.19
+0.24
+0.98
+0.83
+0.77
+0.98
+0.86
+0.84
+ASR
+0.59
+0.67
+0.64
+0.01
+0.13
+0.17
+0.01
+0.11
+0.10
+JamOpt
+F1-score
+0.76
+0.81
+0.80
+0.08
+0.26
+0.34
+0.02
+0.18
+0.19
+AP
+ACC
+0.01
+0.08
+0.24
+0.94
+0.94
+0.95
+0.95
+0.95
+0.94
+ASR
+0.99
+0.90
+0.69
+0.05
+0.05
+0.04
+0.03
+0.05
+0.05
+F1-score
+1.00
+0.89
+0.45
+0.09
+0.00
+0.00
+0.04
+0.00
+0.00
+ACC
+0.65
+0.83
+0.62
+0.99
+0.99
+0.99
+0.99
+0.99
+0.99
+ASR
+0.35
+0.16
+0.35
+0.01
+0.01
+0.01
+0.01
+0.01
+0.01
+BadRAG
+F1-score
+0.37
+0.01
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Phantom
+ACC
+0.99
+0.83
+0.62
+1.00
+0.99
+0.99
+1.00
+0.99
+0.99
+ASR
+0.00
+0.15
+0.35
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+F1-score
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+39
+
+
+
+================================================================================
+ページ 40
+================================================================================
+Table 39: The results of all poisoning attacks under different similarity measurements on NQ, NQ-
+EX-M, and NQ-EX-L datasets.
+Attack
+Metric
+NQ
+NQ-EX-M
+NQ-EX-L
+Cosine similarity
+Dot product
+Cosine similarity
+Dot product
+Cosine similarity
+Dot product
+ACC
+0.27
+0.26
+0.61
+0.60
+0.88
+0.86
+ASR
+0.61
+0.63
+0.13
+0.18
+0.03
+0.01
+BPRAG
+F1-score
+0.96
+0.94
+0.48
+0.47
+0.19
+0.16
+ACC
+0.24
+0.27
+0.63
+0.52
+0.88
+0.75
+ASR
+0.63
+0.63
+0.17
+0.25
+0.04
+0.08
+WPRAG
+F1-score
+0.96
+0.98
+0.53
+0.57
+0.24
+0.31
+BPI
+ACC
+0.03
+0.05
+0.75
+0.69
+0.88
+0.82
+ASR
+0.94
+0.91
+0.16
+0.26
+0.08
+0.14
+F1-score
+0.91
+0.83
+0.20
+0.28
+0.08
+0.15
+ACC
+0.01
+0.01
+0.77
+0.55
+0.87
+0.68
+ASR
+0.98
+0.98
+0.16
+0.38
+0.09
+0.28
+WPI
+F1-score
+0.93
+0.97
+0.26
+0.46
+0.11
+0.31
+AGGD
+ACC
+0.33
+0.30
+0.84
+0.72
+0.92
+0.82
+ASR
+0.55
+0.59
+0.05
+0.18
+0.03
+0.11
+F1-score
+0.78
+0.90
+0.20
+0.40
+0.06
+0.24
+ACC
+0.06
+0.04
+0.81
+0.47
+0.97
+0.76
+ASR
+0.90
+0.93
+0.13
+0.46
+0.00
+0.21
+CRAG-AS
+F1-score
+0.86
+0.89
+0.07
+0.34
+0.00
+0.19
+CRAG-AK
+ACC
+0.05
+0.04
+0.38
+0.35
+0.72
+0.60
+ASR
+0.89
+0.87
+0.47
+0.54
+0.21
+0.35
+F1-score
+0.95
+0.93
+0.40
+0.50
+0.17
+0.30
+ACC
+0.15
+0.08
+0.97
+0.80
+0.98
+0.85
+ASR
+0.85
+0.92
+0.03
+0.20
+0.02
+0.15
+JamInject
+F1-score
+0.75
+0.87
+0.06
+0.32
+0.02
+0.17
+JamOracle
+ACC
+0.13
+0.06
+0.94
+0.84
+0.94
+0.89
+ASR
+0.87
+0.94
+0.05
+0.16
+0.04
+0.11
+F1-score
+0.83
+0.88
+0.25
+0.45
+0.14
+0.28
+ACC
+0.29
+0.18
+0.98
+0.76
+0.98
+0.76
+ASR
+0.59
+0.68
+0.01
+0.18
+0.01
+0.18
+JamOpt
+F1-score
+0.76
+0.81
+0.08
+0.39
+0.02
+0.27
+AP
+ACC
+0.01
+0.01
+0.94
+0.95
+0.95
+0.95
+ASR
+0.99
+0.99
+0.05
+0.04
+0.03
+0.04
+F1-score
+1.00
+1.00
+0.09
+0.00
+0.04
+0.00
+ACC
+0.65
+0.19
+0.99
+0.99
+0.99
+1.00
+ASR
+0.35
+0.81
+0.01
+0.01
+0.01
+0.00
+BadRAG
+F1-score
+0.37
+0.72
+0.00
+0.00
+0.00
+0.00
+Phantom
+ACC
+0.99
+0.03
+1.00
+1.00
+1.00
+1.00
+ASR
+0.00
+0.97
+0.00
+0.00
+0.00
+0.00
+F1-score
+0.00
+0.95
+0.00
+0.00
+0.00
+0.00
+40
+
+
+
+================================================================================
+ページ 41
+================================================================================
+5
+10
+15
+20
+25
+30
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+ACC
+5
+10
+15
+20
+25
+30
+ASR
+5
+10
+15
+20
+25
+30
+F1-score
+BPRAG
+JamInject
+WPRAG
+JamOracle
+BPI
+JamOpt
+WPI
+AP
+AGGD
+BadRAG
+CRAG-AS
+Phantom
+CRAG-AK
+(a) NQ-EX-M dataset
+5
+10
+15
+20
+25
+30
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+ACC
+5
+10
+15
+20
+25
+30
+ASR
+5
+10
+15
+20
+25
+30
+F1-score
+BPRAG
+JamInject
+WPRAG
+JamOracle
+BPI
+JamOpt
+WPI
+AP
+AGGD
+BadRAG
+CRAG-AS
+Phantom
+CRAG-AK
+(b) NQ-EX-L dataset
+Figure 6: The results of poisoning attacks under different top-K of RAG on NQ-EX-M, and NQ-EX-L
+datasets.
+Table 40: The results of all poisoning attacks against different advanced RAG methods on NQ dataset.
+Attack
+Metric
+Naive RAG
+AAR
+SuRe
+Adaptive-RAG
+IRCoT
+FLARE
+RQRAG
+BPRAG
+ACC
+0.27
+0.23
+0.34
+0.27
+0.27
+0.65
+0.26
+ASR
+0.62
+0.66
+0.48
+0.55
+0.60
+0.11
+0.70
+ACC
+0.25
+0.23
+0.33
+0.24
+0.24
+0.65
+0.23
+WPRAG
+ASR
+0.64
+0.66
+0.48
+0.60
+0.64
+0.11
+0.66
+BPI
+ACC
+0.02
+0.00
+0.22
+0.03
+0.03
+0.67
+0.17
+ASR
+0.94
+1.00
+0.67
+0.94
+0.94
+0.04
+0.71
+ACC
+0.01
+0.00
+0.25
+0.00
+0.00
+0.68
+0.26
+WPI
+ASR
+0.97
+1.00
+0.67
+0.97
+0.97
+0.04
+0.58
+AGGD
+ACC
+0.33
+0.33
+0.36
+0.33
+0.34
+0.66
+0.28
+ASR
+0.51
+0.62
+0.37
+0.45
+0.51
+0.06
+0.57
+ACC
+0.06
+0.00
+0.43
+0.06
+0.05
+0.65
+0.18
+CRAG-AS
+ASR
+0.89
+1.00
+0.47
+0.90
+0.85
+0.04
+0.63
+CRAG-AK
+ACC
+0.04
+0.04
+0.30
+0.04
+0.06
+0.64
+0.14
+ASR
+0.88
+0.89
+0.63
+0.83
+0.87
+0.12
+0.73
+ACC
+0.15
+0.13
+0.44
+0.15
+0.15
+0.79
+0.59
+JamInject
+ASR
+0.85
+0.87
+0.47
+0.85
+0.85
+0.02
+0.02
+JamOracle
+ACC
+0.13
+0.03
+0.44
+0.13
+0.12
+0.78
+0.48
+ASR
+0.87
+0.97
+0.21
+0.87
+0.87
+0.05
+0.11
+ACC
+0.29
+0.21
+0.69
+0.26
+0.26
+0.78
+0.58
+JamOpt
+ASR
+0.59
+0.65
+0.04
+0.64
+0.62
+0.03
+0.00
+AP
+ACC
+0.01
+0.42
+0.49
+0.00
+0.00
+0.69
+0.41
+ASR
+0.99
+0.51
+0.26
+1.00
+1.00
+0.01
+0.06
+ACC
+0.65
+0.80
+0.74
+0.66
+0.64
+0.80
+0.70
+BadRAG
+ASR
+0.35
+0.18
+0.07
+0.34
+0.34
+0.03
+0.04
+Phantom
+ACC
+0.99
+0.77
+0.74
+0.96
+0.91
+0.71
+0.77
+ASR
+0.00
+0.20
+0.00
+0.04
+0.02
+0.01
+0.00
+41
+
+
+
+================================================================================
+ページ 42
+================================================================================
+Table 41: The results of all poisoning attacks against different advanced RAG methods on NQ-EX-M
+dataset.
+Attack
+Metric
+Naive RAG
+AAR
+SuRe
+Adaptive-RAG
+IRCoT
+FLARE
+RQRAG
+BPRAG
+ACC
+0.65
+0.59
+0.79
+0.66
+0.63
+0.71
+0.73
+ASR
+0.11
+0.17
+0.08
+0.06
+0.12
+0.04
+0.24
+ACC
+0.59
+0.64
+0.34
+0.63
+0.65
+0.68
+0.79
+WPRAG
+ASR
+0.15
+0.14
+0.44
+0.10
+0.15
+0.07
+0.17
+BPI
+ACC
+0.77
+0.47
+0.76
+0.75
+0.77
+0.73
+0.85
+ASR
+0.16
+0.43
+0.11
+0.19
+0.17
+0.01
+0.11
+ACC
+0.80
+0.56
+0.78
+0.78
+0.79
+0.73
+0.86
+WPI
+ASR
+0.14
+0.35
+0.09
+0.15
+0.14
+0.00
+0.07
+AGGD
+ACC
+0.87
+0.87
+0.80
+0.87
+0.85
+0.72
+0.85
+ASR
+0.04
+0.06
+0.03
+0.02
+0.03
+0.01
+0.10
+ACC
+0.81
+0.49
+0.85
+0.81
+0.86
+0.75
+0.89
+CRAG-AS
+ASR
+0.14
+0.44
+0.01
+0.13
+0.09
+0.00
+0.05
+CRAG-AK
+ACC
+0.36
+0.20
+0.74
+0.37
+0.42
+0.72
+0.70
+ASR
+0.50
+0.65
+0.19
+0.42
+0.39
+0.04
+0.25
+ACC
+0.97
+0.98
+0.87
+0.97
+0.96
+0.83
+0.96
+JamInject
+ASR
+0.03
+0.02
+0.03
+0.03
+0.03
+0.02
+0.00
+JamOracle
+ACC
+0.94
+0.86
+0.83
+0.95
+0.94
+0.82
+0.95
+ASR
+0.05
+0.14
+0.02
+0.05
+0.05
+0.04
+0.00
+ACC
+0.98
+0.82
+0.85
+0.98
+0.97
+0.81
+0.96
+JamOpt
+ASR
+0.01
+0.16
+0.01
+0.01
+0.00
+0.03
+0.00
+AP
+ACC
+0.94
+0.94
+0.83
+0.94
+0.93
+0.71
+0.91
+ASR
+0.05
+0.05
+0.00
+0.05
+0.05
+0.00
+0.02
+ACC
+0.99
+0.99
+0.84
+0.98
+0.98
+0.84
+0.99
+BadRAG
+ASR
+0.01
+0.01
+0.00
+0.02
+0.01
+0.03
+0.00
+Phantom
+ACC
+1.00
+0.99
+0.86
+0.99
+0.98
+0.83
+0.97
+ASR
+0.00
+0.01
+0.00
+0.01
+0.01
+0.01
+0.00
+Table 42: The results of all poisoning attacks against different advanced RAG methods on NQ-EX-L
+dataset.
+Attack
+Metric
+Naive RAG
+AAR
+SuRe
+Adaptive-RAG
+IRCoT
+FLARE
+RQRAG
+BPRAG
+ACC
+0.89
+0.76
+0.84
+0.87
+0.86
+0.77
+0.92
+ASR
+0.03
+0.04
+0.02
+0.01
+0.03
+0.00
+0.06
+ACC
+0.87
+0.79
+0.85
+0.86
+0.84
+0.75
+0.92
+WPRAG
+ASR
+0.05
+0.05
+0.04
+0.02
+0.04
+0.01
+0.04
+BPI
+ACC
+0.90
+0.69
+0.84
+0.88
+0.88
+0.76
+0.93
+ASR
+0.08
+0.25
+0.08
+0.09
+0.08
+0.00
+0.04
+ACC
+0.86
+0.76
+0.82
+0.87
+0.86
+0.78
+0.95
+WPI
+ASR
+0.10
+0.18
+0.07
+0.09
+0.09
+0.00
+0.02
+AGGD
+ACC
+0.97
+0.94
+0.89
+0.96
+0.95
+0.78
+0.94
+ASR
+0.00
+0.02
+0.01
+0.00
+0.00
+0.00
+0.03
+ACC
+0.97
+0.80
+0.90
+0.97
+0.95
+0.76
+0.96
+CRAG-AS
+ASR
+0.00
+0.16
+0.00
+0.00
+0.00
+0.00
+0.01
+CRAG-AK
+ACC
+0.74
+0.50
+0.86
+0.73
+0.74
+0.75
+0.89
+ASR
+0.20
+0.39
+0.07
+0.19
+0.18
+0.02
+0.10
+ACC
+0.98
+1.00
+0.84
+0.98
+0.97
+0.84
+0.96
+JamInject
+ASR
+0.02
+0.00
+0.03
+0.02
+0.02
+0.03
+0.00
+JamOracle
+ACC
+0.94
+0.91
+0.85
+0.97
+0.96
+0.82
+0.95
+ASR
+0.04
+0.09
+0.01
+0.03
+0.03
+0.03
+0.00
+ACC
+0.98
+0.86
+0.86
+0.98
+0.97
+0.84
+0.96
+JamOpt
+ASR
+0.01
+0.12
+0.01
+0.01
+0.00
+0.03
+0.00
+AP
+ACC
+0.95
+0.96
+0.84
+0.94
+0.94
+0.71
+0.91
+ASR
+0.03
+0.04
+0.00
+0.06
+0.05
+0.01
+0.01
+ACC
+0.99
+0.99
+0.89
+0.99
+0.98
+0.83
+0.99
+BadRAG
+ASR
+0.01
+0.01
+0.00
+0.01
+0.01
+0.04
+0.00
+Phantom
+ACC
+1.00
+0.99
+0.92
+0.99
+0.98
+0.83
+0.99
+ASR
+0.00
+0.01
+0.00
+0.01
+0.01
+0.01
+0.00
+42
+
+
+
+================================================================================
+ページ 43
+================================================================================
+Table 43: The results of all poisoning attacks against multi-turn RAG on NQ dataset under different
+LLMs of RAG.
+Attack
+Metric
+GPT-4o-mini
+GPT-4.1-nano
+GPT-4.1-mini
+GPT-4.1
+Claude-3.7-Sonnet
+Gemini-2.0-Flash
+DeepSeek-V3
+BPRAG
+ACC
+0.49
+0.42
+0.58
+0.38
+0.34
+0.30
+0.45
+ASR
+0.44
+0.46
+0.38
+0.26
+0.39
+0.42
+0.38
+F1-score
+0.65
+0.65
+0.66
+0.69
+0.65
+0.68
+0.66
+ACC
+0.50
+0.42
+0.56
+0.33
+0.33
+0.30
+0.43
+ASR
+0.38
+0.43
+0.36
+0.25
+0.34
+0.41
+0.38
+WPRAG
+F1-score
+0.58
+0.61
+0.57
+0.59
+0.57
+0.56
+0.62
+BPI
+ACC
+0.58
+0.31
+0.67
+0.10
+0.15
+0.14
+0.39
+ASR
+0.17
+0.11
+0.05
+0.04
+0.02
+0.29
+0.24
+F1-score
+0.52
+0.50
+0.54
+0.51
+0.53
+0.52
+0.52
+ACC
+0.60
+0.34
+0.64
+0.15
+0.14
+0.17
+0.38
+ASR
+0.16
+0.08
+0.03
+0.02
+0.03
+0.27
+0.19
+WPI
+F1-score
+0.47
+0.47
+0.48
+0.48
+0.49
+0.46
+0.47
+AGGD
+ACC
+0.52
+0.44
+0.59
+0.32
+0.27
+0.31
+0.51
+ASR
+0.30
+0.39
+0.28
+0.17
+0.26
+0.32
+0.27
+F1-score
+0.52
+0.50
+0.49
+0.46
+0.49
+0.51
+0.50
+ACC
+0.44
+0.35
+0.57
+0.12
+0.13
+0.10
+0.25
+ASR
+0.34
+0.25
+0.24
+0.27
+0.25
+0.43
+0.41
+CRAG-AS
+F1-score
+0.49
+0.50
+0.51
+0.54
+0.53
+0.53
+0.51
+CRAG-AK
+ACC
+0.36
+0.20
+0.41
+0.15
+0.14
+0.13
+0.25
+ASR
+0.48
+0.39
+0.42
+0.32
+0.36
+0.53
+0.52
+F1-score
+0.64
+0.63
+0.63
+0.66
+0.63
+0.66
+0.63
+ACC
+0.51
+0.34
+0.46
+0.29
+0.15
+0.33
+0.36
+ASR
+0.47
+0.62
+0.48
+0.69
+0.80
+0.61
+0.62
+JamInject
+F1-score
+0.42
+0.42
+0.42
+0.43
+0.43
+0.42
+0.40
+JamOracle
+ACC
+0.73
+0.36
+0.54
+0.24
+0.09
+0.23
+0.53
+ASR
+0.21
+0.61
+0.32
+0.72
+0.70
+0.55
+0.40
+F1-score
+0.54
+0.55
+0.54
+0.52
+0.52
+0.54
+0.52
+ACC
+0.79
+0.62
+0.74
+0.46
+0.26
+0.53
+0.63
+ASR
+0.15
+0.31
+0.19
+0.45
+0.67
+0.34
+0.33
+JamOpt
+F1-score
+0.23
+0.24
+0.23
+0.24
+0.24
+0.24
+0.26
+AP
+ACC
+0.66
+0.60
+0.66
+0.41
+0.25
+0.22
+0.67
+ASR
+0.30
+0.37
+0.30
+0.55
+0.70
+0.72
+0.29
+F1-score
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+ACC
+0.75
+0.57
+0.71
+0.32
+0.23
+0.26
+0.54
+ASR
+0.20
+0.40
+0.26
+0.64
+0.69
+0.67
+0.40
+BadRAG
+F1-score
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Phantom
+ACC
+0.76
+0.55
+0.69
+0.35
+0.21
+0.29
+0.54
+ASR
+0.20
+0.40
+0.27
+0.61
+0.73
+0.65
+0.43
+F1-score
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+Table 44: The results of all poisoning attacks against multimodal RAG on InfoSeek datasets across
+different VLMs. “Adaptive+BPRAG” means we adapt the BPRAG attack to the multimodal RAG
+setting.
+Attack
+Metric
+GPT-4o-mini
+GPT-4o
+GPT-4.1-mini
+GPT-4.1
+Claude-3.7-Sonnet
+Gemini-2.0-Flash
+Dirty-label
+ACC
+0.01
+0.00
+0.02
+0.03
+0.05
+0.04
+ASR
+0.93
+0.96
+0.90
+0.94
+0.74
+0.68
+ACC
+0.07
+0.10
+0.10
+0.11
+0.12
+0.09
+Adaptive+BPRAG
+ASR
+0.81
+0.81
+0.82
+0.85
+0.79
+0.66
+Adaptive+BPI
+ACC
+0.00
+0.00
+0.01
+0.01
+0.05
+0.00
+ASR
+0.98
+0.95
+0.88
+0.45
+0.89
+0.99
+ACC
+0.02
+0.03
+0.00
+0.00
+0.20
+0.03
+Adaptive+CRAG-AS
+ASR
+0.97
+0.90
+0.85
+0.98
+0.75
+0.70
+Adaptive+CRAG-AK
+ACC
+0.01
+0.04
+0.01
+0.02
+0.05
+0.03
+ASR
+0.97
+0.95
+0.87
+0.98
+0.92
+0.83
+ACC
+0.00
+0.00
+0.03
+0.00
+0.05
+0.00
+Adaptive+JamInject
+ASR
+1.00
+1.00
+0.97
+1.00
+0.95
+1.00
+Adaptive+JamOracle
+ACC
+0.11
+0.19
+0.20
+0.32
+0.15
+0.04
+ASR
+0.89
+0.81
+0.80
+0.68
+0.85
+0.96
+43
+
+
+
+================================================================================
+ページ 44
+================================================================================
+Table 45: The results of all poisoning attacks against RAG based LLM agent systems across various
+LLMs. “Adaptive+BPRAG” means we adapt the BPRAG attack to the RAG based LLM agent
+systems.
+Attack
+Metric
+GPT-4o
+GPT-4o-mini
+GPT-4.1-mini
+Claude-3-7-Sonnet
+DeepSeek-V3
+Gemini-2.0-Flash
+Hunyuan-Lite
+ACC
+0.12
+0.46
+0.43
+0.37
+0.63
+0.27
+0.46
+AgentPoison
+ASR
+0.83
+0.35
+0.49
+0.04
+0.16
+0.59
+0.26
+ACC
+0.18
+0.35
+0.4
+0.44
+0.48
+0.25
+0.27
+Adaptive+BPRAG
+ASR
+0.25
+0.4
+0.42
+0.47
+0.39
+0.67
+0.66
+ACC
+0.05
+0.28
+0.36
+0.6
+0.25
+0.04
+0.41
+Adaptive+BPI
+ASR
+0.28
+0.44
+0.44
+0.33
+0.75
+0.93
+0.54
+ACC
+0.07
+0.22
+0.33
+0.48
+0.14
+0.21
+0.16
+Adaptive+CRAG-AS
+ASR
+0.19
+0.37
+0.33
+0.46
+0.86
+0.41
+0.79
+ACC
+0.03
+0.11
+0.26
+0.32
+0.15
+0.03
+0.14
+Adaptive+CRAG-AK
+ASR
+0.51
+0.65
+0.59
+0.66
+0.84
+0.94
+0.79
+ACC
+0.12
+0.21
+0.16
+0.45
+0.16
+0.18
+0.21
+Adaptive+JamInJect
+ASR
+0.86
+0.77
+0.81
+0.43
+0.82
+0.79
+0.67
+ACC
+0.21
+0.5
+0.56
+0.61
+0.6
+0.38
+0.56
+Adaptive+JamOracle
+ASR
+0.75
+0.36
+0.3
+0.21
+0.16
+0.55
+0.13
+ACC
+0.07
+0.4
+0.38
+0.54
+0.58
+0.31
+0.51
+Adaptive+BadRAG
+ASR
+0.91
+0.47
+0.5
+0.35
+0.2
+0.64
+0.25
+44
+

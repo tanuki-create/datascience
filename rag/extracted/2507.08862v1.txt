@@ -1,0 +1,2024 @@
+
+================================================================================
+ページ 1
+================================================================================
+RAG Safety: Exploring Knowledge Poisoning Attacks to Retrieval-Augmented Generation
+Tianzhe Zhaoa,∗, Jiaoyan Chenb, Yanchi Rua, Haiping Zhua, Nan Huc, Jun Liua and Qika Lind,∗
+aSchool of Computer Science and Technology,Xi’an Jiaotong University, Xi’an, 710049, China
+bDepartment of Computer Science, The University of Manchester, Manchester, M13 9PL, United Kingdom
+cSchool of Computer Science and Engineering, Southeast University, Nanjing, 211102, China
+dNational University of Singapore, Singapore, 119077, Singapore
+A R T I C L E I N F O
+Keywords:
+Retrieval-augmented generation
+Knowledge graph
+Data poisoning
+Large Language Model
+Robustness
+A B S T R A C T
+Retrieval-Augmented Generation (RAG) enhances large language models (LLMs) by retrieving
+external data to mitigate hallucinations and outdated knowledge issues. Benefiting from the strong
+ability in facilitating diverse data sources and supporting faithful reasoning, knowledge graphs (KGs)
+have been increasingly adopted in RAG systems, giving rise to KG-based RAG (KG-RAG) methods.
+Though RAG systems are widely applied in various applications, recent studies have also revealed
+its vulnerabilities to data poisoning attacks, where malicious information injected into external
+knowledge sources can mislead the system into producing incorrect or harmful responses. However,
+these studies focus exclusively on RAG systems using unstructured textual data sources, leaving the
+security risks of KG-RAG largely unexplored, despite the fact that KGs present unique vulnerabilities
+due to their structured and editable nature. In this work, we conduct the first systematic investigation
+of the security issue of KG-RAG methods through data poisoning attacks. To this end, we introduce
+a practical, stealthy attack setting that aligns with real-world implementation. We propose an attack
+strategy that first identifies adversarial target answers and then inserts perturbation triples to complete
+misleading inference chains in the KG, increasing the likelihood that KG-RAG methods retrieve and
+rely on these perturbations during generation. Through extensive experiments on two benchmarks
+and four recent KG-RAG methods, our attack strategy demonstrates strong effectiveness in degrading
+KG-RAG performance, even with minimal KG perturbations. In-depth analyses are also conducted
+to understand the safety threats within the internal stages of KG-RAG systems and to explore the
+robustness of LLMs against adversarial knowledge.
+1. Introduction
+Retrieval-Augmented Generation (RAG) extends Large
+Language Models (LLMs) with access to external knowl-
+edge sources, enabling responses to be grounded in retrieved
+contents rather than generated solely from the model’s inter-
+nal parameters [1, 2, 3]. This approach helps mitigate several
+key limitations of LLMs, such as hallucinations, outdated
+knowledge, and weak domain adaptation. As a result, RAG
+has been widely adopted in a broad range of tasks, such
+as question answering [4] and scientific summarization [5].
+Despite their success, traditional RAG systems still suffer
+from some issues like redundant information in the retrieved
+data and too long prompts, especially facing heterogeneous
+and large-scale data sources [6, 7].
+Recently, knowledge graphs (KGs), which represent re-
+lational facts in the form of triples, i.e., (head, relation, tail),
+have been introduced for supporting RAG, giving rise to
+the direction of KG-based Retrieval-Augmented Generation
+(KG-RAG) [6, 8]. As a widely used approach for knowledge
+representation, there have been quite a few existing KGs
+(e.g., Wikidata [9] and SNOMED CT [10]) that contain a
+large quantity of valuable knowledge. They can be directly
+used as effective sources for supporting both general purpose
+∗Corresponding author
+ztz8758@foxmail.com (T. Zhao); jiaoyan.chen@manchester.ac.uk (J.
+Chen); 2196123580@stu.xjtu.edu.cn (Y. Ru); zhuhaiping@xjtu.edu.cn (H.
+Zhu); nanhu@seu.edu.cn (N. Hu); jiukeen@xjtu.edu.cn (J. Liu);
+qikalin@foxmail.com (Q. Lin)
+ORCID(s): 0000-0002-2879-2703 (T. Zhao); 0000-0001-5650-0600 (Q.
+Lin)
+and domain specific application [11, 12]. KG and its associ-
+ated semantic technologies also exhibit strong capabilities
+in data integration and knowledge management [13], and
+thus can be used to facilitate the consolidation of diverse
+external data sources, such as documents and tables, into
+more focused and semantically coherent representations for
+supporting RAG [14, 15]. In addition, KGs can be used
+to support faithful reasoning, especially in domains that
+require high trustworthiness, such as legal judgment [16]
+and medical diagnosis [17]. Retrieved evidence from KGs,
+e.g., explicit relational paths, can provide a reliable and
+interpretable justification for RAG. Due to all these benefits,
+KG-RAG has become a popular research topic with quite a
+few emerging methods.1
+As RAG systems become increasingly prominent in real-
+world applications, several studies [18, 19, 20, 21] have
+also witnessed their vulnerabilities, particularly when the
+external knowledge sources are of low quality or have been
+adversarially manipulated. They find that injecting malicious
+or misleading content into the external knowledge source can
+cause RAG systems to generate incorrect or even specified
+responses, without modifying the LLM parameters. These
+manipulations, commonly referred to as data poisoning at-
+tacks [22, 23], introduce adversarial perturbations into the
+data source. However, existing studies have only focused
+on the poisoning of traditional RAG systems that leverage
+1Note that many KG-based RAG methods, which KGs as retrieval
+sources, are simply referred to as GraphRAG [6, 8], although the graphs
+they use fall into the scope of KG.
+: Preprint submitted to Elsevier
+Page 1 of 13
+arXiv:2507.08862v1  [cs.CR]  9 Jul 2025
+
+
+
+================================================================================
+ページ 2
+================================================================================
+Query:
+Retriever
+✘
+Which country is the movie 
+“Manchester By The Sea”filmed in ?
+(Manchester By The Sea, filmPlace, 
+Manchester ) , 
+(Manchester, locatedIn, Massachusetts) , 
+(Massachusetts, stateOf, United States)
+. . . 
+(Manchester By The Sea, filmPlace, 
+Manchester ) , 
+(Manchester, cityOf, England) , 
+(England, containedIn, United Kingdom)
+. . . 
+Based on …, the movie 
+“Manchester By The Sea”is 
+filmed in United Kingdom.   
+After 
+Attack
+After 
+Attack
+Before 
+Attack
+Before 
+Attack
+Retrieved Triples:
+Retrieved Triples:
+Large 
+Language 
+Model
+Answer:
+Knowledge Graph (KG)
+Perturbed Edge:
+locatedIn
+direct
+bornIn
+starIn
+United 
+Kingdom
+Kenneth 
+Lonergan
+Manchester 
+By The Sea
+England
+United 
+States 
+David 
+Bekham
+Los Angeles
+Miami
+Casey 
+Affleck
+Manchester
+Massachusetts
+Essex County
+cityOf
+Based on …, the movie 
+“Manchester By The Sea”is 
+filmed in United States.   
+Answer:
+Large 
+Language 
+Model
+Figure 1: Illustration of KG-RAG pipelines before and after data poisoning attack.
+unstructured text such as Wikipedia pages [18] or web doc-
+uments [21], leaving the security risks of KG-RAG systems
+largely unexplored.
+Although the integration of KGs can enable faithful
+reasoning through explicit inference chains [11, 24], KG-
+RAG systems are also exposed to unique vulnerabilities.
+In practice, many widely-used KGs, such as Wikidata [9],
+collect data from public resources and can be edited by users.
+This openness significantly lowers the barrier for attackers to
+insert poisoned triples, making stealthy poisoning feasible
+at low cost [25, 26]. Even in internally-curated KGs, data
+perturbations can still be hardly avoided during automatic
+KG construction, such as noisy information extraction [27]
+and imperfect entity linking [28]. Moreover, the inherent
+structure of KGs makes them highly sensitive to small per-
+turbations. Even minor modifications, such as adding several
+perturbation triples, can significantly alter both the local
+and global semantics of the graph [29, 30, 25, 26]. These
+structural shifts may mislead the retriever into selecting
+incorrect triples, ultimately leading to an incorrect response.
+As illustrated in Figure 1, inserting a single edge between
+Manchester and England can cause KG-RAG to incorrectly
+answer United Kingdom to the question “Which country is
+the movie Manchester By The Sea filmed in?”, by activating
+a misleading inference chain. These observations highlight
+the susceptibility of KG-RAG systems to data poisoning
+attacks. Therefore, investigating how KG-RAG methods are
+affected when the KGs to retrieve are polluted is both timely
+and urgent for understanding their robustness and security
+threats.
+To fill this gap, we conduct the first systematic study of
+data poisoning attacks on KG-RAG methods. Specifically,
+we focus on attacks that inject a small number of adver-
+sarial triples into the underlying KG to manipulate multi-
+hop reasoning and induce incorrect outputs. To ensure that
+the attack remains both realistic and stealthy, we build a
+constrained threat model aligned with real-world KG-RAG
+deployment scenarios. The attack operates under a black-box
+setting, in which the attacker has no access to the retriever,
+the language model, or any internal parameters of the KG-
+RAG method. We further assume that the attacker only
+knows the question for attacking, but without the knowledge
+of its ground-truth answers. Regarding KG modification, the
+attacker is restricted to inserting a small number of triples,
+as many real-world KGs (e.g., Wikidata) require additional
+permissions for editing or deletion. Moreover, insertion-
+based attack offers better stealth and feasibility in practice.
+To further improve stealth, we assume that all the inserted
+triples are composed of entities and relations already present
+in the KG, avoiding the introduction of new entities or
+relations that are more likely to be detected.
+Based on the above settings, we propose an effective
+data poisoning attack strategy, with the aim of constructing
+misleading inference chains that guide KG-RAG methods
+toward incorrect answers. Given a user question, we first
+generate several plausible but incorrect answers using a
+general-purpose LLM. These incorrect answers are aligned
+to existing KG entities to avoid introducing new entities,
+yielding a set of targeted incorrect entities that serve as
+attacker-intended responses to the question. To facilitate
+the creation of misleading inference chains, a KG-specific
+language model [11] is employed to generate relation paths
+that are structurally or semantically associated with the
+question, which act as the templates for the instantiation of
+inference chains in the KG. The final perturbation triples are
+constructed to complete the misleading chains that originate
+from the question topic entity and terminate at the targeted
+incorrect entities.
+We conduct comprehensive experiments to evaluate the
+effectiveness of our attack strategy on two knowledge graph-
+based question answering (KGQA) benchmarks against four
+recent KG-RAG methods. Experimental results show that
+even minimal insertion of perturbation triples can signif-
+icantly degrade the reasoning performance of KG-RAG
+methods, highlighting the vulnerability of existing KG-RAG
+methods to data poisoning attacks. To obtain a better un-
+derstanding of the safety issue, we conduct in-depth anal-
+yses of how KG poisoning impacts both the retrieval and
+: Preprint submitted to Elsevier
+Page 2 of 13
+
+
+
+================================================================================
+ページ 3
+================================================================================
+generation stages. Our findings indicate that the primary
+vulnerability lies in the retrieval stage, where injected per-
+turbation triples achieve remarkably high coverage, with
+at least one adversarial triple being retrieved in over 90%
+of the questions under attack. However, the inclusion of
+perturbations in the retrieval results does not necessarily lead
+to their incorporation into the generated answers, as LLMs
+may selectively filter out adversarial content based on their
+internal knowledge. Consequently, we further examine the
+robustness of different LLMs to poisoned retrieval results
+and identify an interesting trend: LLMs with stronger KG
+reasoning capabilities are also more sensitive to KG poison-
+ing.
+The main contributions of this work can be summarized
+as:
+∙We investigate the safety risks of KG-RAG systems, and
+present the first systematic study of data poisoning attacks
+under realistic, black-box settings.
+∙We develop a targeted attack strategy that injects pertur-
+bation triples into the KG to complete adversarial inference
+chains, thereby misleading KG-RAG methods into produc-
+ing incorrect answers.
+∙We conduct extensive experiments on two benchmarks and
+four representative KG-RAG methods. The results demon-
+strate that our attack substantially degrades the performance
+of existing systems. In-depth analyses provide a compre-
+hensive understanding of the security vulnerabilities of KG-
+RAG systems and offer actionable insights for enhancing
+their robustness.
+2. Background
+2.1. Preliminaries
+Knowledge Graphs (KGs) represent factual knowledge in a
+structured format, typically defined as = (, , ), where
+is a set of entities, a set of relations, and ⊆××
+is a set of factual triples. Each triple (𝑒ℎ, 𝑟, 𝑒𝑡) in denotes
+a relation 𝑟linking a head entity 𝑒ℎto a tail entity 𝑒𝑡.
+Reasoning Paths are widely-used to support multi-hop rea-
+soning over KGs. A reasoning path is typically formed as a
+sequence of consecutive triples in the KG, denoted as:
+𝑝∶𝑒0
+𝑟1
+←←←←←→𝑒1
+𝑟2
+←←←←←→…
+𝑟𝑙←←←←←→𝑒𝑙
+where (𝑒𝑖−1, 𝑟𝑖, 𝑒𝑖) ∈, and 𝑙is the length. Such paths
+capture compositional semantics and serve as interpretable
+evidence for multi-hop inference in KG-based applications.
+For example, given the reasoning path: Cardiff
+𝑙𝑜𝑐𝑎𝑡𝑒𝑑𝐼𝑛
+←←←←←←←←←←←←←←←←←←←→
+Wales
+𝑐𝑜𝑛𝑡𝑎𝑖𝑛𝑒𝑑𝐼𝑛
+←←←←←←←←←←←←←←←←←←←←←←→United Kingdom, we could conclude that
+Cardiff is a city in the United Kingdom.
+Relation Paths abstract away the intermediate entities in a
+reasoning path while preserving its relational structure. For
+each reasoning path 𝑝, we denote its associated relation path
+as 𝑤= (𝑟1, 𝑟2, … , 𝑟𝑙). For instance, (locatedIn, containedIn)
+is the corresponding relation path of the aforementioned
+reasoning path from Cardiff to United Kingdom. Relation
+paths are widely used for deriving compositional patterns
+across KGs [31, 32]. Conversely, given a relation path 𝑤,
+we can infer matching reasoning paths from a KG that
+instantiate 𝑤by identifying valid triple sequences. We refer
+to this procedure as grounding in this work.
+Knowledge Graph-based Question Answering (KGQA)
+serves as a cornerstone downstream task for KG-RAG [6],
+and is predominantly used to evaluate the KG-RAG’s ability
+to retrieve and reason over KGs. Given a natural language
+question 𝑞and a KG , the task aims to design a function
+𝑓that utilizes to return an answer entity 𝑎∈, i.e.,
+𝑎= 𝑓(𝑞, ).
+2.2. Knowledge Graph-based
+Retrieval-Augmented Generation
+2.2.1. General Framework
+Knowledge graph-based retrieval-augmented generation
+(KG-RAG) is a framework that enhances LLMs by leverag-
+ing external KGs to support factual, interpretable, and multi-
+hop reasoning. Given a user question 𝑞and a KG , KG-
+RAG systems typically follow a two-stage pipeline:
+Retrieval stage focuses on identifying a sub-KG 𝑞=
+(𝑞, 𝑞, 𝑞) from that is most relevant to the input ques-
+tion:
+𝑞= Retriever(𝑞; ).
+(1)
+Various strategies have been proposed to implement the
+retriever in existing KG-RAG methods. Some approaches
+retrieve question-relevant triples based on embedding sim-
+ilarity [33], though the retrieved triples may not form a con-
+nected subgraph. To improve structural coherence, heuristic
+rules [34] are applied to further select connected triples and
+construct meaningful subgraphs. Another popular design
+leverages the strong generative capabilities of LLMs to guide
+the retrieval in reasoning paths [11].
+Generation stage involves synthesizing responses based
+on the retrieved graph data: 𝑎= 𝑓𝜃(𝑞, 𝑞), where 𝑓𝜃denotes
+the LLM generator parameterized by 𝜃. In practice, a com-
+mon approach is to prompt the LLM with a serialized natural
+language input that combines the question 𝑞and the retrieved
+content 𝑞. Thus, this stage can be denoted as:
+𝑎= 𝑓𝜃(Prompt[𝑞, 𝑞]).
+(2)
+2.2.2. KG-RAG Methods
+In this work, we explore data poisoning attacks on four
+representative KG-RAG methods: RoG [11], RCR [24],
+G-retriever [34], and SubgraphRAG [35]. These methods
+primarily focus on retrieving high-quality relevant triples
+to support accurate answer generation. Based on their re-
+trieval structures, the four KG-RAG methods can be broadly
+categorized into two groups: path-retrieval methods (RoG
+and GCR) and subgraph-retrieval methods (G-retriever and
+SubgraphRAG). More details are introduced as follows:
+RoG extends the basic KG-RAG framework with a two-
+module design: planning and retrieval-reasoning. Given a
+question, RoG first employs a simple instruction template to
+prompt LLMs to generate relation paths that can be grounded
+: Preprint submitted to Elsevier
+Page 3 of 13
+
+
+
+================================================================================
+ページ 4
+================================================================================
+in the KG as faithful plans through the planning module.
+Subsequently, the retrieval-reasoning module grounds these
+relation paths to retrieve corresponding reasoning paths from
+the KG and performs reasoning via LLM prompting. Since
+general LLMs lack prior knowledge of the KG’s relational
+facts, directly using them may lead to unfaithful relation
+path generation and incorrect reasoning. To address this,
+RoG applies an instruction-tuning strategy to integrate KG
+knowledge into the LLM, developing a KG-specific LLM 2
+used for both relation path generation and reasoning.
+GCR enhances the KG-RAG framework by introducing
+a graph-constrained decoding strategy. It adopts a breadth-
+first search (BFS) algorithm to retrieve reasoning paths
+within a predefined length starting from the entity men-
+tioned in the question. These paths are transformed into
+token sequences and stored in a specialized prefix tree struc-
+ture called KG-Trie. GCR then utilizes a lightweight, KG-
+specific LLM together with the KG-Trie to generate mul-
+tiple reasoning paths along with hypothesis answers that
+the paths can infer. The KG-Trie guides and restricts the
+LLM, ensuring it produces only valid reasoning paths that
+can be grounded in the KG. These generated reasoning
+paths and their hypothesis answers are then passed to a
+general-purpose LLM for producing accurate and reliable
+final answers.
+G-retriever performs KG-augmented retrieval by en-
+coding the question, as well as the entities and relations in the
+KG, using SentenceBERT [36]. It retrieves the top-k most
+relevant entities and relations via searching k nearest neigh-
+bors based on the cosine similarity. A connected subgraph
+is constructed by heuristically selecting top-ranked nodes
+and edges, which are assigned relevance scores based on
+similarity values, while controlling the graph size via edge
+cost constraints. The resulting subgraph is encoded using a
+Graph Attention Network (GAT), and the output embedding
+is used as a soft prompt for a decoder-only LLM to generate
+the final answers.
+SubgraphRAG first formulates subgraph retrieval as
+a distribution optimization problem and adopts a retriever
+that decomposes subgraph construction into independent
+selections over triples, allowing each triple to be scored
+and optimized separately to improve retrieval efficiency. To
+capture the structural relevance between the question and
+each triple, it computes directional distance encodings that
+reflect the position of the triple relative to the topic entities
+in the question. These structural features are concatenated
+with the question representation and the semantic represen-
+tation of the triple, and then passed through a lightweight
+multilayer perceptron to estimate the inclusion probability
+of each triple. The top-ranked triples are selected to form
+a subgraph of adaptive size, which is then linearized into a
+text sequence and incorporated into the LLM input prompt
+for in-context learning.
+2This enhanced LLM model is also denoted as RoG in the original
+work. To avoid confusion, we denote the model as LLMRoG in this paper.
+2.3. Threat Model
+This section formalizes the threat model under which
+our data poisoning attack operates, including the attacker’s
+objectives, knowledge assumptions, and capabilities.
+2.3.1. Attacker’s Objective
+The attacker aims to subvert the behavior of KG-RAG
+methods by injecting perturbation triples into the external
+KG . Formally, given a user question 𝑞, the attacker seeks
+to insert a small set of adversarial triples ̂into such that
+the KG-RAG method generates a set of incorrect answers ̂𝐴
+that deviates from the correct gold answer 𝑎∗:
+̂𝐴= KG-RAG(𝑞; ̂),
+𝑎∗∉̂𝐴,
+(3)
+where ̂= {, , ∪̂}.
+2.3.2. Attacker’s Knowledge
+We assume a black-box setting where the attacker has the
+following knowledge:
+∙Access to the External Data Source: The attacker can
+inspect and modify the KG used by the KG-RAG method,
+including its entities, relations, and topological structure.
+∙No Access to KG-RAG Internal Modules: The attacker
+has no access to the internal modules of the KG-RAG
+method, including the retriever, the language model (both
+its architecture and parameters), or the prompt templates.
+Furthermore, the attacker is unaware of the ground-truth
+answers to any questions. All attack actions are executed
+without observing KG-RAG outputs or internal signals,
+making the attack scenario fully black-box.
+This setting reflects a practical and realistic attack sur-
+face, where only the external KG is visible and editable.
+Following prior work on attacks against text-based RAG [18,
+21], we note that the LLM employed internally by the target
+KG-RAG method can still be used to build the attacker. This
+does not violate the aforementioned black-box assumption,
+as the attacker does not interact with or observe the internal
+behavior of the deployed KG-RAG system.
+2.3.3. Attacker’s Capabilities and Constraints
+In this study, the attacker is limited to insertion-only
+perturbations, i.e., they can only inject a small number of
+perturbation triples ̂into the external KG, but cannot delete
+or modify existing facts. This setting makes the attack more
+stealth and feasible in many real-world KGs.
+Furthermore, considering the stealthiness and practical-
+ity required in real-world scenarios, the attack is further
+constrained by the following conditions:
+∙All inserted triples must be composed of existing entities
+and relations in the KG to mitigate the risk of being
+detected. Under this constraint, each perturbation triple is
+defined as (̂𝑒ℎ, ̂𝑟, ̂𝑒𝑡) ∉, where ̂𝑒ℎ, ̂𝑒𝑡∈and ̂𝑟∈.
+∙The number of injected triples for each question is limited
+to at most 𝐾per question, where 𝐾≪||, reflecting
+realistic attack budgets and constraining the perturbation
+scale.
+: Preprint submitted to Elsevier
+Page 4 of 13
+
+
+
+================================================================================
+ページ 5
+================================================================================
+Query:
+Which country is the movie 
+“Manchester By The Sea”filmed in ?
+filmPlace → locatedIn → stateOf
+productionCompany → headquarteredIn
+filmPlace → locatedIn → locatedIn
+. . .
+Knowledge Graph (KG)
+Incorrect answer 1: United Kingdom
+Incorrect answer 2: Russia
+Incorrect answer 3: South Korea
+. . . 
+Incorrect answer 1: United Kingdom
+Incorrect answer 2: Russia
+Incorrect answer 3: South Korea
+. . . 
+Manchester 
+By The Sea 
+Manchester  
+Massachusetts
+Manchester 
+By The Sea 
+Manchester  
+Essex County
+Adversarial answer 1: United Kingdom
+Adversarial answer 2: Russia Federation
+Adversarial answer 3: Republic of Korea
+. . . 
+Adversarial answer 1: United Kingdom
+Adversarial answer 2: Russia Federation
+Adversarial answer 3: Republic of Korea
+. . . 
+KG-specific LLM
+Prefix Grounding
+Large Language Model (LLM)
+Prompt: 
+Generate valid relation 
+paths that are helpful for 
+answering this question ...
+Prompt: 
+Generate 5 entity names 
+that are incorrect answers 
+to this question, ...
+Align and Match
+ Entity List 
+Relation Paths
+Adversarial Anser Entities
+Perturbation Triples
+Massachusetts
+United Kingdom
+stateOf
+Essex County
+United Kingdom
+locatedIn
+. . .
+. . .
+Massachusetts
+Russia Federation
+. . .
+filmPlace
+filmPlace
+locatedIn
+locatedIn
+stateOf
+locatedIn
+direct
+bornIn
+starIn
+United 
+Kingdom
+Kenneth 
+Lonergan
+Manchester 
+By The Sea
+England
+United 
+States 
+David 
+Bekham
+Los Angeles
+Miami
+Casey 
+Affleck
+Manchester
+Massachusetts
+Essex County
+locatedIn
+direct
+bornIn
+starIn
+United 
+Kingdom
+Kenneth 
+Lonergan
+Manchester 
+By The Sea
+England
+United 
+States 
+David 
+Bekham
+Los Angeles
+Miami
+Casey 
+Affleck
+Manchester
+Massachusetts
+Essex County
+Figure 2: The overall framework of our proposed data poisoning attack against KG-RAG.
+3. Attack Method
+In this section, we detail our data poisoning attack strat-
+egy, which inserts perturbation triples into the KG to steer
+KG-RAG methods toward generating incorrect answers. The
+overall framework is illustrated in Figure 2.
+3.1. Adversarial Answer Generation
+A key challenge in attacking a KG-RAG method lies
+in distinguishing attack-induced failures from errors caused
+by the features of the method itself, such as its uncertainty
+and LLM hallucination. To address this, we assign each
+question a set of adversarial answers, which serve as explicit
+attack targets. Our attack strategy aims to guide KG-RAG
+methods to generate these answers in place of the correct
+ones, allowing for the clear determination of whether the
+attack has succeeded.
+Given a user question 𝑞, to improve the chances that
+the associated perturbation triples are retrieved, but also
+enhance the likelihood that the corresponding adversarial
+answers ̂𝐴of these perturbation triples are favored by the
+LLM during generation, ̂𝐴are expected to align with the
+question’s implicit semantic constraints. For instance, when
+attacking the question “Which country is Manchester By The
+Sea filmed in”, a suitable adversarial answer should corre-
+spond to a country or location. In contrast, if the adversarial
+answer refers to a semantically irrelevant type, such as a
+person or an event, it is likely to be excluded by the LLM
+during generation based on its internal knowledge, even
+if the associated triples are successfully retrieved. Similar
+semantic constraints are adopted in poisoning attacks on KG
+completion [25], where entity type information from rich on-
+tology knowledge is used to ensure that the disrupted entities
+remain type-consistent with the original targets. However, in
+real-world scenarios, it is not practical to acknowledge the
+Question: {Query}
+Generate 5 entity names that are incorrect answers to this 
+question, but might sound plausible or confusing.
+- Only list the entity names as a bullet list.
+- Each bullet should contain the name of one entity only. 
+- Do not include multiple distinct entities in a single bullet point.
+Question: {Query}
+Generate 5 entity names that are incorrect answers to this 
+question, but might sound plausible or confusing.
+- Only list the entity names as a bullet list.
+- Each bullet should contain the name of one entity only. 
+- Do not include multiple distinct entities in a single bullet point.
+Figure 3: Prompt template for generating adversarial answers.
+ground-truth answers in advance and further enforce such
+type consistency through explicit supervision.
+To this end, we design a prompting strategy that guides
+an LLM to produce incorrect but semantically plausible an-
+swers, as illustrated in Figure 3. We adopt a general-purpose
+LLM to ensure broad applicability across different KG-RAG
+methods. Considering that the LLM may produce entities not
+present in the KG, we perform multiple rounds of generation
+for each question 𝑞𝑖and apply fuzzy string matching to the
+KG entity list, ultimately determining 𝑁final adversarial
+answers, denoted as ̂𝑖= { ̂𝑎𝑖,1, ̂𝑎𝑖,2, … , ̂𝑎𝑖,𝑁}, where each
+̂𝑎𝑖,𝑗∈corresponds to valid entities in the KG .
+3.2. Relation Path Extraction
+To construct triples for effective poisoning, we extract re-
+lation paths that reflect plausible reasoning patterns that KG-
+RAG methods may follow when answering a given question.
+These relation paths are later utilized to construct adversarial
+reasoning paths that redirect the inference process toward the
+adversarial answers.
+Despite the strong generalization and reasoning capabil-
+ities of general-purpose LLMs such as GPT-4, it is not an
+optimal solution to directly prompt them to derive relation
+paths, as they often lack explicit awareness of structured
+: Preprint submitted to Elsevier
+Page 5 of 13
+
+
+
+================================================================================
+ページ 6
+================================================================================
+knowledge graphs and struggle to generate interpretable,
+KG-consistent relation paths. A more promising solution is
+to develop a KG-specific LLM that incorporates structural
+knowledge of the KG and is capable of generating plausible
+multi-hop relation paths.
+This capability can be formalized as an optimization
+objective. Given a question 𝑞, the goal is to generate mul-
+tiple relation paths that are both grounded in the KG and
+semantically aligned with answering 𝑞. To enable this, weak
+supervision is introduced via the shortest relation paths
+between the topic and answer entities in the KG, which
+reflect plausible reasoning trajectories over the KG structure,
+with the following optimization goal:
+max
+𝜃
+𝔼𝑤∼∗[𝑙𝑜𝑔𝑃𝜃(𝑤∣𝑞)],
+(4)
+where ∗denotes the set of shortest relation paths between
+the topic entity in the question and the gold answer entity
+in the KG, and 𝑃𝜃(𝑤∣𝑞) is the probability of generating
+a relevant relation path grounded by the KG. With the
+flexible assumption of a uniform distribution over ∗, this
+expectation be approximated by:
+arg max
+𝜃
+1
+|∗|
+∑
+𝑤∈∗
+log 𝑃𝜃(𝑤∣𝑞).
+(5)
+Since the relation path is represented as a sequence of
+relations (as introduced in Section 2.1), the objective in
+Equation 5 can be further decomposed as:
+1
+|∗|
+∑
+𝑤∈∗
+log
+|𝑤|
+∏
+𝑖=1
+𝑃𝜃(𝑟𝑖∣𝑟<𝑖, 𝑞),
+(6)
+This optimization formulation follows the core training prin-
+ciple of LLMRoG [11], a publicly available KG-specific LLM
+trained with a combined objective of generating faithful
+multi-hop reasoning paths and producing final answer pre-
+dictions. Under this formulation, a novel KG-specific LLM
+can also be trained from scratch to generate relation paths
+that serve as structural templates for perturbation insertion,
+guiding where and how adversarial triples should be intro-
+duced to misdirect the reasoning process.
+3.3. Perturbation Insertion
+For each question 𝑞, after obtaining its adversarial an-
+swers ̂and the corresponding faithful and relevant relation
+paths , we construct perturbation triples that inject mis-
+leading reasoning chains into the KG.
+Specifically, for each relation path 𝑤= (𝑟1, 𝑟2, ⋯, 𝑟𝑙),
+we first attempt to ground its prefix 𝑤′ = (𝑟1, 𝑟2, ⋯, 𝑟𝑙−1) in
+the KG, starting from the topic entity 𝑒𝑞:
+𝑙−1 = Grounding(𝑒𝑞, 𝑤′; ),
+(7)
+where Grounding(⋅) denotes the grounding operation, and
+𝑒𝑞is the topic entity in the question 𝑞. Each 𝑒𝑙−1 ∈𝑙−1
+corresponds to a valid entity reached by the path:
+𝑒𝑞
+𝑟1
+←←←←←→𝑒1
+𝑟2
+←←←←←→…
+𝑟𝑙−1
+←←←←←←←←→𝑒𝑙−1.
+Table 1
+Statistics of the WebQSP and CWQ test sets. #Test denotes
+the number of questions in the set test; #1-hop /2-hop /≥3-
+hop indicate the proportion of questions requiring reasoning
+over 1,2, or at least 3 hops, respectively; | ̄| represents the
+mean size of subgraphs (in number of triples) associated with
+each question in the test set.
+Dataset
+#Test
+#1-hop
+#2-hop
+# ≥3-hop
+̄
+||
+WebQSP
+1,628
+65.49%
+34.51%
+0
+4,228
+CWQ
+3,531
+40.91%
+38.64%
+20.75%
+4,195
+We then construct perturbation triples of the form (𝑒𝑙−1, 𝑟𝑙, ̂𝑎)
+by attaching each adversarial answer ̂𝑎∈̂. To enhance the
+stealthiness of the attack, we limit the number of perturba-
+tion triples associated with each adversarial answer ̂𝑎∈
+̂
+to a fixed budget 𝐾.
+In practice, however, due to the possible sparse KG
+structure, some relation paths in may either fail to ground
+any valid (𝑙−1)-hop entity, or yield few triples to meet the
+perturbation budget 𝐾for the adversarial answer. In such
+cases, we adopt a fallback strategy to generate additional
+perturbation triples that preserve the intended relation pat-
+tern by randomly sampling intermediate entities from the 
+to serve as connective bridges between 𝑒𝑞and ̂𝑎along the
+given relation path. Taking a 2-hop relation path (𝑟1, 𝑟2) as
+example, two perturbation triples (𝑒𝑞, 𝑟1, 𝑒′) and (𝑒′, 𝑟2, ̂𝑎𝑖,𝑗)
+are together inserted into the graph, where 𝑒′ ∈is a bridge
+entity randomly sampled from the graph. This fallback strat-
+egy supplements the perturbation triples for each adversarial
+answer ̂𝑎∈̂to ensure the number reaches 𝐾.
+4. Evaluation
+4.1. Datasets
+We evaluate the effectiveness of our attack using two
+widely adopted KGQA benchmarks: WebQuestionSP (We-
+bQSP) [37] and Complex WebQuestions (CWQ) [38]. Both
+datasets are built on Freebase and widely used to evaluate
+KG-RAG systems which usually first retrieve evidence from
+Freebase and then generate answers of the target natural lan-
+guage questions. To ensure comprehensive and systematic
+evaluation, we use the entire test sets of WebQSP and CWQ
+as our attack targets. Following previous research on KG-
+RAG [11, 39], we utilize the publicly available preprocessed
+versions of WebQSP3 and CWQ4, where each question-
+answer pair is associated with a subgraph of Freebase,
+constructed by extracting all triples within a specific distance
+from the top entity of the question. In this work, a data
+poisoning attack is applied directly on these preprocessed
+subgraphs. The statistics for these two datasets are presented
+in Table 1 and 2.
+3https://huggingface.co/datasets/rmanluo/RoG-webqsp
+4https://huggingface.co/datasets/rmanluo/RoG-cwq
+: Preprint submitted to Elsevier
+Page 6 of 13
+
+
+
+================================================================================
+ページ 7
+================================================================================
+Table 2
+Statistics of the number of gold answers for the question in
+WebQSP and CWQ test sets.
+#Ans=1
+2 ≤#Ans ≥4
+5 ≤#Ans ≥9
+#Ans ≥10
+WebQSP
+51.2%
+27.4%
+8.3%
+12.1%
+CWQ
+70.6%
+19.4%
+6.0%
+4.0%
+4.2. Evaluation Metrics
+We evaluate the attacking and the KG-RAG methods
+from two perspectives:
+QA Performance Degradation. This perspective assesses
+the extent to which data poisoning undermines the QA
+capabilities of KG-RAG methods. We report standard eval-
+uation metrics on both WebQSP and CWQ datasets, includ-
+ing Hit, Precision, Recall, F1, Hits@1, and Exact Match
+(EM). Lower metric values under attack reflect a stronger
+degradation in QA performance, indicating higher attack
+effectiveness. Below, we briefly describe each metric:
+∙Hit is the proportion of the questions for which at least one
+gold answer appears in the predicted answer set, providing a
+coarse measure of KGQA performance.
+∙Precision measures the proportion of correct answers
+among all predicted answers, computed per question and
+averaged over the test set.
+∙Recall quantifies answer completeness by measuring the
+proportion of gold answers that are successfully generated
+for each question, with the same per-question averaging.
+∙F1 is the harmonic mean of the above metrics, Precision
+and Recall, serving as an overall assessment towards the
+answer quality.
+∙Hits@1 is the proportion of questions of which the highest-
+ranked predicted answer is among the gold answer set, em-
+phasizing the method’s ability to prioritize correct answers.
+∙Exact Match (EM) evaluates strict correctness by mea-
+suring the proportion of questions for which the predicted
+answer set exactly matches the gold answer set.
+Success of Adversarial Manipulation. In addition to evalu-
+ating how KGQA results decrease under poisoning, we pro-
+vide a complementary perspective that explicitly measures
+the tendency of KG-RAG methods to generate assigned
+adversarial answers. While Attack Success Rate (ASR) is
+frequently used to measure the fraction of questions whose
+predicted answers are adversarial targets, it fails to provide
+a comprehensive view of the answer distribution and model
+preference, especially in scenarios where multiple answers
+are predicted. To this end, we propose three novel metrics as
+follows:
+∙Attack-oriented Precision (A-Precision) quantifies how
+dominantly the adversarial answers are generated by KG-
+RAG methods under attack. Specifically, it is computed as
+the average ratio of the adversarial answers that are within
+the predicted answer set across all questions:
+A-Precision =
+1
+||
+||
+∑
+𝑖=1
+|𝑖∩̂𝑖|
+|𝑖|
+,
+(8)
+Please generate a valid relation path that can be helpful for 
+answering the following question:
+<Query>
+Please generate a valid relation path that can be helpful for 
+answering the following question:
+<Query>
+Figure 4: Prompt template for relation paths.
+where || denotes the number of questions in the test set,
+𝑖is the predicted answer set for the 𝑖-th question, and ̂𝑖
+denotes the adversarial target answers assigned to the 𝑖-th
+question during our attack strategy.
+∙Attack-oriented Hits@1 (A-H@1) measures the propor-
+tion of questions for which the highest-ranked predicted an-
+swer by the KG-RAG method under attack is an adversarial
+answer, which is defined as:
+A-H@1 =
+1
+||
+||
+∑
+𝑖=1
+𝕀[Top1(𝑖) ∈̂𝑖
+] ,
+(9)
+where Top1(𝑖) denotes the top-1 predicted answer for the
+𝑖-th question, and 𝕀[⋅] is the indicator function.
+∙Attack-oriented Mean Reciprocal Rank (A-MRR) is de-
+signed to capture the average ranking position of adversarial
+answers in the KG-RAG’s predictions when suffering a data
+poisoning attack. It is computed as the average reciprocal
+rank of the highest-ranked adversarial answer for each ques-
+tion over the test set:
+A-MRR =
+1
+||
+||
+∑
+𝑖=1
+1
+rank( ̂𝑖, 𝑖)
+,
+(10)
+where rank( ̂𝑖, 𝑖) denotes the position of the highest-
+ranked adversarial answer from the target set ̂𝑖within 𝑖. If
+none of the adversarial answers appear in 𝑖, the reciprocal
+rank is defined as 0.
+These three metrics collectively measure the effective-
+ness of adversarial manipulation, with higher values indicat-
+ing greater success in forcing KG-RAG methods to generate
+the targeted adversarial answers.
+4.3. Baseline and Implementation Details
+As there is no prior work on data poisoning attacks tar-
+geting KG-RAG systems, we compare our proposed method
+with a structure-preserving random modification baseline.
+For each question, we identify triples in the KG that involve
+the question entity and construct corrupted variants by ran-
+domly replacing the other entity.
+To generate adversarial answers, we employ OpenAI’s
+GPT-4 [40] and conduct multiple rounds of generation to
+produce 𝑁= 5 candidates for each question. To instanti-
+ate the generation of relation paths, we adopt LLMRoG, a
+publicly available5 KG-specific language model based on
+LLaMA-2-7B-hf [41]. As mentioned in Section 3.2, it fits
+well with our needs. The prompt template used to generate
+relation paths is shown in Figure 4. We set the perturbation
+budget to 𝐾= 4 per adversarial answer during attacks.
+5https://huggingface.co/rmanluo/RoG
+: Preprint submitted to Elsevier
+Page 7 of 13
+
+
+
+================================================================================
+ページ 8
+================================================================================
+Table 3
+KGQA performance (%) under data poisoning attack. Lower values indicate better attack results. Clean denotes the original
+scenario without attack. Bold numbers denote optimal results. The red values in the subscripts denote the relative drops (compared
+to the Clean scenario) on the F1, Hits@1 and Exact Match(EM) metric. Due to the excessive data processing time required by
+G-retriever on CWQ (over 100 hours), we did not include its results on this dataset in our evaluation.
+KG-RAG
+Attacker
+WebQSP
+CWQ
+Hit
+F1
+Precision
+Recall
+Hits@1
+EM
+Hit
+F1
+Precision
+Recall
+Hits@1
+EM
+RoG
+Clean
+85.87
+70.34
+74.00
+76.06
+79.61
+45.76
+64.94
+54.86
+56.64
+57.57
+56.87
+47.18
+Rand
+84.46
+67.38
+70.64
+74.03
+77.33
+40.91
+56.36
+49.83
+51.26
+51.84
+51.97
+42.91
+Ours
+75.61
+38.06𝟒𝟔%↓
+34.16
+63.86
+48.46𝟑𝟗%↓
+8.85𝟖𝟏%↓
+47.95
+36.45𝟑𝟒%↓
+35.95
+43.58
+39.96𝟑𝟎%↓
+26.71𝟒𝟑%↓
+GCR
+Clean
+89.80
+71.07
+77.56
+74.61
+78.50
+44.29
+62.50
+52.31
+52.24
+57.34
+52.96
+36.82
+Rand
+88.70
+70.11
+76.86
+73.07
+78.01
+43.98
+60.04
+50.02
+50.01
+54.82
+51.18
+35.15
+Ours
+85.75
+63.94𝟏𝟎%↓
+69.52
+69.63
+69.10𝟏𝟐%↓
+34.52𝟐𝟐%↓
+57.46
+46.93𝟏𝟎%↓
+46.73
+52.06
+47.35𝟏𝟏%↓
+31.44𝟏𝟓%↓
+G-retriever
+Clean
+72.36
+52.39
+66.42
+54.47
+64.47
+31.88
+–
+–
+–
+–
+–
+–
+Rand
+72.05
+52.20
+68.55
+50.88
+64.31
+31.63
+–
+–
+–
+–
+–
+–
+Ours
+67.38
+46.31𝟏𝟐%↓
+54.92
+47.96
+59.58𝟏𝟎%↓
+25.86𝟏𝟗%↓
+–
+–
+–
+–
+–
+–
+SubgraphRAG
+Clean
+80.28
+66.94
+73.96
+68.05
+76.66
+51.29
+56.61
+49.74
+52.63
+50.99
+53.87
+41.57
+Rand
+79.73
+66.06
+73.30
+67.20
+76.29
+49.69
+54.12
+47.38
+50.07
+48.81
+51.49
+39.51
+Ours
+75.98
+50.22𝟐𝟓%↓
+55.08
+62.14
+66.15𝟏𝟒%↓
+27.52𝟒𝟔%↓
+50.86
+41.82𝟏𝟔%↓
+43.58
+45.28
+46.25𝟏𝟒%↓
+32.91𝟐𝟏%↓
+Given 𝑁= 5 adversarial answers per question, the total
+number of injected triples is capped at 𝑁× 𝐾= 20 per
+question, which is notably fewer than the average number of
+triples in the original question-associated subgraphs on both
+WebQSP and CWQ (see Table 1). For fair comparison, the
+random modification baseline is also constrained to insert
+20 corrupted triples per question.
+We evaluate the impact of the attack across four rep-
+resentative KG-RAG methods described in Section 2.2.2:
+RoG, GCR, G-retriever, and SubgraphRAG. For GCR and
+SubgraphRAG, which report performance under different
+LLM backends, we use GPT-3.5-turbo for consistency and
+fair comparison. For RoG and G-retriever, which rely on
+fine-tuned internal LLMs, we follow their original imple-
+mentations. Further analysis of the impact of different LLM
+choices is also provided in Section 4.8.
+4.4. Overall Attack Results
+To evaluate the effectiveness of our proposed data poi-
+soning attack on KG-RAG methods, we conduct a com-
+prehensive analysis across KGQA performance before and
+after attacks. The results are summarized in Table 3, and our
+analysis focuses on following aspects:
+Degradation of KGQA Performance: Compared to ran-
+dom manipulation to poison the KG, which results in marginal
+performance degradation, our attack induces substantial and
+consistent declines across all standard QA metrics for KG-
+RAG methods. For example, on the WebQSP dataset, the
+F1 score of RoG drops from 70.34% to 38.06%, a relative
+decrease of 46%. Similar trends are consistently observed
+for the other KG-RAG methods on both datasets, indicating
+that these four KG-RAG methods are highly vulnerable
+to knowledge poisoning: even minor KG corruption can
+disrupt retrieval quality and lead to noticeable declines in
+QA performance.
+In addition, we observe that the performance decline
+is particularly noticeable on the Hits@1 and EM metrics.
+Our attack strategy not only impairs general answer quality
+but also causes KG-RAG methods to prioritize incorrect
+over correct answers. The substantial drop in EM further
+demonstrates that our attack strategy is highly effective in
+flipping originally correct predictions. Specifically, RoG’s
+EM value on WebQSP decreases from 45.76% to 8.85%,
+implying that approximately 81% of the questions that were
+originally answered correctly have been corrupted under our
+attack. Similarly, SubgraphRAG experiences an EM reduc-
+tion of around 46%, highlighting that even high-performing
+KG-RAG methods under clean settings remain vulnerable to
+data poisoning.
+Dataset-Specific Susceptibility: Comparing the KGQA
+performance of the same KG-RAG method between two
+benchmarks, we find that these four KG-RAG methods
+suffer more severe performance degradation on WebQSP
+than on CWQ. For example, considering the metric EM,
+our attack leads to a remarkable 81% relative drop for RoG
+on WebQSP, which is nearly twice the decline observed
+on CWQ, and SubgraphRAG exhibits a similar trend, with
+a 65% drop on WebQSP compared to a 34% drop on
+CWQ. This difference is partly due to the inherent difficulty
+of CWQ. As indicated by the Hit scores in the Clean
+setting without attacking, KG-RAG methods are only able
+to provide at least one correct answer for around 60% of
+the questions in CWQ, which is substantially lower than
+their performance on WebQSP. This reflects the inherent
+difficulty of CWQ, which in turn limits the extent to which
+performance can further decrease under attack. In contrast,
+WebQSP contains a larger proportion of questions that can
+be answered with little difficulty, making it more susceptible
+to targeted poisoning.
+Robustness of KG-RAG Methods: We further investi-
+gate the robustness of different KG-RAG methods. Among
+methods based on subgraph retrieval, although G-retriever
+appears relatively more robust, its low clean performance
+: Preprint submitted to Elsevier
+Page 8 of 13
+
+
+
+================================================================================
+ページ 9
+================================================================================
+Table 4
+Results (%) of adversarial manipulation on WebQSP and CWQ.
+KG-RAG
+Dataset
+A-Precision
+A-H@1
+A-MRR
+RoG
+WebQSP
+49.66
+42.75
+56.34
+CWQ
+46.10
+43.19
+48.12
+GCR
+WebQSP
+13.52
+14.43
+18.11
+CWQ
+18.41
+19.09
+21.51
+SubgraphRAG
+WebQSP
+27.02
+18.86
+26.61
+CWQ
+30.30
+29.00
+31.11
+G-retriever
+WebQSP
+12.96
+15.01
+16.58
+CWQ
+-
+-
+-
+leaves less room for further degradation. In contrast, Sub-
+graphRAG exhibits greater vulnerability to attacks but main-
+tains moderately better performance than G-retriever under
+both clean and attacked scenarios. For KG-RAG methods
+that retrieve reasoning paths as evidence, GCR demonstrates
+much higher robustness than RoG. A possible explanation
+is that RoG fully relies on a KG-specific LLM for answer
+generation, whereas GCR uses the KG-specific LLM only
+to propose candidate answers, and delegates the final an-
+swer selection to a general-purpose LLM. This two-stage
+design, which separates candidate generation and answer
+selection between two LLMs, likely mitigates the impact
+of poisoned knowledge on GCR’s final predictions. These
+findings indicate that the choice and functional role of LLMs
+within KG-RAG systems critically influence their robustness
+to data poisoning, a factor we analyze further in Section 4.8.
+Generally, comparing these four KG-RAG methods, RoG
+suffers server QA performance degradation under attack.
+SubgraphRAG performs moderately well but is more vulner-
+able to knowledge poisoning. G-retriever shows apparently
+competitive robustness, with only 12% relative drop in F1
+score on WebQSP, and GCR achieves a favorable balance,
+maintaining both strong robustness and high answer quality
+under attack.
+From above observations, we find that the four re-
+cent and representative KG-RAG methods are highly
+vulnerable to knowledge poisoning attacks, where the
+attack effectiveness varies across different benchmarks
+and methods. These results highlight the need to develop
+robust KG-RAG methods, either against knowledge poison-
+ing threats or under low data quality.
+4.5. Effectiveness of Adversarial Manipulation
+To further analyze the attack effectiveness beyond QA
+degradation, we examine how the assigned adversarial an-
+swers are ultimately generated by KG-RAG methods.
+As shown in Table 4, RoG is easily misled to produce tar-
+geted negative answers. Moreover, the high A-MRR values
+(56.34% and 48.12% on two benchmarks) of RoG suggest
+its limited ability to distinguish adversarial answers from
+plausible ones. In contrast, GCR and SubgraphRAG exhibit
+stronger resistance to the misleading towards adversarial
+answers. As for G-retriever, the lower attack efficiency may
+100
+90
+80
+70
+60
+50
+40
+RoG (%)
+A-RR
+A-GR
+A-Precision
+99.63
+95.44
+82.61
+59.76
+63.24
+69.17
+CWQ
+WebQSP
+50
+60
+70
+80
+90
+100
+SubgraphRAG (%)
+87.84
+87.09
+60.66
+50.54
+77.20
+54.11
+CWQ
+WebQSP
+Figure 5: Attack impact on different stages of KG-RAG
+systems.
+stem from its generation mechanism, where the retrieved
+subgraph is encoded into embeddings and concatenated as a
+prefix to the input text embeddings of the LLM, and then the
+final decoded predictions are obtained. This probably makes
+the attack less controllable, compared to directly presenting
+adversarial content as natural language input via in-context
+learning. Interestingly, although GCR and SubgraphRAG
+show smaller QA performance degradation on CWQ than
+on WebQSP (shown in Table 3), they actually present higher
+values across A-Precision, A-H@1, and A-MRR on CWQ.
+These results are consistent with the observations in
+Table 3, confirming that the QA degradation primarily re-
+sults from our proposed attack, which effectively induces
+the generation of adversarial answers, rather than being
+attributed to the hallucinations of LLMs themselves.
+4.6. Attack Analysis on KG-RAG Stages
+To better understand how our data poisoning attack
+affects different stages of the KG-RAG methods, we conduct
+a detailed analysis focusing on how adversarial answers are
+retrieved and ultimately involved in the final responses.
+Specifically, we calculate the proportion of questions in
+which the retrieved result contains the injected perturbation
+triples that can lead to adversarial answers, and denote it as
+Attack Retrieved Ratio (A-RR). To quantify the impact on
+the generation stage, we focus on the questions of which
+adversarial answers have been successfully retrieved, and
+among them, measure the proportion of those questions in
+which adversarial answers are finally generated, denoted as
+Attack Generated Ratio (A-GR). Besides, we further calcu-
+late a more focused measurement of A-Precision, denoted
+as A-Precision†, calculating the A-Precision values over the
+questions where at least one adversarial answer is generated.
+We consider two representative KG-RAG methods, RoG
+and SubgraphRAG, which retrieve reasoning paths and sub-
+graphs, respectively. As illustrated in Figure 5, our data
+poisoning attack achieves high coverage at the retrieval
+stage, with both methods exhibiting high A-RR scores across
+both datasets. Compared to the success in polluting retrieval
+results, the KG-RAG methods behavior more resiliently in
+answer generation. For example, only about half of the CWQ
+: Preprint submitted to Elsevier
+Page 9 of 13
+
+
+
+================================================================================
+ページ 10
+================================================================================
+F1
+Hits@1
+EM
+Metrics
+20
+40
+60
+80
+Value(%)
+70.3
+79.6
+45.8
+43.1
+54.6
+11.7
+38.1
+48.5
+8.8
+36.3
+46.9
+8.7
+clean
+k=2
+k=4
+k=6
+(a) KGQA performances of RoG
+A-Precision
+A-H@1
+A-MRR
+Metrics
+40
+45
+50
+55
+60
+Value(%)
+47.5
+39.7
+52.2
+49.7
+42.8
+56.3
+48.5
+43.5
+56.3
+k=2
+k=4
+k=6
+(b) Adversarial Results of RoG
+F1
+Hits@1
+EM
+Metrics
+30
+40
+50
+60
+70
+80
+Value(%)
+71.1
+78.5
+44.3
+65.5
+72.0
+36.2
+64.0
+69.1
+34.5
+63.9
+68.5
+34.8
+clean
+k=2
+k=4
+k=6
+(c) KGQA performances of GCR
+A-Precision
+A-H@1
+A-MRR
+Metrics
+12
+14
+16
+18
+20
+Value(%)
+13.2
+12.8
+16.7
+13.5
+14.4
+18.1
+13.3
+14.2
+18.0
+k=2
+k=4
+k=6
+(d) Adversarial Results of GCR
+Figure 6: Attack Effectiveness across increasing poisoning scales.
+Table 5
+Performance of RoG using different LLMs, with and without data poisoning attack.
+F1
+Hits@1
+EM
+Category
+LLM for Generation
+Clean
+Attack
+Degradation
+Clean
+Attack
+Degradation
+Clean
+Attack
+Degradation
+Open-source
+Llama-2-7B-chat-hf
+41.00
+22.78
+18.22 (44.43↓)
+46.56
+26.78
+19.78 (44.48↓)
+7.49
+0.25
+7.24 (96.66↓)
+Llama-3.1-8B-Instruct
+54.20
+32.02
+22.18 (40.92↓)
+32.49
+27.70
+4.79 (14.72↓)
+26.78
+5.77
+21.01 (78.45↓)
+Closed-source
+GPT-3.5-turbo
+56.51
+36.19
+20.34 (35.95↓)
+64.13
+35.75
+28.38 (44.25↓)
+31.02
+3.87
+27.15 (87.52↓)
+GPT-4
+61.33
+37.31
+24.02 (39.17↓)
+61.36
+32.49
+28.87 (47.05↓)
+41.34
+8.91
+32.43 (78.45↓)
+Mixture-of-Experts
+DeepSeek-V3-0324
+57.69
+33.00
+24.69 (42.80↓)
+67.04
+37.70
+29.34 (43.76↓)
+41.94
+11.81
+30.13 (71.84↓)
+KG-specific
+LLMRoG
+70.34
+38.06
+32.28 (45.89↓)
+79.61
+48.46
+31.15 (39.13↓)
+45.76
+8.85
+36.91 (80.66↓)
+questions with retrieved adversarial answers are ultimately
+adopted by SubgraphRAG in the final response. However,
+for those questions in which adversarial answers are suc-
+cessfully introduced into the final prediction, such answers
+typically occupy a large proportion of the prediction across
+both RoG and SubgraphRAG on the two benchmarks.
+Based on these results, we observe that the retrieval
+stage constitutes a critical vulnerability in existing KG-
+RAG methods, underscoring the importance of reliable
+evidence to secure KG-RAG methods. While the gener-
+ation stage with LLMs is more robust against poisoned
+evidence, it still suffers from a polarized response: ad-
+versarial content is either fully rejected or dominates the
+final prediction once adopted.
+4.7. Attack Analysis on Poisoning Scales
+In this section, we investigate the impact of the poisoning
+scale by varying the number of poisoned triples 𝑘associated
+with each targeted adversarial answer. As shown in Figure 6,
+larger values of 𝑘generally lead to stronger attack effects
+on both QA accuracy and adversarial manipulation. This
+is primarily reflected in the improved ability to promote
+adversarial answers and elevate their ranking, as indicated
+by higher MAPR and AH@1 scores.
+However, the effects of further increasing 𝑘beyond 𝑘=
+4 diminish, with both QA and attack metrics remaining
+largely stable. For example, when 𝑘= 4, RoG already
+fails to produce most of the exactly correct answers, leaving
+little room for further degradation. In such cases, additional
+poisoned triples primarily increase the likelihood that the
+targeted negative answers appear at higher ranks, but can
+hardly lead to further drops in the overall QA performance of
+KG-RAG methods. Instead, the increasing poisoning scales
+would potentially raise the risk of attack detection.
+These findings suggest that
+KG-RAG methods are
+highly sensitive to knowledge poisoning, as even small-
+scale perturbations can cause notable performance degra-
+dation. Compared to the marginal enhancement of at-
+tack effectiveness, increasing poisoning scales may pose a
+greater concern regarding attack stealthiness, especially
+considering that large-scale perturbations are often im-
+practical in real-world scenarios.
+4.8. Attack Analysis on KG-RAG Generators
+In this section, we investigate the robustness of dif-
+ferent LLMs used in the generation stage of KG-RAG
+methods under our data poisoning attacks. We focus on
+the KG-RAG method of RoG and adopt different LLMs
+used for final answer generation. Specifically, we evaluate
+four categories of LLMs: open-source models (LLaMA2-
+7B-chat-hf, LLaMA3.1-8B-Instruct), closed-source models
+(GPT-3.5-turbo, GPT-4), mixture-of-experts (MoE) models
+(DeepSeek-V3-0324), and KG-specific models (the RoG-
+integrated LLM). The retrieval results and prompt templates
+are kept consistent across all settings, with minimal format-
+ting adjustments for each LLM to accommodate their input
+formatting requirements.
+Based on the results in Table 5, we have following obser-
+vations: (1). The KG-specific LLM (LLMRoG) achieves the
+greatest QA performance without data poisoning attack, but
+also suffers the most significant degradation under attack.
+For example, its F1 score drops by 45.89% relative to its
+clean performance, a decline greater than that of any other
+LLM in comparison. (2). Closed-source LLMs (GPT-3.5
+: Preprint submitted to Elsevier
+Page 10 of 13
+
+
+
+================================================================================
+ページ 11
+================================================================================
+Table 6
+Effect of data poisoning on retrieval and prediction: a real example of RoG.
+Question
+What language is spoken in the location that appointed Michelle Bachelet to a governmental position speak?
+Ground Truth
+Aymara language, Mapudungun Language, Rapa Nui Language, Spanish Language, Puquina Language
+Before Attack
+Retrieval:
+1. Michelle Bachelet →people.person.nationality →Chile →language.human_language.countries_spoken_in →
+Spanish Language
+Prediction:
+Spanish Language
+Adversarial
+Targets
+Portuguese, Italian, French, German, Dutch
+After Attack
+Retrieval:
+1. Michelle Bachelet →people.person.nationality →Germany →location.country.languages_spoken →German
+2. Michelle Bachelet →people.person.nationality →Chile →location.country.languages_spoken →Italian
+3. Michelle Bachelet →people.person.nationality →Chile →location.country.languages_spoken →Spanish
+Language
+4. Michelle Bachelet →people.person.nationality →Chile →location.country.official_language →Portuguese
+5. Michelle Bachelet →people.person.nationality →Chile →location.country.official_language →French
+6. Michelle Bachelet →people.person.nationality →Chile →location.country.official_language →German
+7. Michelle Bachelet →people.person.nationality →Chile →location.country.official_language →Dutch
+Prediction:
+Italian Language, German Language, French, Spanish Language
+and GPT-4) and the MoE model (DeepSeek-V3-0324) con-
+sistently outperform open-source LLaMA variants both be-
+fore and after attack. Notably, LLaMA-2-7B-chat-hf exhibits
+the weakest robustness, with its EM score nearly eliminated
+under attack. Although LLaMA-3.1-8B-Instruct shows im-
+proved robustness, its performance remains far below that
+of GPT-4 and DeepSeek-V3-0324. (3). With attack, GPT-
+4 and DeepSeek-V3-0324 demonstrate competitive QA per-
+formance to the KG-specific model across several metrics.
+In particular, DeepSeek-V3-0324 achieves the highest EM
+score after attack (11.81), surpassing LLMRoG (8.85). In
+terms of relative degradation, these models seem to exhibit
+better robustness than the KG-specific LLM. However, the
+robustness gaps remain marginal.
+4.9. Case Study
+We present a representative case to provide an explicit
+illustration of how data poisoning affects both retrieval and
+generation in KG-RAG systems. As shown in Table 6, our at-
+tack successfully leads to adversarial paths retrieved by RoG,
+which in turn results in incorrect predictions aligned with the
+attack targets. The attack also leads to Spanish Language,
+the only originally correct answer, being no longer prior-
+itized under attack during answer generation. Besides, we
+also observe that several adversarial targets, like Dutch and
+Portuguese, although successfully retrieved, are ultimately
+excluded from the final prediction. This reveals that LLMs
+in RAG systems do not fully rely on all retrieved content
+and exhibit a potential implicit preference in content
+selection, highlighting the need to better understand the
+underlying such selection behavior in future work.
+5. Related Works
+5.1. Attack to RAG
+With the increasing adoption of retrieval-augmented
+generation (RAG) systems, concerns over their safety have
+been growing [42], and adversarial attacks have emerged
+as a promising approach to study robustness and vulnera-
+bilities of RAG systems. Recent efforts to attack retrieval-
+augmented generation (RAG) systems mainly focus on
+manipulating the retrieval corpus to induce malicious re-
+sponses. PoisonedRAG [18] conducts the first investiga-
+tion to inject crafted passages that are retrievable for spe-
+cific questions and steer the LLM toward attacker-desired
+answers. While effective, it is limited to fixed question-
+answer pairs. BadRAG [43] generalizes this approach to
+semantically grouped questions by using contrastive opti-
+mization, enabling broader yet still topic-bound attacks. It
+also explores indirect generative threats such as denial-of-
+service and sentiment bias. A recent study [21] proposes
+a composite adversarial document structure that includes
+three components: an Adversarial Target Sequence, an Ad-
+versarial Retriever Sequence, and an Adversarial Generation
+Sequence. This design enables joint attacks on both the
+retriever and generator components of RAG systems, op-
+timizing adversarial effectiveness through a dual-objective
+strategy.
+Although these studies demonstrate that RAG systems
+are vulnerable to adversarial manipulation of the external
+knowledge source, they primarily focus on traditional RAG
+systems that retrieve unstructured texts. However, with the
+growing incorporation of structured knowledge sources, typ-
+ically KGs, the security implications of such systems remain
+largely unexplored.
+: Preprint submitted to Elsevier
+Page 11 of 13
+
+
+
+================================================================================
+ページ 12
+================================================================================
+5.2. KG Poisoning
+Poisoning attacks on knowledge graphs (KGs) have also
+received increasing attention, although most prior work fo-
+cuses on their impact on knowledge graph embedding (KGE)
+models. These studies [29, 44, 25] typically conduct tar-
+geted attacks by injecting adversarial triples into the KG
+structure, aiming to degrade link prediction performance
+for specific target entities or relations. In contrast to these
+targeted approaches, recent work [26] explores untargeted
+KG poisoning by leveraging logic rules to identify and
+manipulate high-impact triples that significantly affect the
+global semantics of the KG. These studies, despite focusing
+on KGE performance, demonstrate that the semantics of
+KGs are fragile to be polluted, which may further affect
+KG-based applications such as recommendation and KG-
+RAG systems. Thus, investigating the influence of KG poi-
+soning on KG-RAG systems is both timely and urgent for
+understanding their security implications, as KG-RAG has
+emerged as a popular extension of RAG systems.
+6. Conclusion
+In this work, we present the first study on the safety risks
+of KG-RAG, a popular extension of the RAG framework. We
+explore knowledge poisoning attacks and propose a practi-
+cal scenario in which the attacker is restricted to injecting
+perturbations to pollute KGs, with the goal of misleading
+the reasoning results of KG-RAG systems. We develop an
+attack strategy that inserts crafted triples that can complete
+adversarial reasoning paths, which may mislead the retriever
+or generator into producing incorrect answers. Experimental
+results on two benchmarks and four representative KG-RAG
+models demonstrate the effectiveness of the proposed attack.
+Beyond overall attack success, our analysis reveals the
+following key insights:
+(1). The safety of KG-RAG systems is particularly suscepti-
+ble to knowledge poisoning attacks, and their structural vul-
+nerability primarily resides in the retrieval stage. Retrievers
+in existing methods lack effective mechanisms to distinguish
+or exclude poisoned triples, allowing adversarial informa-
+tion to flow into the generation stage. Consequently, the
+overall robustness of KG-RAG systems often relies heavily
+on the LLMs’ persistence to noisy content.
+(2). Different LLMs exhibit varying levels of resistance to
+noise. While equipping LLMs with structured KG knowl-
+edge can improve their performance on KG-related tasks,
+it also tends to make them more vulnerable to adversar-
+ial KG manipulation. An improving direction may lie in
+combining the strengths of both KG-specific and general-
+purpose LLMs, aiming to maintain high answer accuracy
+while enhancing resistance to poisoned knowledge.
+(3). Increasing the number of injected triples does not guar-
+antee a consistent gain in attack effectiveness. Meanwhile,
+LLMs employed in KG-RAG generate stages may not fully
+utilize all retrieved content and could exhibit implicit pref-
+erences during answer generation, which needs further ex-
+plora.
+As future work, we aim to enhance the attack effective-
+ness by inserting perturbations that are more consistent with
+the LLM’s knowledge, thereby increasing the likelihood that
+retrieved adversarial triples are incorporated into the final
+answer. We also plan to investigate deletion and modification
+attacks to develop a broader understanding of RAG safety.
+References
+[1] Y. Gao, Y. Xiong, X. Gao, K. Jia, J. Pan, Y. Bi, Y. Dai, J. Sun, H. Wang,
+H. Wang, Retrieval-augmented generation for large language models:
+A survey, arXiv preprint arXiv:2312.10997 2 (1) (2023).
+[2] W. Fan, Y. Ding, L. Ning, S. Wang, H. Li, D. Yin, T.-S. Chua,
+Q. Li, A survey on rag meeting llms: Towards retrieval-augmented
+large language models, in: Proceedings of the 30th ACM SIGKDD
+Conference on Knowledge Discovery and Data Mining, 2024, pp.
+6491–6501.
+[3] P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal,
+H. Küttler, M. Lewis, W.-t. Yih, T. Rocktäschel, et al., Retrieval-
+augmented generation for knowledge-intensive nlp tasks, Advances
+in neural information processing systems 33 (2020) 9459–9474.
+[4] S. Siriwardhana, R. Weerasekera, E. Wen, T. Kaluarachchi, R. Rana,
+S. Nanayakkara, Improving the domain adaptation of retrieval aug-
+mented generation (rag) models for open domain question answering,
+Transactions of the Association for Computational Linguistics 11
+(2023) 1–17.
+[5] A. Toney-Wails, R. Wails, C. Smith, Expertly informed, genera-
+tively summarized: A hybrid RAG approach to informed consent
+summarization with auxiliary expert knowledge, in: Proceedings of
+the 4th International Workshop on Knowledge-Augmented Methods
+for Natural Language Processing, Association for Computational
+Linguistics, Albuquerque, New Mexico, USA, 2025, pp. 246–258.
+doi:10.18653/v1/2025.knowledgenlp-1.23.
+URL https://aclanthology.org/2025.knowledgenlp-1.23/
+[6] B. Peng, Y. Zhu, Y. Liu, X. Bo, H. Shi, C. Hong, Y. Zhang,
+S. Tang, Graph retrieval-augmented generation: A survey, arXiv
+preprint arXiv:2408.08921 (2024).
+[7] N. F. Liu, K. Lin, J. Hewitt, A. Paranjape, M. Bevilacqua, F. Petroni,
+P. Liang, Lost in the middle: How language models use long contexts,
+Transactions of the Association for Computational Linguistics 12
+(2024) 157–173. doi:10.1162/tacl_a_00638.
+URL https://aclanthology.org/2024.tacl-1.9/
+[8] H. Han, Y. Wang, H. Shomer, K. Guo, J. Ding, Y. Lei, M. Ha-
+lappanavar, R. A. Rossi, S. Mukherjee, X. Tang, et al., Retrieval-
+augmented generation with graphs (graphrag), arXiv preprint
+arXiv:2501.00309 (2024).
+[9] D. Vrandečić, M. Krötzsch, Wikidata: a free collaborative knowledge-
+base, Communications of the ACM 57 (10) (2014) 78–85.
+[10] K. Donnelly, et al., Snomed-ct: The advanced terminology and coding
+system for ehealth, Studies in health technology and informatics 121
+(2006) 279.
+[11] L. LUO, Y.-F. Li, G. Haffari, S. Pan, Reasoning on graphs: Faithful
+and interpretable large language model reasoning, in: The Twelfth
+International Conference on Learning Representations, 2024.
+URL https://openreview.net/forum?id=ZGNWW7xZ6Q
+[12] Y. Wu, Y. Huang, N. Hu, Y. Hua, G. Qi, J. Chen, J. Pan, Cotkr: Chain-
+of-thought enhanced knowledge rewriting for complex knowledge
+graph question answering, in: Proceedings of the 2024 Conference on
+Empirical Methods in Natural Language Processing, 2024, pp. 3501–
+3520.
+[13] S. Ji, S. Pan, E. Cambria, P. Marttinen, S. Y. Philip, A survey
+on knowledge graphs: Representation, acquisition, and applications,
+IEEE transactions on neural networks and learning systems 33 (2)
+(2021) 494–514.
+[14] Y. Wang, N. Lipka, R. A. Rossi, A. Siu, R. Zhang, T. Derr, Knowledge
+graph prompting for multi-document question answering, in: Proceed-
+ings of the AAAI Conference on Artificial Intelligence, Vol. 38, 2024,
+: Preprint submitted to Elsevier
+Page 12 of 13
+
+
+
+================================================================================
+ページ 13
+================================================================================
+pp. 19206–19214.
+[15] D. Edge, H. Trinh, N. Cheng, J. Bradley, A. Chao, A. Mody, S. Truitt,
+D. Metropolitansky, R. O. Ness, J. Larson, From local to global: A
+graph rag approach to query-focused summarization, arXiv preprint
+arXiv:2404.16130 (2024).
+[16] Y. Feng, C. Li, V. Ng, Legal judgment prediction: A survey of the
+state of the art, in: L. D. Raedt (Ed.), Proceedings of the Thirty-First
+International Joint Conference on Artificial Intelligence, IJCAI-22,
+International Joint Conferences on Artificial Intelligence Organiza-
+tion, 2022, pp. 5461–5469, survey Track. doi:10.24963/ijcai.2022/
+765.
+URL https://doi.org/10.24963/ijcai.2022/765
+[17] X. Wu, J. Duan, Y. Pan, M. Li, Medical knowledge graph: Data
+sources, construction, reasoning, and applications, Big Data Mining
+and Analytics 6 (2) (2023) 201–217.
+[18] W. Zou, R. Geng, B. Wang, J. Jia, Poisonedrag: Knowledge corruption
+attacks to retrieval-augmented generation of large language models,
+arXiv preprint arXiv:2402.07867 (2024).
+[19] F. Nazary, Y. Deldjoo, T. d. Noia, Poison-rag: Adversarial data
+poisoning attacks on retrieval-augmented generation in recommender
+systems, in: European Conference on Information Retrieval, Springer,
+2025, pp. 239–251.
+[20] H. Zhou, K.-H. Lee, Z. Zhan, Y. Chen, Z. Li, Trustrag: Enhancing ro-
+bustness and trustworthiness in rag, arXiv preprint arXiv:2501.00879
+(2025).
+[21] Z. Tan, C. Zhao, R. Moraffah, Y. Li, S. Wang, J. Li, T. Chen,
+H. Liu, Glue pizza and eat rocks - exploiting vulnerabilities in
+retrieval-augmented generative models, in: Proceedings of the 2024
+Conference on Empirical Methods in Natural Language Processing,
+Association for Computational Linguistics, Miami, Florida, USA,
+2024, pp. 1610–1626. doi:10.18653/v1/2024.emnlp-main.96.
+URL https://aclanthology.org/2024.emnlp-main.96/
+[22] J. Fan, Q. Yan, M. Li, G. Qu, Y. Xiao, A survey on data poisoning
+attacks and defenses, in: 2022 7th IEEE International Conference on
+Data Science in Cyberspace (DSC), IEEE, 2022, pp. 48–55.
+[23] Z. Wang, J. Ma, X. Wang, J. Hu, Z. Qin, K. Ren, Threats to training:
+A survey of poisoning attacks and defenses on machine learning
+systems, ACM Computing Surveys 55 (7) (2022) 1–36.
+[24] L. Luo, Z. Zhao, G. Haffari, Y.-F. Li, C. Gong, S. Pan, Graph-
+constrained reasoning: Faithful reasoning on knowledge graphs with
+large language models, arXiv preprint arXiv:2410.13080 (2024).
+[25] X. You, B. Sheng, D. Ding, M. Zhang, X. Pan, M. Yang, F. Feng,
+Mass: Model-agnostic, semantic and stealthy data poisoning attack
+on knowledge graph embedding, in: Proceedings of the ACM Web
+Conference 2023, 2023, pp. 2000–2010.
+[26] T. Zhao, J. Chen, Y. Ru, Q. Lin, Y. Geng, J. Liu, Untargeted ad-
+versarial attack on knowledge graph embeddings, in: Proceedings
+of the 47th International ACM SIGIR Conference on Research and
+Development in Information Retrieval, SIGIR ’24, Association for
+Computing Machinery, New York, NY, USA, 2024, p. 1701–1711.
+[27] S. Bratus, A. Rumshisky, A. Khrabrov, R. Magar, P. Thompson,
+Domain-specific entity extraction from noisy, unstructured data using
+ontology-guided search, International Journal on Document Analysis
+and Recognition (IJDAR) 14 (2011) 201–211.
+[28] W. Shen, J. Wang, J. Han, Entity linking with a knowledge base:
+Issues, techniques, and solutions, IEEE Transactions on Knowledge
+and Data Engineering 27 (2) (2014) 443–460.
+[29] H. Zhang, T. Zheng, J. Gao, C. Miao, L. Su, Y. Li, K. Ren, Data
+poisoning attack against knowledge graph embedding, in: Proceed-
+ings of the Twenty-Eighth International Joint Conference on Artificial
+Intelligence, IJCAI-19, International Joint Conferences on Artificial
+Intelligence Organization, 2019, pp. 4853–4859. doi:10.24963/ijcai.
+2019/674.
+URL https://doi.org/10.24963/ijcai.2019/674
+[30] P. Bhardwaj, J. Kelleher, L. Costabello, D. O’Sullivan, Poisoning
+knowledge graph embeddings via relation inference patterns, in:
+Proceedings of the 59th Annual Meeting of the Association for Com-
+putational Linguistics and the 11th International Joint Conference on
+Natural Language Processing (Volume 1: Long Papers), Association
+for Computational Linguistics, Online, 2021, pp. 1875–1888.
+doi:
+10.18653/v1/2021.acl-long.147.
+URL https://aclanthology.org/2021.acl-long.147/
+[31] Z. Sun, Z.-H. Deng, J.-Y. Nie, J. Tang, Rotate: Knowledge graph
+embedding by relational rotation in complex space, in: International
+Conference on Learning Representations, 2019.
+URL https://openreview.net/forum?id=HkgEQnRqYQ
+[32] K. Cheng, N. Ahmed, Y. Sun, Neural compositional rule learning for
+knowledge graph reasoning, in: The Eleventh International Confer-
+ence on Learning Representations, 2023.
+URL https://openreview.net/forum?id=F8VKQyDgRVj
+[33] Y. Wu, Y. Huang, N. Hu, Y. Hua, G. Qi, J. Chen, J. Z. Pan, CoTKR:
+Chain-of-thought enhanced knowledge rewriting for complex knowl-
+edge graph question answering, in: Proceedings of the 2024 Confer-
+ence on Empirical Methods in Natural Language Processing, Associ-
+ation for Computational Linguistics, Miami, Florida, USA, 2024, pp.
+3501–3520. doi:10.18653/v1/2024.emnlp-main.205.
+URL https://aclanthology.org/2024.emnlp-main.205/
+[34] X. He, Y. Tian, Y. Sun, N. V. Chawla, T. Laurent, Y. LeCun, X. Bres-
+son, B. Hooi, G-retriever: Retrieval-augmented generation for tex-
+tual graph understanding and question answering, in: A. Globerson,
+L. Mackey, D. Belgrave, A. Fan, U. Paquet, J. Tomczak, C. Zhang
+(Eds.), Advances in Neural Information Processing Systems, Vol. 37,
+Curran Associates, Inc., 2024, pp. 132876–132907.
+URL https://proceedings.neurips.cc/paper_files/paper/2024/file/
+efaf1c9726648c8ba363a5c927440529-Paper-Conference.pdf
+[35] M. Li, S. Miao, P. Li, Simple is effective: The roles of graphs and large
+language models in knowledge-graph-based retrieval-augmented gen-
+eration, in: The Thirteenth International Conference on Learning
+Representations, 2025.
+URL https://openreview.net/forum?id=JvkuZZ04O7
+[36] N. Reimers, I. Gurevych, Sentence-bert: Sentence embeddings using
+siamese bert-networks, arXiv preprint arXiv:1908.10084 (2019).
+[37] W.-t. Yih, M. Richardson, C. Meek, M.-W. Chang, J. Suh, The value
+of semantic parse labeling for knowledge base question answering,
+in: Proceedings of the 54th Annual Meeting of the Association for
+Computational Linguistics (Volume 2: Short Papers), 2016, pp. 201–
+206.
+[38] A. Talmor, J. Berant, The web as a knowledge-base for answering
+complex questions, in: Proceedings of the 2018 Conference of the
+North American Chapter of the Association for Computational Lin-
+guistics: Human Language Technologies, Volume 1 (Long Papers),
+2018, pp. 641–651.
+[39] G. He, Y. Lan, J. Jiang, W. X. Zhao, J.-R. Wen, Improving multi-
+hop knowledge base question answering by learning intermediate
+supervision signals, in: Proceedings of the 14th ACM international
+conference on web search and data mining, 2021, pp. 553–561.
+[40] J. Achiam, S. Adler, S. Agarwal, L. Ahmad, I. Akkaya, F. L. Aleman,
+D. Almeida, J. Altenschmidt, S. Altman, S. Anadkat, et al., Gpt-4
+technical report, arXiv preprint arXiv:2303.08774 (2023).
+[41] H. Touvron, L. Martin, K. Stone, P. Albert, A. Almahairi, Y. Babaei,
+N. Bashlykov, S. Batra, P. Bhargava, S. Bhosale, et al., Llama
+2: Open foundation and fine-tuned chat models, arXiv preprint
+arXiv:2307.09288 (2023).
+[42] B. Ni, Z. Liu, L. Wang, Y. Lei, Y. Zhao, X. Cheng, Q. Zeng,
+L. Dong, Y. Xia, K. Kenthapadi, et al., Towards trustworthy retrieval
+augmented generation for large language models: A survey, arXiv
+preprint arXiv:2502.06872 (2025).
+[43] J. Xue, M. Zheng, Y. Hu, F. Liu, X. Chen, Q. Lou, Badrag: Identifying
+vulnerabilities in retrieval augmented generation of large language
+models, arXiv preprint arXiv:2406.00083 (2024).
+[44] P. Banerjee, L. Chu, Y. Zhang, L. V. Lakshmanan, L. Wang, Stealthy
+targeted data poisoning attack on knowledge graphs, in: 2021 IEEE
+37th International Conference on Data Engineering (ICDE), IEEE,
+2021, pp. 2069–2074.
+: Preprint submitted to Elsevier
+Page 13 of 13
+
