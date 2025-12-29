@@ -48,8 +48,8 @@ def extract_pdf_with_pymupdf(pdf_path):
 def main():
     # スクリプトのディレクトリを取得
     script_dir = Path(__file__).parent
-    papers_dir = script_dir / "papers"
-    output_dir = script_dir / "extracted"
+    papers_dir = script_dir / "second_papers"
+    output_dir = script_dir / "second_papers" / "extracted"
     
     # 出力ディレクトリを作成
     output_dir.mkdir(exist_ok=True)
