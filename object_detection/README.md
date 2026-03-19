@@ -66,6 +66,15 @@
    - tile / sliced inference 中心の実務設計
    - OCR、vector parsing、rule engine を含む本番パイプライン
 
+8. [08_end_to_end_training_workflow.md](./08_end_to_end_training_workflow.md)
+   - データ作成から学習、評価、運用までの実務手順
+   - 実際に便利なツールと使い分け
+   - プロの視点での細かい効率化と運用の勘所
+
+9. [09_kaggle_leonardo_airborne_gold_strategy.md](./09_kaggle_leonardo_airborne_gold_strategy.md)
+   - Kaggle Leonardo（機載・可視＋IR・VOC mAP@0.5・Code Competition）向けゴールド級攻略
+   - Leaderboard と Efficiency Prize の二正面設計、CV・学習・推論・提出バグ防止
+
 ## このガイドの特徴
 
 - 研究論文の紹介ではなく、現場で使える判断軸に寄せている
