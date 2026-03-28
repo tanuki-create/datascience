@@ -1,0 +1,548 @@
+- role: document
+  name: (2) X
+  ref: root
+  children:
+    - role: link
+      name: キーボードショートカットを表示
+      ref: e0
+    - role: button
+      name: ホームタイムラインに移動
+      ref: e1
+    - role: button
+      name: トレンドに移動
+      ref: e2
+    - role: link
+      name: X
+      ref: e3
+    - role: link
+      name: ホーム
+      ref: e4
+    - role: link
+      name: 調べたいものを検索
+      ref: e5
+    - role: link
+      name: 通知（2件の未読通知）
+      ref: e6
+    - role: link
+      name: ダイレクトメッセージ
+      ref: e7
+    - role: link
+      name: SuperGrok
+      ref: e8
+    - role: link
+      name: プレミアム
+      ref: e9
+    - role: link
+      name: ブックマーク
+      ref: e10
+    - role: link
+      name: クリエイタースタジオ
+      ref: e11
+    - role: link
+      name: 記事
+      ref: e12
+    - role: link
+      name: プロフィール
+      ref: e13
+    - role: button
+      name: その他のメニュー項目
+      ref: e14
+      states: [collapsed]
+    - role: link
+      name: ポストする
+      ref: e15
+    - role: button
+      name: アカウントメニュー
+      ref: e16
+    - role: generic
+      name: ホームタイムライン
+      ref: e17
+    - role: button
+      name: 戻る
+      ref: e18
+    - role: button
+      name: フォルダを作成
+      ref: e19
+    - role: textbox
+      name: ブックマークを検索
+      ref: e20
+      placeholder: ブックマークを検索
+    - role: tab
+      name: 営業
+      ref: e21
+    - role: tab
+      name: 就活
+      ref: e22
+    - role: tab
+      name: LLM
+      ref: e23
+    - role: tab
+      name: Comfy
+      ref: e24
+    - role: tab
+      name: デザイン
+      ref: e25
+    - role: tab
+      name: createXYZ
+      ref: e26
+    - role: tab
+      name: 画像生成
+      ref: e27
+    - role: tab
+      name: 起業
+      ref: e28
+    - role: tab
+      name: 研究
+      ref: e29
+    - role: tab
+      name: kaggel, ML
+      ref: e30
+    - role: link
+      name: Brady Long
+      ref: e31
+    - role: link
+      name: @thisguyknowsai
+      ref: e32
+    - role: link
+      name: 17 時間前
+      ref: e33
+    - role: button
+      name: Grokのアクション
+      ref: e34
+    - role: button
+      name: もっと見る
+      ref: e35
+      states: [collapsed]
+    - role: button
+      name: さらに表示
+      ref: e36
+    - role: link
+      ref: e37
+    - role: button
+      name: 23 件の返信。返信する
+      ref: e38
+    - role: button
+      name: 60 件のリポスト件。リポスト
+      ref: e39
+      states: [collapsed]
+    - role: button
+      name: 409 件のいいね。いいねしました
+      ref: e40
+    - role: link
+      name: 55649 件の表示。ポストアナリティクスを表示
+      ref: e41
+    - role: button
+      name: ブックマークに追加済み
+      ref: e42
+    - role: button
+      name: ポストを共有
+      ref: e43
+      states: [collapsed]
+    - role: link
+      name: Kazunori Sato
+      ref: e44
+    - role: link
+      name: @kazunori_279
+      ref: e45
+    - role: link
+      name: 4 時間前
+      ref: e46
+    - role: button
+      name: Grokのアクション
+      ref: e47
+      nth: 1
+    - role: button
+      name: もっと見る
+      ref: e48
+      nth: 1
+      states: [collapsed]
+    - role: button
+      name: さらに表示
+      ref: e49
+      nth: 1
+    - role: link
+      name: "Brady Long @thisguyknowsai 17時間 BREAKING: A self-taught developer from Brazil just cracked the context window problem that's been plaguing RAG systems for 2 years. No PhD. No research lab affiliation."
+      ref: e50
+    - role: link
+      ref: e51
+      nth: 1
+    - role: button
+      name: 0 件の返信。返信する
+      ref: e52
+    - role: button
+      name: 11 件のリポスト件。リポスト
+      ref: e53
+      states: [collapsed]
+    - role: button
+      name: 113 件のいいね。いいねしました
+      ref: e54
+    - role: link
+      name: 10279 件の表示。ポストアナリティクスを表示
+      ref: e55
+    - role: button
+      name: ブックマークに追加済み
+      ref: e56
+      nth: 1
+    - role: button
+      name: ポストを共有
+      ref: e57
+      nth: 1
+      states: [collapsed]
+    - role: link
+      name: J
+      ref: e58
+    - role: link
+      name: @xjuntaro
+      ref: e59
+    - role: link
+      name: 17 時間前
+      ref: e60
+      nth: 1
+    - role: button
+      name: Grokのアクション
+      ref: e61
+      nth: 2
+    - role: button
+      name: もっと見る
+      ref: e62
+      nth: 2
+      states: [collapsed]
+    - role: button
+      name: さらに表示
+      ref: e63
+      nth: 2
+    - role: link
+      ref: e64
+      nth: 2
+    - role: button
+      name: 2 件の返信。返信する
+      ref: e65
+    - role: button
+      name: 16 件のリポスト件。リポスト
+      ref: e66
+      states: [collapsed]
+    - role: button
+      name: 112 件のいいね。いいねしました
+      ref: e67
+    - role: link
+      name: 10921 件の表示。ポストアナリティクスを表示
+      ref: e68
+    - role: button
+      name: ブックマークに追加済み
+      ref: e69
+      nth: 2
+    - role: button
+      name: ポストを共有
+      ref: e70
+      nth: 2
+      states: [collapsed]
+    - role: link
+      ref: e71
+      nth: 3
+    - role: link
+      name: AI at Meta
+      ref: e72
+    - role: link
+      ref: e73
+      nth: 4
+    - role: link
+      name: @AIatMeta
+      ref: e74
+    - role: link
+      name: 9 時間前
+      ref: e75
+    - role: button
+      name: Grokのアクション
+      ref: e76
+      nth: 3
+    - role: button
+      name: もっと見る
+      ref: e77
+      nth: 3
+      states: [collapsed]
+    - role: button
+      name: さらに表示
+      ref: e78
+      nth: 3
+    - role: link
+      ref: e79
+      nth: 5
+    - role: button
+      name: 47 件の返信。返信する
+      ref: e80
+    - role: button
+      name: 212 件のリポスト件。リポストしました
+      ref: e81
+      states: [collapsed]
+    - role: button
+      name: 1454 件のいいね。いいねしました
+      ref: e82
+    - role: link
+      name: 131641 件の表示。ポストアナリティクスを表示
+      ref: e83
+    - role: button
+      name: ブックマークに追加済み
+      ref: e84
+      nth: 3
+    - role: button
+      name: ポストを共有
+      ref: e85
+      nth: 3
+      states: [collapsed]
+    - role: link
+      name: IT navi
+      ref: e86
+    - role: link
+      name: @itnavi2022
+      ref: e87
+    - role: link
+      name: 13 時間前
+      ref: e88
+    - role: button
+      name: Grokのアクション
+      ref: e89
+      nth: 4
+    - role: button
+      name: もっと見る
+      ref: e90
+      nth: 4
+      states: [collapsed]
+    - role: button
+      name: さらに表示
+      ref: e91
+      nth: 4
+    - role: link
+      name: Andrew Curran @AndrewCurran_ 17時間 Mythos is a new tier, bigger than Opus, and more capable. It will be beyond the current state of the art by a wide margin, a dramatic jump in intelligence. Things hav
+      ref: e92
+    - role: link
+      ref: e93
+      nth: 6
+    - role: button
+      name: 2 件の返信。返信する
+      ref: e94
+      nth: 1
+    - role: button
+      name: 24 件のリポスト件。リポスト
+      ref: e95
+      states: [collapsed]
+    - role: button
+      name: 118 件のいいね。いいねしました
+      ref: e96
+    - role: link
+      name: 15901 件の表示。ポストアナリティクスを表示
+      ref: e97
+    - role: button
+      name: ブックマークに追加済み
+      ref: e98
+      nth: 4
+    - role: button
+      name: ポストを共有
+      ref: e99
+      nth: 4
+      states: [collapsed]
+    - role: link
+      name: Phosphen
+      ref: e100
+    - role: link
+      ref: e101
+      nth: 7
+    - role: link
+      name: @phosphenq
+      ref: e102
+    - role: link
+      name: 3月27日
+      ref: e103
+    - role: button
+      name: Grokのアクション
+      ref: e104
+      nth: 5
+    - role: button
+      name: もっと見る
+      ref: e105
+      nth: 5
+      states: [collapsed]
+    - role: button
+      name: 22 件の返信。返信する
+      ref: e106
+    - role: button
+      name: 301 件のリポスト件。リポストしました
+      ref: e107
+      states: [collapsed]
+    - role: button
+      name: 2079 件のいいね。いいねしました
+      ref: e108
+    - role: link
+      name: 207441 件の表示。ポストアナリティクスを表示
+      ref: e109
+    - role: button
+      name: ブックマークに追加済み
+      ref: e110
+      nth: 5
+    - role: button
+      name: ポストを共有
+      ref: e111
+      nth: 5
+      states: [collapsed]
+    - role: link
+      name: ひろ データをストーリーで語るマーケター
+      ref: e112
+    - role: link
+      name: @hiro_panketing
+      ref: e113
+    - role: link
+      name: 21 時間前
+      ref: e114
+    - role: button
+      name: Grokのアクション
+      ref: e115
+      nth: 6
+    - role: button
+      name: もっと見る
+      ref: e116
+      nth: 6
+      states: [collapsed]
+    - role: button
+      name: さらに表示
+      ref: e117
+      nth: 5
+    - role: link
+      ref: e118
+      nth: 8
+    - role: link
+      ref: e119
+      nth: 9
+    - role: button
+      name: 1 件の返信。返信する
+      ref: e120
+    - role: button
+      name: 155 件のリポスト件。リポスト
+      ref: e121
+      states: [collapsed]
+    - role: button
+      name: 1145 件のいいね。いいねしました
+      ref: e122
+    - role: link
+      name: 118342 件の表示。ポストアナリティクスを表示
+      ref: e123
+    - role: button
+      name: ブックマークに追加済み
+      ref: e124
+      nth: 6
+    - role: button
+      name: ポストを共有
+      ref: e125
+      nth: 6
+      states: [collapsed]
+    - role: link
+      name: yoku0825
+      ref: e126
+    - role: link
+      name: @yoku0825
+      ref: e127
+    - role: link
+      name: 3月27日
+      ref: e128
+      nth: 1
+    - role: button
+      name: Grokのアクション
+      ref: e129
+      nth: 7
+    - role: button
+      name: もっと見る
+      ref: e130
+      nth: 7
+      states: [collapsed]
+    - role: link
+      ref: e131
+      nth: 10
+    - role: link
+      name: digital.go.jp ガバメントクラウド｜デジタル庁
+      ref: e132
+    - role: button
+      name: 1 件の返信。返信する
+      ref: e133
+      nth: 1
+    - role: button
+      name: 115 件のリポスト件。リポスト
+      ref: e134
+      states: [collapsed]
+    - role: button
+      name: 469 件のいいね。いいねしました
+      ref: e135
+    - role: link
+      name: 180093 件の表示。ポストアナリティクスを表示
+      ref: e136
+    - role: button
+      name: ブックマークに追加済み
+      ref: e137
+      nth: 7
+    - role: button
+      name: ポストを共有
+      ref: e138
+      nth: 7
+      states: [collapsed]
+    - role: link
+      name: 今井翔太 / Shota Imai@えるエル
+      ref: e139
+    - role: link
+      name: @ImAI_Eruel
+      ref: e140
+    - role: link
+      name: 18 時間前
+      ref: e141
+    - role: button
+      name: Grokのアクション
+      ref: e142
+      nth: 8
+    - role: button
+      name: もっと見る
+      ref: e143
+      nth: 8
+      states: [collapsed]
+    - role: button
+      name: さらに表示
+      ref: e144
+      nth: 6
+    - role: link
+      ref: e145
+      nth: 11
+    - role: button
+      name: 11 件の返信。返信する
+      ref: e146
+    - role: button
+      name: 258 件のリポスト件。リポスト
+      ref: e147
+      states: [collapsed]
+    - role: button
+      name: 963 件のいいね。いいねしました
+      ref: e148
+    - role: link
+      name: 125451 件の表示。ポストアナリティクスを表示
+      ref: e149
+    - role: button
+      name: ブックマークに追加済み
+      ref: e150
+      nth: 8
+    - role: button
+      name: ポストを共有
+      ref: e151
+      nth: 8
+      states: [collapsed]
+    - role: heading
+      name: キーボードショートカットを表示するには、はてなマークを押してください。 キーボードショートカットを表示
+      ref: e152
+      level: 2
+    - role: navigation
+      name: メインメニュー
+      ref: e153
+    - role: heading
+      name: すべてのブックマーク
+      ref: e154
+      level: 2
+    - role: region
+      name: ブックマーク
+      ref: e155
+    - role: heading
+      name: ブックマーク
+      ref: e156
+      level: 1

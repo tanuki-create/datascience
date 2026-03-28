@@ -13,11 +13,14 @@
   - RT-DETRv2 による real-time DETR の改善
   - YOLOv10 による NMS-free real-time 検出の整理
   - Grounding DINO / YOLO-World による open-vocabulary detection
+  - VLM・MLLM による grounding / 生成型座標（[10_vlm_vision_language_object_detection.md](./10_vlm_vision_language_object_detection.md)）
   - DINOv2 による視覚 foundation backbone の実務転用
 - コミュニティ実践知:
   - Ultralytics の pretrained-first な学習導線
   - MMDetection の config ベース実験管理と auto-scale LR
   - RT-DETR 公式実装での custom data、deployment、small object sliced inference の実践知
+  - アノテーション設計と運用の標準化（[11_annotation_guidelines_professional.md](./11_annotation_guidelines_professional.md)）
+  - クラウド GPU 学習の実務判断（[12_cloud_gpu_training_practice.md](./12_cloud_gpu_training_practice.md)）
 
 重要なのは、研究の最新をそのまま本番に入れることではありません。研究の進展を踏まえつつ、どこが本番で使える知見で、どこが探索段階かを分けて扱うことです。
 
@@ -74,6 +77,18 @@
 9. [09_kaggle_leonardo_airborne_gold_strategy.md](./09_kaggle_leonardo_airborne_gold_strategy.md)
    - Kaggle Leonardo（機載・可視＋IR・VOC mAP@0.5・Code Competition）向けゴールド級攻略
    - Leaderboard と Efficiency Prize の二正面設計、CV・学習・推論・提出バグ防止
+
+10. [10_vlm_vision_language_object_detection.md](./10_vlm_vision_language_object_detection.md)
+   - VLM / MLLM を用いた物体検出と **bbox 正確性**（localization）の論点
+   - fine-tuning 見込み、主要モデル・サーベイ、実務のハイブリッド判断、リンク集（2025〜2026 近傍）
+
+11. [11_annotation_guidelines_professional.md](./11_annotation_guidelines_professional.md)
+   - 物体検出アノテの **プロ向けガイドライン**（クラス設計、bbox 規約、CVAT 運用、QA、版管理・マイグレーション）
+   - Class Registry、チェックリスト、学習パイプラインとの接続
+
+12. [12_cloud_gpu_training_practice.md](./12_cloud_gpu_training_practice.md)
+   - **クラウド GPU 学習**の現場判断（IaaS / マネージド / 従量系、コスト、Spot、データとチェックポイント、再現性・セキュリティ）
+   - 公式ドキュメントへの誘導（料金・SKU は都度確認）
 
 ## このガイドの特徴
 

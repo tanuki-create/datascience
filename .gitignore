@@ -1,0 +1,3 @@
+# x_bookmarks: local Python env and Playwright browser profile (do not commit)
+x_bookmarks/.venv/
+x_bookmarks/.pw-browser-profile/

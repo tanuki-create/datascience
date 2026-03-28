@@ -1,0 +1,16 @@
+[FOLDER:LLM] github.com GitHub - mistralai/mistral-finetune
+[FOLDER:LLM] zenn.dev ベクトルデータの容量を96%削減するBinary Embedding
+[FOLDER:画像生成] 田中義弘 | taziku CEO / AI × Creative @taziku_co 2024年4月24日 #生成AI #動画生成AI
+[FOLDER:画像生成] github.com/fofr/cog-style
+[FOLDER:画像生成] fofr @fofrAI 2024年4月19日
+[FOLDER:画像生成] github.com GitHub - Fannovel16/ComfyUI-MagickWand: Proper implementation of ImageMagick - the famous software...
+[FOLDER:画像生成] liming-ai.github.io/ControlNet_Plu
+[FOLDER:画像生成] github.com/ZHO-ZHO-ZHO/Co
+[FOLDER:画像生成] -Zho- @ZHO_ZHO_ZHO 2024年4月18日 #SD3 API ComfyUI 节点初步测试成功，已充值，但就是积分太贵了 x.com/ZHO_ZHO_ZHO/st…
+[FOLDER:画像生成] -Zho- @ZHO_ZHO_ZHO 2024年4月15日 1:44 卧槽！！！太强了！！！Adobe 开始上强度了！！！ 把官方演示视频剪成两段了 注：视频来自 Adobe 官方 视频地址： youtube.com/watch?v=6de4ak
+[FOLDER:画像生成] mi141 @mi141 2024年4月4日 こちらSSII2024で講演します。ちなみに、私の講演はマジで今昔物語＋αにするつもりですが、拡散モデルに特化した話は技術動向解説セッションのほうで、噂のSakana AIさんから講演があるそうです。他にも面白企画が目白押しなので、ぜひご参加を！（参加登録始まりました） confit.atlas.jp/guide/event/ss
+[FOLDER:研究] Yoshitaka Ushiku @losnuevetoros 2024年4月21日 ohmsha.co.jp/book/978427423
+[FOLDER:研究] huggingface.co stabilityai/cosxl · Hugging Face
+[FOLDER:研究] github.com GitHub - FoundationVision/VAR: [NeurIPS 2024 Best Paper Award][GPT beats diffusion🔥] [scaling laws...
+[FOLDER:研究] toyxyz @toyxyz3 2024年4月8日 huggingface.co stabilityai/cosxl
+[FOLDER:研究] Tatsuya Shirakawa @s_tat1204 2024年4月6日（本文はさらに表示側）

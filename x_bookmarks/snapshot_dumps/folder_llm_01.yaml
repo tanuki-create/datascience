@@ -1,0 +1,180 @@
+- role: document
+  name: (2) LLM / X
+  ref: root
+  children:
+    - role: link
+      name: キーボードショートカットを表示
+      ref: e0
+    - role: button
+      name: ホームタイムラインに移動
+      ref: e194
+    - role: button
+      name: トレンドに移動
+      ref: e195
+    - role: link
+      name: X
+      ref: e3
+    - role: link
+      name: ホーム
+      ref: e4
+    - role: link
+      name: 調べたいものを検索
+      ref: e5
+    - role: link
+      name: 通知（2件の未読通知）
+      ref: e6
+    - role: link
+      name: ダイレクトメッセージ
+      ref: e7
+    - role: link
+      name: SuperGrok
+      ref: e8
+    - role: link
+      name: プレミアム
+      ref: e9
+    - role: link
+      name: ブックマーク
+      ref: e10
+    - role: link
+      name: クリエイタースタジオ
+      ref: e11
+    - role: link
+      name: 記事
+      ref: e12
+    - role: link
+      name: プロフィール
+      ref: e13
+    - role: button
+      name: その他のメニュー項目
+      ref: e14
+      states: [collapsed]
+    - role: link
+      name: ポストする
+      ref: e15
+    - role: button
+      name: アカウントメニュー
+      ref: e16
+    - role: generic
+      name: ホームタイムライン
+      ref: e196
+    - role: button
+      name: 戻る
+      ref: e197
+    - role: button
+      name: もっと見る
+      ref: e198
+      states: [collapsed]
+    - role: link
+      name: Shion Honda
+      ref: e199
+    - role: link
+      name: @shion_honda
+      ref: e200
+    - role: link
+      name: 2024年5月25日
+      ref: e201
+    - role: button
+      name: Grokのアクション
+      ref: e202
+    - role: button
+      name: もっと見る
+      ref: e203
+      nth: 1
+      states: [collapsed]
+    - role: link
+      name: github.com GitHub - mistralai/mistral-finetune
+      ref: e204
+    - role: link
+      name: github.com から
+      ref: e205
+    - role: button
+      name: 0 件の返信。返信する
+      ref: e206
+    - role: button
+      name: 30 件のリポスト件。リポスト
+      ref: e207
+      states: [collapsed]
+    - role: button
+      name: 241 件のいいね。いいねする
+      ref: e208
+    - role: link
+      name: 23657 件の表示。ポストアナリティクスを表示
+      ref: e209
+    - role: button
+      name: ブックマークに追加済み
+      ref: e210
+    - role: button
+      name: ポストを共有
+      ref: e211
+      states: [collapsed]
+    - role: link
+      name: Hidetoshi Sudoh
+      ref: e212
+    - role: link
+      name: @sasa_kuna_
+      ref: e213
+    - role: link
+      name: 2024年5月21日
+      ref: e214
+    - role: button
+      name: Grokのアクション
+      ref: e215
+      nth: 1
+    - role: button
+      name: もっと見る
+      ref: e216
+      nth: 2
+      states: [collapsed]
+    - role: link
+      name: zenn.dev/knowledgesense
+      ref: e217
+    - role: link
+      name: "#zenn"
+      ref: e218
+    - role: link
+      name: zenn.dev ベクトルデータの容量を96%削減するBinary Embedding
+      ref: e219
+    - role: link
+      name: zenn.dev から
+      ref: e220
+    - role: button
+      name: 0 件の返信。返信する
+      ref: e221
+      nth: 1
+    - role: button
+      name: 36 件のリポスト件。リポスト
+      ref: e222
+      states: [collapsed]
+    - role: button
+      name: 261 件のいいね。いいねする
+      ref: e223
+    - role: link
+      name: 20009 件の表示。ポストアナリティクスを表示
+      ref: e224
+    - role: button
+      name: ブックマークに追加済み
+      ref: e225
+      nth: 1
+    - role: button
+      name: ポストを共有
+      ref: e226
+      nth: 1
+      states: [collapsed]
+    - role: heading
+      name: キーボードショートカットを表示するには、はてなマークを押してください。 キーボードショートカットを表示
+      ref: e192
+      level: 2
+    - role: navigation
+      name: メインメニュー
+      ref: e193
+    - role: heading
+      name: LLM
+      ref: e227
+      level: 2
+    - role: region
+      name: LLM
+      ref: e228
+    - role: heading
+      name: LLM
+      ref: e229
+      level: 1
