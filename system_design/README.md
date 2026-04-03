@@ -17,6 +17,7 @@
 ```
 system_design/
 ├── README.md                          # このファイル（シリーズ全体のインデックス）
+├── pro_field_concepts_guide_ja.md     # 現場プロ向け概念解説（日本語ハブ）
 ├── 01_social_media/                   # ソーシャルメディア
 │   ├── README.md
 │   ├── twitter_design.md
@@ -216,6 +217,8 @@ system_design/
 57. **[Chatbot](16_ml_ai_systems/chatbot_design.md)** - チャットボットシステム
 
 ### Phase 4: 共通パターンとケーススタディ
+
+- **[現場プロ向け概念解説（日本語ハブ）](pro_field_concepts_guide_ja.md)** — API Gateway／LB／キャッシュ／CAP など横断対照と現場の扱い方
 
 #### 共通パターン
 
