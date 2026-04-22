@@ -90,6 +90,13 @@
    - **クラウド GPU 学習**の現場判断（IaaS / マネージド / 従量系、コスト、Spot、データとチェックポイント、再現性・セキュリティ）
    - 公式ドキュメントへの誘導（料金・SKU は都度確認）
 
+13. [13_detection_training_settings_master_guide.md](./13_detection_training_settings_master_guide.md)
+   - **検知モデル学習の完全版リファレンス**
+   - 基礎知識から応用例、現場レベルの工夫、学習設定の深掘りを一冊で整理
+   - `learning rate`、`batch size`、`image size`、`augmentation`、`optimizer`、`loss`、`freeze / unfreeze` などを個別解説
+
+横断的な **検証・R&D のマインドセット**（メンタルモデル、指標設計、落とし所、止め時）は、このガイドの外側に [ml_research_practice/](../ml_research_practice/) としてまとめています。物体検出に限らない縦串の考え方をここで扱い、各章の個別作法と組み合わせて使ってください。
+
 ## このガイドの特徴
 
 - 研究論文の紹介ではなく、現場で使える判断軸に寄せている

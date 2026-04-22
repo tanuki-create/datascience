@@ -23,3 +23,7 @@
 1. **Recommendation System**から始める: レコメンデーションの基本設計
 2. **ML Inference**で推論システムを学ぶ: 大規模推論システム
 
+## 関連ドキュメント
+
+- [ml_research_practice/](../../ml_research_practice/) - 検証・R&D のマインドセット、指標設計、現実的な落とし所
+

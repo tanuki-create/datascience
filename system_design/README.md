@@ -18,6 +18,7 @@
 system_design/
 ├── README.md                          # このファイル（シリーズ全体のインデックス）
 ├── pro_field_concepts_guide_ja.md     # 現場プロ向け概念解説（日本語ハブ）
+├── system_design_topics_index_ja.md   # システム設計用語98項目インデックス（日本語）
 ├── 01_social_media/                   # ソーシャルメディア
 │   ├── README.md
 │   ├── twitter_design.md
@@ -219,6 +220,7 @@ system_design/
 ### Phase 4: 共通パターンとケーススタディ
 
 - **[現場プロ向け概念解説（日本語ハブ）](pro_field_concepts_guide_ja.md)** — API Gateway／LB／キャッシュ／CAP など横断対照と現場の扱い方
+- **[システム設計用語インデックス（98項目・日本語）](system_design_topics_index_ja.md)** — スケーラビリティ〜分散合意まで一言定義とカテゴリ分類
 
 #### 共通パターン
 
