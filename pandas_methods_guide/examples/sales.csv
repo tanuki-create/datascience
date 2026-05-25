@@ -1,0 +1,9 @@
+date,store,product,quantity,price
+2026-01-01,Tokyo,A,10,1200
+2026-01-02,Tokyo,B,4,2500
+2026-01-03,Osaka,A,7,1200
+2026-01-04,Osaka,B,,2500
+2026-02-01,Tokyo,A,12,1200
+2026-02-02,Osaka,B,5,2500
+2026-03-01,Tokyo,B,6,2500
+2026-03-02,Osaka,A,9,1200
