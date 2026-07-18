@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+  >
+  <title>Visual Explanation: Two Sum</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f5f7fa;
+      --surface: #ffffff;
+      --surface-subtle: #edf1f5;
+      --text: #17212b;
+      --muted: #4b5d6c;
+      --border: #aab6c2;
+      --accent: #075985;
+      --accent-soft: #e0f2fe;
+      --accent-text: #0c4a6e;
+      --pair: #6d28d9;
+      --pair-soft: #ede9fe;
+      --pair-text: #4c1d95;
+      --button: #17212b;
+      --button-text: #ffffff;
+      --focus: #b45309;
+      --code: #eef2f6;
+      --shadow: 0 12px 30px rgb(23 33 43 / 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --page: #0d141b;
+        --surface: #151f29;
+        --surface-subtle: #1d2a36;
+        --text: #edf3f8;
+        --muted: #b8c5d0;
+        --border: #536473;
+        --accent: #7dd3fc;
+        --accent-soft: #12384a;
+        --accent-text: #d7f3ff;
+        --pair: #c4b5fd;
+        --pair-soft: #352a55;
+        --pair-text: #f1edff;
+        --button: #edf3f8;
+        --button-text: #111820;
+        --focus: #fbbf24;
+        --code: #101820;
+        --shadow: 0 12px 30px rgb(0 0 0 / 0.25);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-family:
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      line-height: 1.55;
+      background: var(--page);
+      color: var(--text);
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--page);
+      color: var(--text);
+    }
+
+    main {
+      width: min(100% - 2rem, 68rem);
+      margin-inline: auto;
+      padding-block: clamp(1.25rem, 4vw, 3.5rem);
+    }
+
+    header {
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.2;
+      font-weight: 500;
+      text-wrap: balance;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 3.8rem);
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin: 0 0 1rem;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+    }
+
+    h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+    }
+
+    p,
+    dl,
+    pre,
+    table {
+      margin-block: 0;
+    }
+
+    p + p {
+      margin-top: 0.75rem;
+    }
+
+    section {
+      margin-top: clamp(2rem, 6vw, 4rem);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .eyebrow {
+      margin: 0 0 0.5rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lede {
+      max-width: 48rem;
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+    }
+
+    .recap {
+      max-width: 52rem;
+      font-size: 1.05rem;
+    }
+
+    .visual-stage {
+      padding: clamp(1rem, 3vw, 1.75rem);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .stage-heading {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .step-count {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .target-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .target-value {
+      padding: 0.2rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface-subtle);
+      font-weight: 500;
+    }
+
+    .array-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .array-cell {
+      min-width: 0;
+      padding: 0.75rem 0.5rem;
+      border: 2px solid var(--border);
+      border-radius: 0.75rem;
+      background: var(--surface-subtle);
+      text-align: center;
+    }
+
+    .array-cell.is-current {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-text);
+    }
+
+    .array-cell.is-pair {
+      box-shadow: inset 0 0 0 3px var(--pair);
+    }
+
+    .cell-index,
+    .cell-value,
+    .cell-marker {
+      display: block;
+    }
+
+    .cell-index {
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .cell-value {
+      margin-block: 0.3rem;
+      font-size: clamp(1.6rem, 5vw, 2.5rem);
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .cell-marker {
+      min-height: 2.5em;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1.25;
+    }
+
+    .array-cell.is-current .cell-marker {
+      color: var(--accent-text);
+    }
+
+    .array-cell.is-pair .cell-marker {
+      color: var(--pair-text);
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .state-item {
+      min-width: 0;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .state-label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .state-value {
+      display: block;
+      margin-top: 0.2rem;
+      overflow-wrap: anywhere;
+      font-weight: 500;
+    }
+
+    .status {
+      min-height: 3.4em;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-text);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+
+    button {
+      min-height: 2.75rem;
+      padding: 0.6rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--button);
+      background: var(--button);
+      color: var(--button-text);
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(0.94);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .terms {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem 1.5rem;
+    }
+
+    .term {
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .term dt {
+      font-weight: 500;
+    }
+
+    .term dd {
+      margin: 0.25rem 0 0;
+      color: var(--muted);
+    }
+
+    .explanation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      background: var(--code);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .proof-list {
+      margin: 0.75rem 0 0;
+      padding-left: 1.25rem;
+    }
+
+    .proof-list li + li {
+      margin-top: 0.65rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 38rem;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      font-weight: 500;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 44rem) {
+      .state-grid,
+      .terms,
+      .explanation-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .explanation-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 31rem) {
+      main {
+        width: min(100% - 1.25rem, 68rem);
+      }
+
+      .array-grid,
+      .state-grid,
+      .terms {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .controls button {
+        flex: 1 1 7rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (forced-colors: active) {
+      .array-cell.is-current {
+        border-style: double;
+      }
+
+      .array-cell.is-pair {
+        outline: 2px dashed CanvasText;
+        outline-offset: -5px;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Easy · Hash map</p>
+      <h1>Two Sum</h1>
+      <p class="lede">
+        Step through the canonical example and watch one pass turn a sum into a
+        constant-time lookup.
+      </p>
+    </header>
+
+    <section aria-labelledby="recap-heading">
+      <h2 id="recap-heading">Problem recap</h2>
+      <p class="recap">
+        Given an integer array <code>nums</code> and an integer
+        <code>target</code>, return the indices of two different elements whose
+        values add up to <code>target</code>. The same index cannot be used
+        twice, and the input contains exactly one valid pair.
+      </p>
+    </section>
+
+    <section aria-labelledby="terms-heading">
+      <h2 id="terms-heading">Terms to know</h2>
+      <dl class="terms">
+        <div class="term">
+          <dt>Complement</dt>
+          <dd>
+            The value needed to reach the target:
+            <code>target - current value</code>.
+          </dd>
+        </div>
+        <div class="term">
+          <dt>Hash map</dt>
+          <dd>
+            A key-value data structure. Python's <code>dict</code> is a hash
+            map and usually finds a key in constant time.
+          </dd>
+        </div>
+        <div class="term">
+          <dt>Index</dt>
+          <dd>
+            A numbered array position. Python uses zero-based indexing, so the
+            first element is at index <code>0</code>.
+          </dd>
+        </div>
+        <div class="term">
+          <dt>Constant time</dt>
+          <dd>
+            A lookup whose average amount of work does not grow with the input
+            size, written <code>O(1)</code>.
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section aria-labelledby="scan-heading">
+      <h2 id="scan-heading">Interactive hash-map scan</h2>
+      <div
+        class="visual-stage"
+        id="scan-visual"
+        role="group"
+        aria-describedby="scan-instructions"
+      >
+        <div class="stage-heading">
+          <h3>Array state</h3>
+          <span class="step-count" id="step-count">Step 1 of 5</span>
+        </div>
+
+        <p id="scan-instructions" class="target-line">
+          <span>
+            Use Previous and Next to inspect each algorithm state. Current and
+            result cells are labeled in text.
+          </span>
+          <span class="target-value">Target: <output>9</output></span>
+        </p>
+
+        <ol class="array-grid" id="array-grid" aria-label="Input array">
+          <li class="array-cell" data-index="0">
+            <span class="cell-index">Index 0</span>
+            <strong class="cell-value">2</strong>
+            <span class="cell-marker" aria-hidden="true"></span>
+          </li>
+          <li class="array-cell" data-index="1">
+            <span class="cell-index">Index 1</span>
+            <strong class="cell-value">7</strong>
+            <span class="cell-marker" aria-hidden="true"></span>
+          </li>
+          <li class="array-cell" data-index="2">
+            <span class="cell-index">Index 2</span>
+            <strong class="cell-value">11</strong>
+            <span class="cell-marker" aria-hidden="true"></span>
+          </li>
+          <li class="array-cell" data-index="3">
+            <span class="cell-index">Index 3</span>
+            <strong class="cell-value">15</strong>
+            <span class="cell-marker" aria-hidden="true"></span>
+          </li>
+        </ol>
+
+        <div class="state-grid" aria-label="Current algorithm state">
+          <div class="state-item">
+            <span class="state-label">Phase</span>
+            <output class="state-value" id="phase-output">Ready</output>
+          </div>
+          <div class="state-item">
+            <span class="state-label">Current item</span>
+            <output class="state-value" id="current-output">None yet</output>
+          </div>
+          <div class="state-item">
+            <span class="state-label">Complement</span>
+            <output class="state-value" id="complement-output">—</output>
+          </div>
+          <div class="state-item">
+            <span class="state-label">Seen map</span>
+            <output class="state-value" id="seen-output">{ }</output>
+          </div>
+          <div class="state-item">
+            <span class="state-label">Result</span>
+            <output class="state-value" id="result-output">Not found yet</output>
+          </div>
+        </div>
+
+        <p
+          class="status"
+          id="step-status"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          Step 1 of 5. Start with an empty seen map. Select Next to inspect index 0.
+        </p>
+
+        <div class="controls" aria-label="Scan controls">
+          <button
+            id="previous-button"
+            type="button"
+            aria-controls="scan-visual"
+            disabled
+          >
+            Previous
+          </button>
+          <button
+            class="primary"
+            id="next-button"
+            type="button"
+            aria-controls="scan-visual"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="algorithm-heading">
+      <h2 id="algorithm-heading">Algorithm and correctness</h2>
+      <div class="explanation-grid">
+        <div>
+          <h3>Pseudocode</h3>
+          <pre><code>create an empty hash map named seen
+
+for each index and number in nums:
+    complement = target - number
+
+    if complement is in seen:
+        return [seen[complement], index]
+
+    store number -&gt; index in seen</code></pre>
+        </div>
+        <div>
+          <h3>Why it works</h3>
+          <p>
+            Before each check, <code>seen</code> stores an earlier index for
+            every distinct value already visited. One earlier index is enough,
+            even when a value appears more than once.
+          </p>
+          <ul class="proof-list">
+            <li>
+              If the complement is present, its stored index and the current
+              index identify two different elements that add to the target.
+            </li>
+            <li>
+              If it is absent, storing the current value preserves it for later
+              checks.
+            </li>
+            <li>
+              Checking before storing prevents the current element from being
+              paired with itself while still supporting duplicate values.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="complexity-heading">
+      <h2 id="complexity-heading">Complexity</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Time</th>
+              <th scope="col">Extra space</th>
+              <th scope="col">Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Try every pair</th>
+              <td><code>O(n²)</code></td>
+              <td><code>O(1)</code></td>
+              <td>The work can grow like the square of the array length.</td>
+            </tr>
+            <tr>
+              <th scope="row">Hash-map scan</th>
+              <td><code>O(n)</code> average</td>
+              <td><code>O(n)</code></td>
+              <td>Visit each element once and store up to <code>n</code> keys.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="lede">
+        <strong>Big O notation</strong> describes how work or extra memory grows
+        with input size <code>n</code>. Here, <code>O(n)</code> is linear
+        growth and <code>O(1)</code> extra space is constant growth.
+      </p>
+    </section>
+
+    <footer>
+      Canonical walkthrough: <code>nums = [2, 7, 11, 15]</code>,
+      <code>target = 9</code>.
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const numbers = [2, 7, 11, 15];
+      const states = [
+        {
+          phase: "Ready",
+          currentIndex: null,
+          complement: null,
+          seen: [],
+          pair: [],
+          result: "Not found yet",
+          message:
+            "Start with an empty seen map. Select Next to inspect index 0."
+        },
+        {
+          phase: "Check",
+          currentIndex: 0,
+          complement: 7,
+          seen: [],
+          pair: [],
+          result: "Not found yet",
+          message:
+            "At index 0, value 2 needs complement 7. The seen map is empty, so there is no match yet."
+        },
+        {
+          phase: "Store",
+          currentIndex: 0,
+          complement: 7,
+          seen: [[2, 0]],
+          pair: [],
+          result: "Not found yet",
+          message:
+            "Store value 2 with index 0. It is now available to later elements."
+        },
+        {
+          phase: "Match",
+          currentIndex: 1,
+          complement: 2,
+          seen: [[2, 0]],
+          pair: [0, 1],
+          result: "Pair found: [0, 1]",
+          message:
+            "At index 1, value 7 needs complement 2. The seen map contains 2 at index 0, so the pair is found."
+        },
+        {
+          phase: "Return",
+          currentIndex: 1,
+          complement: 2,
+          seen: [[2, 0]],
+          pair: [0, 1],
+          result: "Return [0, 1]",
+          message:
+            "Return [0, 1]. The values are 2 and 7, and 2 + 7 equals the target 9."
+        }
+      ];
+
+      const elements = {
+        stepCount: document.getElementById("step-count"),
+        phase: document.getElementById("phase-output"),
+        current: document.getElementById("current-output"),
+        complement: document.getElementById("complement-output"),
+        seen: document.getElementById("seen-output"),
+        result: document.getElementById("result-output"),
+        status: document.getElementById("step-status"),
+        previous: document.getElementById("previous-button"),
+        next: document.getElementById("next-button")
+      };
+      const arrayCells = Array.from(
+        document.querySelectorAll("#array-grid .array-cell")
+      );
+      let activeStep = 0;
+
+      function formatSeen(entries) {
+        if (entries.length === 0) {
+          return "{ }";
+        }
+        return (
+          "{ " +
+          entries
+            .map((entry) => entry[0] + " → index " + entry[1])
+            .join(", ") +
+          " }"
+        );
+      }
+
+      function render() {
+        const state = states[activeStep];
+        elements.stepCount.textContent =
+          "Step " + (activeStep + 1) + " of " + states.length;
+        elements.phase.textContent = state.phase;
+        elements.current.textContent =
+          state.currentIndex === null
+            ? "None yet"
+            : "Index " +
+              state.currentIndex +
+              " · value " +
+              numbers[state.currentIndex];
+        elements.complement.textContent =
+          state.complement === null ? "—" : String(state.complement);
+        elements.seen.textContent = formatSeen(state.seen);
+        elements.result.textContent = state.result;
+        elements.status.textContent =
+          "Step " +
+          (activeStep + 1) +
+          " of " +
+          states.length +
+          ". " +
+          state.message;
+
+        arrayCells.forEach((cell, index) => {
+          const isCurrent = index === state.currentIndex;
+          const isPair = state.pair.includes(index);
+          const marker = cell.querySelector(".cell-marker");
+          let markerText = "";
+
+          cell.classList.toggle("is-current", isCurrent);
+          cell.classList.toggle("is-pair", isPair);
+
+          if (isCurrent && isPair) {
+            markerText = "Current item · Result pair";
+          } else if (isCurrent) {
+            markerText = "Current item";
+          } else if (isPair) {
+            markerText = "Result pair";
+          }
+
+          marker.textContent = markerText;
+          cell.setAttribute(
+            "aria-label",
+            "Index " +
+              index +
+              ", value " +
+              numbers[index] +
+              (markerText ? ", " + markerText : ", not selected")
+          );
+        });
+
+        elements.previous.disabled = activeStep === 0;
+        elements.next.disabled = activeStep === states.length - 1;
+        elements.next.textContent =
+          activeStep === states.length - 1 ? "Scan complete" : "Next";
+      }
+
+      elements.previous.addEventListener("click", () => {
+        if (activeStep > 0) {
+          activeStep -= 1;
+          render();
+        }
+      });
+
+      elements.next.addEventListener("click", () => {
+        if (activeStep < states.length - 1) {
+          activeStep += 1;
+          render();
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

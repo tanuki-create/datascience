@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Visual Explanation: Maximum Subarray</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #f7f8fa;
+      --surface: #ffffff;
+      --surface-subtle: #edf1f5;
+      --text: #17202a;
+      --muted: #52606d;
+      --border: #aab4bf;
+      --strong-border: #334e68;
+      --accent: #0b63ce;
+      --accent-soft: #e5f0ff;
+      --accent-text: #073b7a;
+      --winner: #6b4f00;
+      --winner-soft: #fff2bd;
+      --focus: #b54708;
+      --shadow: 0 8px 24px rgb(23 32 42 / 8%);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #111820;
+        --surface: #19232d;
+        --surface-subtle: #24313d;
+        --text: #edf2f7;
+        --muted: #bcc8d4;
+        --border: #536475;
+        --strong-border: #c6d2dd;
+        --accent: #8dc2ff;
+        --accent-soft: #193d66;
+        --accent-text: #f1f7ff;
+        --winner: #ffe08a;
+        --winner-soft: #554510;
+        --focus: #ffb86b;
+        --shadow: 0 8px 24px rgb(0 0 0 / 24%);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+    }
+
+    main {
+      width: min(100% - 2rem, 70rem);
+      margin-inline: auto;
+      padding-block: 2.5rem 4rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 22ch;
+      margin-bottom: 0.75rem;
+      font-size: clamp(2rem, 6vw, 3.75rem);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin-bottom: 0.75rem;
+      font-size: clamp(1.35rem, 3vw, 1.75rem);
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    code,
+    pre,
+    .number {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    code {
+      padding: 0.1em 0.3em;
+      border-radius: 0.25rem;
+      background: var(--surface-subtle);
+    }
+
+    .eyebrow {
+      margin: 0 0 0.5rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lede {
+      max-width: 68ch;
+      margin-bottom: 2rem;
+      color: var(--muted);
+      font-size: 1.08rem;
+    }
+
+    .section {
+      margin-top: 2.5rem;
+    }
+
+    .panel {
+      padding: clamp(1rem, 3vw, 1.5rem);
+      border: 1px solid var(--border);
+      border-radius: 0.8rem;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .recap-grid,
+    .definition-grid,
+    .metrics,
+    .comparison-grid {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .recap-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .recap-item,
+    .definition,
+    .metric,
+    .choice {
+      padding: 0.9rem;
+      border-left: 4px solid var(--border);
+      background: var(--surface-subtle);
+    }
+
+    .recap-item strong,
+    .definition dt,
+    .metric dt {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .definition-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 0;
+    }
+
+    .definition {
+      margin: 0;
+    }
+
+    .definition dd,
+    .metric dd {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .explorer-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .step-count {
+      margin: 0;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .array-grid {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 0.45rem;
+      padding: 0;
+      margin: 0 0 1rem;
+      list-style: none;
+    }
+
+    .array-cell {
+      min-width: 0;
+      padding: 0.65rem 0.25rem;
+      border: 1px solid var(--border);
+      border-radius: 0.45rem;
+      background: var(--surface-subtle);
+      text-align: center;
+    }
+
+    .array-cell.is-current {
+      border: 3px solid var(--accent);
+      padding: calc(0.65rem - 2px) calc(0.25rem - 2px);
+      background: var(--accent-soft);
+    }
+
+    .array-cell.is-winner {
+      border-bottom: 5px double var(--winner);
+      background: var(--winner-soft);
+    }
+
+    .array-index,
+    .array-state {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.2;
+    }
+
+    .array-value {
+      display: block;
+      margin-block: 0.2rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .array-cell.is-current .array-state {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .array-cell.is-winner .array-state {
+      color: var(--winner);
+      font-weight: 700;
+    }
+
+    .metrics {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 1rem;
+    }
+
+    .metric {
+      margin: 0;
+    }
+
+    .metric dd.number {
+      color: var(--text);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .comparison-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 1rem;
+    }
+
+    .choice {
+      position: relative;
+      border-left-color: var(--border);
+    }
+
+    .choice.is-chosen {
+      border-left-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .choice-status {
+      display: inline-block;
+      margin-top: 0.45rem;
+      font-weight: 700;
+    }
+
+    .decision {
+      padding: 0.85rem 1rem;
+      border: 1px dashed var(--strong-border);
+      border-radius: 0.45rem;
+      background: var(--surface-subtle);
+    }
+
+    .decision strong {
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .final-result {
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 2px double var(--winner);
+      border-radius: 0.45rem;
+      background: var(--winner-soft);
+    }
+
+    .final-result.is-visible {
+      display: block;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    button {
+      min-height: 2.75rem;
+      padding: 0.65rem 1rem;
+      border: 2px solid var(--strong-border);
+      border-radius: 0.45rem;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--surface-subtle);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .next-button {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .next-button {
+        color: #071522;
+      }
+    }
+
+    .next-button:hover:not(:disabled) {
+      filter: brightness(0.92);
+      background: var(--accent);
+    }
+
+    .live-status {
+      min-height: 1.6em;
+      margin: 0.75rem 0 0;
+      color: var(--muted);
+    }
+
+    .explanation-columns {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 1rem;
+    }
+
+    .explanation-columns > * {
+      min-width: 0;
+    }
+
+    pre {
+      max-width: 100%;
+      margin: 0;
+      padding: 1rem;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      border: 1px solid var(--border);
+      border-radius: 0.45rem;
+      background: var(--surface-subtle);
+      color: var(--text);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .proof-list {
+      padding-left: 1.2rem;
+      margin-bottom: 0;
+    }
+
+    .proof-list li + li {
+      margin-top: 0.65rem;
+    }
+
+    .complexity-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin: 0;
+    }
+
+    .complexity-list > div {
+      padding: 1rem;
+      border-top: 3px solid var(--strong-border);
+      background: var(--surface-subtle);
+    }
+
+    .complexity-list dt {
+      font-weight: 700;
+    }
+
+    .complexity-list dd {
+      margin: 0.25rem 0 0;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 700px) {
+      main {
+        width: min(100% - 1.25rem, 70rem);
+        padding-top: 1.5rem;
+      }
+
+      .recap-grid,
+      .definition-grid,
+      .metrics,
+      .comparison-grid,
+      .explanation-columns,
+      .complexity-list {
+        grid-template-columns: 1fr;
+      }
+
+      .array-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .explorer-heading {
+        align-items: start;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .controls {
+        flex-direction: column-reverse;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .array-cell,
+      .choice {
+        transition: background-color 160ms ease, border-color 160ms ease;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Easy · Arrays · Dynamic programming</p>
+      <h1>Maximum Subarray</h1>
+      <p class="lede">See why Kadane's algorithm keeps one useful running sum, discards weaker choices, and finds the best contiguous block in a single pass.</p>
+    </header>
+
+    <section class="section" aria-labelledby="recap-title">
+      <h2 id="recap-title">Problem recap</h2>
+      <div class="recap-grid">
+        <div class="recap-item">
+          <strong>Input</strong>
+          An integer array <code>nums</code> containing at least one number.
+        </div>
+        <div class="recap-item">
+          <strong>Output</strong>
+          The largest sum of any contiguous, non-empty subarray.
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="terms-title">
+      <h2 id="terms-title">Terms to know</h2>
+      <dl class="definition-grid">
+        <div class="definition">
+          <dt>Contiguous</dt>
+          <dd>Items occupy consecutive indices with no gaps.</dd>
+        </div>
+        <div class="definition">
+          <dt>Subarray</dt>
+          <dd>A contiguous, non-empty section of an array.</dd>
+        </div>
+        <div class="definition">
+          <dt>Linear scan</dt>
+          <dd>Visit the input once from left to right.</dd>
+        </div>
+        <div class="definition">
+          <dt>Dynamic programming</dt>
+          <dd>Build a larger answer from previously computed smaller answers.</dd>
+        </div>
+        <div class="definition">
+          <dt>Divide and conquer</dt>
+          <dd>Split a problem into smaller parts, solve them, and combine their answers.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="section panel" aria-labelledby="explorer-title">
+      <div class="explorer-heading">
+        <div>
+          <h2 id="explorer-title">Nine-step Kadane scan</h2>
+          <p>At each index, choose the better sum: start here or extend the previous best ending here.</p>
+        </div>
+        <p class="step-count" id="step-count">Step 1 of 9</p>
+      </div>
+
+      <ol class="array-grid" id="array-grid" aria-label="Input array by index"></ol>
+
+      <dl class="metrics" aria-label="Current algorithm state">
+        <div class="metric">
+          <dt>Current number</dt>
+          <dd class="number" id="current-number">−2</dd>
+        </div>
+        <div class="metric">
+          <dt><code>current_sum</code></dt>
+          <dd class="number" id="current-sum">−2</dd>
+        </div>
+        <div class="metric">
+          <dt><code>max_sum</code></dt>
+          <dd class="number" id="max-sum">−2</dd>
+        </div>
+      </dl>
+
+      <div class="comparison-grid" aria-label="Start versus extend comparison">
+        <section class="choice" id="start-choice" aria-labelledby="start-title">
+          <h3 id="start-title">Start at this number</h3>
+          <p><code>x</code> = <strong class="number" id="start-value">−2</strong></p>
+          <span class="choice-status" id="start-status">Chosen</span>
+        </section>
+        <section class="choice" id="extend-choice" aria-labelledby="extend-title">
+          <h3 id="extend-title">Extend the previous subarray</h3>
+          <p><code>previous current_sum + x</code> = <strong class="number" id="extend-value">Not available</strong></p>
+          <span class="choice-status" id="extend-status">The scan starts here</span>
+        </section>
+      </div>
+
+      <div class="decision" id="decision-box">
+        <strong>Decision</strong>
+        <span id="decision-text">Initialize both sums with the first number.</span>
+      </div>
+
+      <div class="final-result" id="final-result">
+        <strong>Final winning subarray: indices 3–6</strong>
+        <p><code>[4, −1, 2, 1]</code> gives <code>4 − 1 + 2 + 1 = 6</code>. The double-underlined cells mark the winning contiguous block.</p>
+      </div>
+
+      <nav class="controls" aria-label="Kadane scan steps">
+        <button type="button" id="previous-button">Previous step</button>
+        <button type="button" class="next-button" id="next-button">Next step</button>
+      </nav>
+      <p class="live-status" id="live-status" aria-live="polite" aria-atomic="true">Step 1 of 9. Index 0, value −2. Initialize both sums with the first number.</p>
+      <noscript><p>This step-through requires JavaScript. The algorithm and proof remain available below.</p></noscript>
+    </section>
+
+    <section class="section" aria-labelledby="algorithm-title">
+      <h2 id="algorithm-title">Algorithm and correctness</h2>
+      <div class="explanation-columns">
+        <div>
+          <h3>Pseudocode</h3>
+          <pre><code>current_sum = nums[0]
+max_sum = nums[0]
+
+for each number x after the first:
+    current_sum = max(
+        x,
+        current_sum + x
+    )
+    max_sum = max(max_sum, current_sum)
+
+return max_sum</code></pre>
+        </div>
+        <div>
+          <h3>Why it works</h3>
+          <ul class="proof-list">
+            <li><code>current_sum</code> is the largest sum of any subarray that must end at the current index.</li>
+            <li>Every such subarray either starts at the current number or extends the best subarray ending at the previous index. The comparison covers both possibilities.</li>
+            <li>The smaller choice can be discarded because both choices would receive the same future additions.</li>
+            <li><code>max_sum</code> records the largest ending-here result seen at any processed index, so it is the answer after the final index.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="complexity-title">
+      <h2 id="complexity-title">Complexity and alternatives</h2>
+      <dl class="complexity-list">
+        <div>
+          <dt>Time: <code>O(n)</code></dt>
+          <dd>A linear scan visits each of the <code>n</code> values once.</dd>
+        </div>
+        <div>
+          <dt>Extra space: <code>O(1)</code></dt>
+          <dd>Only two sums are stored, regardless of the array length.</dd>
+        </div>
+      </dl>
+      <p>A divide-and-conquer solution compares the best subarray in the left half, right half, and across the midpoint. It takes <code>O(n log n)</code> time, so Kadane's single-pass solution is more efficient here.</p>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    const values = [-2, 1, -3, 4, -1, 2, 1, -5, 4];
+    const steps = [
+      { start: -2, extend: null, current: -2, maximum: -2, choice: "start", decision: "Initialize both sums with the first number." },
+      { start: 1, extend: -1, current: 1, maximum: 1, choice: "start", decision: "Start a new subarray because 1 is greater than −1." },
+      { start: -3, extend: -2, current: -2, maximum: 1, choice: "extend", decision: "Extend because −2 is greater than −3; keep the earlier maximum of 1." },
+      { start: 4, extend: 2, current: 4, maximum: 4, choice: "start", decision: "Start a new subarray at 4 because 4 is greater than 2." },
+      { start: -1, extend: 3, current: 3, maximum: 4, choice: "extend", decision: "Extend to 3; the earlier maximum remains 4." },
+      { start: 2, extend: 5, current: 5, maximum: 5, choice: "extend", decision: "Extend to 5 and update the maximum to 5." },
+      { start: 1, extend: 6, current: 6, maximum: 6, choice: "extend", decision: "Extend to 6 and update the maximum to 6." },
+      { start: -5, extend: 1, current: 1, maximum: 6, choice: "extend", decision: "Extend to 1; keep the earlier maximum of 6." },
+      { start: 4, extend: 5, current: 5, maximum: 6, choice: "extend", decision: "Extend to 5. The scan is complete, and the maximum remains 6." }
+    ];
+
+    const elements = {
+      arrayGrid: document.getElementById("array-grid"),
+      stepCount: document.getElementById("step-count"),
+      currentNumber: document.getElementById("current-number"),
+      currentSum: document.getElementById("current-sum"),
+      maxSum: document.getElementById("max-sum"),
+      startChoice: document.getElementById("start-choice"),
+      extendChoice: document.getElementById("extend-choice"),
+      startValue: document.getElementById("start-value"),
+      extendValue: document.getElementById("extend-value"),
+      startStatus: document.getElementById("start-status"),
+      extendStatus: document.getElementById("extend-status"),
+      decisionText: document.getElementById("decision-text"),
+      finalResult: document.getElementById("final-result"),
+      previousButton: document.getElementById("previous-button"),
+      nextButton: document.getElementById("next-button"),
+      liveStatus: document.getElementById("live-status")
+    };
+
+    let activeStep = 0;
+
+    function formatNumber(value) {
+      if (value === null) return "Not available";
+      return String(value).replace("-", "−");
+    }
+
+    function renderArray() {
+      const fragment = document.createDocumentFragment();
+      values.forEach((value, index) => {
+        const cell = document.createElement("li");
+        const isCurrent = index === activeStep;
+        const isWinner = activeStep === steps.length - 1 && index >= 3 && index <= 6;
+        const state = isCurrent ? "Current" : isWinner ? "Winner" : index < activeStep ? "Seen" : "Next";
+
+        cell.className = "array-cell";
+        if (isCurrent) cell.classList.add("is-current");
+        if (isWinner) cell.classList.add("is-winner");
+        if (isCurrent) cell.setAttribute("aria-current", "step");
+        cell.setAttribute("aria-label", `Index ${index}, value ${value}, ${state.toLowerCase()}`);
+
+        const indexLabel = document.createElement("span");
+        indexLabel.className = "array-index";
+        indexLabel.textContent = `index ${index}`;
+
+        const valueLabel = document.createElement("span");
+        valueLabel.className = "array-value number";
+        valueLabel.textContent = formatNumber(value);
+
+        const stateLabel = document.createElement("span");
+        stateLabel.className = "array-state";
+        stateLabel.textContent = state;
+
+        cell.append(indexLabel, valueLabel, stateLabel);
+        fragment.appendChild(cell);
+      });
+      elements.arrayGrid.replaceChildren(fragment);
+    }
+
+    function render() {
+      const step = steps[activeStep];
+      const stepNumber = activeStep + 1;
+      const isFirst = activeStep === 0;
+      const isLast = activeStep === steps.length - 1;
+
+      renderArray();
+      elements.stepCount.textContent = `Step ${stepNumber} of ${steps.length}`;
+      elements.currentNumber.textContent = formatNumber(values[activeStep]);
+      elements.currentSum.textContent = formatNumber(step.current);
+      elements.maxSum.textContent = formatNumber(step.maximum);
+      elements.startValue.textContent = formatNumber(step.start);
+      elements.extendValue.textContent = formatNumber(step.extend);
+      elements.decisionText.textContent = step.decision;
+
+      elements.startChoice.classList.toggle("is-chosen", step.choice === "start");
+      elements.extendChoice.classList.toggle("is-chosen", step.choice === "extend");
+      elements.startStatus.textContent = step.choice === "start" ? "Chosen" : "Not chosen";
+      elements.extendStatus.textContent = isFirst ? "The scan starts here" : step.choice === "extend" ? "Chosen" : "Not chosen";
+      elements.finalResult.classList.toggle("is-visible", isLast);
+
+      elements.previousButton.disabled = isFirst;
+      elements.nextButton.disabled = isLast;
+      elements.nextButton.textContent = isLast ? "Scan complete" : "Next step";
+
+      elements.liveStatus.textContent = `Step ${stepNumber} of ${steps.length}. Index ${activeStep}, value ${formatNumber(values[activeStep])}. ${step.decision}${isLast ? " Winning subarray: indices 3 through 6, sum 6." : ""}`;
+    }
+
+    elements.previousButton.addEventListener("click", () => {
+      if (activeStep > 0) {
+        activeStep -= 1;
+        render();
+      }
+    });
+
+    elements.nextButton.addEventListener("click", () => {
+      if (activeStep < steps.length - 1) {
+        activeStep += 1;
+        render();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
