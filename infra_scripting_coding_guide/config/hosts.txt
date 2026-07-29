@@ -1,0 +1,6 @@
+# web tier
+web01.example.invalid
+web02.example.invalid
+
+# db tier
+db01.example.invalid

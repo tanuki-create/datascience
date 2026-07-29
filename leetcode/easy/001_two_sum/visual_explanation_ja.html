@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+  >
+  <title>可視化解説：Two Sum（2数の和）</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f5f7fa;
+      --surface: #ffffff;
+      --surface-subtle: #edf1f5;
+      --text: #17212b;
+      --muted: #4b5d6c;
+      --border: #aab6c2;
+      --accent: #075985;
+      --accent-soft: #e0f2fe;
+      --accent-text: #0c4a6e;
+      --pair: #6d28d9;
+      --pair-soft: #ede9fe;
+      --pair-text: #4c1d95;
+      --button: #17212b;
+      --button-text: #ffffff;
+      --focus: #b45309;
+      --code: #eef2f6;
+      --shadow: 0 12px 30px rgb(23 33 43 / 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --page: #0d141b;
+        --surface: #151f29;
+        --surface-subtle: #1d2a36;
+        --text: #edf3f8;
+        --muted: #b8c5d0;
+        --border: #536473;
+        --accent: #7dd3fc;
+        --accent-soft: #12384a;
+        --accent-text: #d7f3ff;
+        --pair: #c4b5fd;
+        --pair-soft: #352a55;
+        --pair-text: #f1edff;
+        --button: #edf3f8;
+        --button-text: #111820;
+        --focus: #fbbf24;
+        --code: #101820;
+        --shadow: 0 12px 30px rgb(0 0 0 / 0.25);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-family:
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      line-height: 1.55;
+      background: var(--page);
+      color: var(--text);
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--page);
+      color: var(--text);
+    }
+
+    main {
+      width: min(100% - 2rem, 68rem);
+      margin-inline: auto;
+      padding-block: clamp(1.25rem, 4vw, 3.5rem);
+    }
+
+    header {
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.2;
+      font-weight: 500;
+      text-wrap: balance;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 3.8rem);
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin: 0 0 1rem;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+    }
+
+    h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+    }
+
+    p,
+    dl,
+    pre,
+    table {
+      margin-block: 0;
+    }
+
+    p + p {
+      margin-top: 0.75rem;
+    }
+
+    section {
+      margin-top: clamp(2rem, 6vw, 4rem);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .eyebrow {
+      margin: 0 0 0.5rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lede {
+      max-width: 48rem;
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+    }
+
+    .recap {
+      max-width: 52rem;
+      font-size: 1.05rem;
+    }
+
+    .visual-stage {
+      padding: clamp(1rem, 3vw, 1.75rem);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .stage-heading {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .step-count {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .target-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .target-value {
+      padding: 0.2rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface-subtle);
+      font-weight: 500;
+    }
+
+    .array-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .array-cell {
+      min-width: 0;
+      padding: 0.75rem 0.5rem;
+      border: 2px solid var(--border);
+      border-radius: 0.75rem;
+      background: var(--surface-subtle);
+      text-align: center;
+    }
+
+    .array-cell.is-current {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-text);
+    }
+
+    .array-cell.is-pair {
+      box-shadow: inset 0 0 0 3px var(--pair);
+    }
+
+    .cell-index,
+    .cell-value,
+    .cell-marker {
+      display: block;
+    }
+
+    .cell-index {
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .cell-value {
+      margin-block: 0.3rem;
+      font-size: clamp(1.6rem, 5vw, 2.5rem);
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .cell-marker {
+      min-height: 2.5em;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1.25;
+    }
+
+    .array-cell.is-current .cell-marker {
+      color: var(--accent-text);
+    }
+
+    .array-cell.is-pair .cell-marker {
+      color: var(--pair-text);
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .state-item {
+      min-width: 0;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .state-label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .state-value {
+      display: block;
+      margin-top: 0.2rem;
+      overflow-wrap: anywhere;
+      font-weight: 500;
+    }
+
+    .status {
+      min-height: 3.4em;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-text);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+
+    button {
+      min-height: 2.75rem;
+      padding: 0.6rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--button);
+      background: var(--button);
+      color: var(--button-text);
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(0.94);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .terms {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem 1.5rem;
+    }
+
+    .term {
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .term dt {
+      font-weight: 500;
+    }
+
+    .term dd {
+      margin: 0.25rem 0 0;
+      color: var(--muted);
+    }
+
+    .explanation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      background: var(--code);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .proof-list {
+      margin: 0.75rem 0 0;
+      padding-left: 1.25rem;
+    }
+
+    .proof-list li + li {
+      margin-top: 0.65rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 38rem;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      font-weight: 500;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 44rem) {
+      .state-grid,
+      .terms,
+      .explanation-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .explanation-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 31rem) {
+      main {
+        width: min(100% - 1.25rem, 68rem);
+      }
+
+      .array-grid,
+      .state-grid,
+      .terms {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .controls button {
+        flex: 1 1 7rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (forced-colors: active) {
+      .array-cell.is-current {
+        border-style: double;
+      }
+
+      .array-cell.is-pair {
+        outline: 2px dashed CanvasText;
+        outline-offset: -5px;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">初級 · 配列</p>
+      <h1>Two Sum（2数の和）</h1>
+      <p class="lede">
+        基本例を一段階ずつたどり、和を求める問題を1回の走査と
+        高速な検索に置き換える過程を確認します。
+      </p>
+    </header>
+
+    <section aria-labelledby="recap-heading">
+      <h2 id="recap-heading">問題の要点</h2>
+      <p class="recap">
+        整数配列 <code>nums</code> と整数 <code>target</code> が与えられます。
+        値の合計が <code>target</code> になる2つの異なる要素の
+        インデックス（配列内の位置を表す番号）を返します。
+        同じインデックスを2回使うことはできず、入力には有効な組がちょうど1つ存在します。
+      </p>
+    </section>
+
+    <section aria-labelledby="terms-heading">
+      <h2 id="terms-heading">知っておきたい用語</h2>
+      <dl class="terms">
+        <div class="term">
+          <dt>補数（complement）</dt>
+          <dd>
+            現在の値との合計を目標値にするために必要な値です。
+            <code>target - current value</code> で求めます。
+          </dd>
+        </div>
+        <div class="term">
+          <dt>ハッシュマップ</dt>
+          <dd>
+            キーと値を対応付けるデータ構造です。
+            Python の <code>dict</code> はハッシュマップであり、通常は
+            入力サイズにかかわらず平均的な処理量が変わらない定数時間でキーを検索できます。
+          </dd>
+        </div>
+        <div class="term">
+          <dt>インデックス</dt>
+          <dd>
+            配列内の位置を表す番号です。
+            Python は0始まりなので、最初の要素のインデックスは <code>0</code> です。
+          </dd>
+        </div>
+        <div class="term">
+          <dt>定数時間</dt>
+          <dd>
+            入力サイズが増えても、平均的な処理量が増えない計算量です。
+            <code>O(1)</code> と表します。
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section aria-labelledby="scan-heading">
+      <h2 id="scan-heading">ハッシュマップによる走査</h2>
+      <div
+        class="visual-stage"
+        id="scan-visual"
+        role="group"
+        aria-describedby="scan-instructions"
+      >
+        <div class="stage-heading">
+          <h3>配列の状態</h3>
+          <span class="step-count" id="step-count">ステップ 1 / 5</span>
+        </div>
+
+        <p id="scan-instructions" class="target-line">
+          <span>
+            「前のステップ」と「次のステップ」でアルゴリズムの各状態を確認できます。
+            現在の要素と解を構成する要素は、色だけでなく文字でも示します。
+          </span>
+          <span class="target-value">目標値: <output>9</output></span>
+        </p>
+
+        <ol class="array-grid" id="array-grid" aria-label="入力配列">
+          <li class="array-cell" data-index="0">
+            <span class="cell-index">インデックス 0</span>
+            <strong class="cell-value">2</strong>
+            <span class="cell-marker" aria-hidden="true"></span>
+          </li>
+          <li class="array-cell" data-index="1">
+            <span class="cell-index">インデックス 1</span>
+            <strong class="cell-value">7</strong>
+            <span class="cell-marker" aria-hidden="true"></span>
+          </li>
+          <li class="array-cell" data-index="2">
+            <span class="cell-index">インデックス 2</span>
+            <strong class="cell-value">11</strong>
+            <span class="cell-marker" aria-hidden="true"></span>
+          </li>
+          <li class="array-cell" data-index="3">
+            <span class="cell-index">インデックス 3</span>
+            <strong class="cell-value">15</strong>
+            <span class="cell-marker" aria-hidden="true"></span>
+          </li>
+        </ol>
+
+        <div class="state-grid" aria-label="現在のアルゴリズムの状態">
+          <div class="state-item">
+            <span class="state-label">処理段階</span>
+            <output class="state-value" id="phase-output">開始前</output>
+          </div>
+          <div class="state-item">
+            <span class="state-label">現在の要素</span>
+            <output class="state-value" id="current-output">未選択</output>
+          </div>
+          <div class="state-item">
+            <span class="state-label">補数</span>
+            <output class="state-value" id="complement-output">—</output>
+          </div>
+          <div class="state-item">
+            <span class="state-label"><code>seen</code> マップ</span>
+            <output class="state-value" id="seen-output">{ }</output>
+          </div>
+          <div class="state-item">
+            <span class="state-label">結果</span>
+            <output class="state-value" id="result-output">未発見</output>
+          </div>
+        </div>
+
+        <p
+          class="status"
+          id="step-status"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          ステップ 1 / 5。空の seen マップから始めます。「次のステップ」を押してインデックス0を確認します。
+        </p>
+
+        <div class="controls" aria-label="走査の操作">
+          <button
+            id="previous-button"
+            type="button"
+            aria-controls="scan-visual"
+            disabled
+          >
+            前のステップ
+          </button>
+          <button
+            class="primary"
+            id="next-button"
+            type="button"
+            aria-controls="scan-visual"
+          >
+            次のステップ
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="algorithm-heading">
+      <h2 id="algorithm-heading">アルゴリズムと正しさ</h2>
+      <div class="explanation-grid">
+        <div>
+          <h3>擬似コード</h3>
+          <pre><code>空のハッシュマップ seen を作る
+
+nums の各 index と number について:
+    complement = target - number
+
+    complement が seen に存在する場合:
+        return [seen[complement], index]
+
+    seen に number -&gt; index を保存する</code></pre>
+        </div>
+        <div>
+          <h3>正しく動作する理由</h3>
+          <p>
+            各要素を確認する直前には、処理済みの異なる値ごとに、
+            その値が以前に現れた位置のインデックスが <code>seen</code> に保存されています。
+            同じ値が複数回現れても、以前のインデックスは1つあれば十分です。
+          </p>
+          <ul class="proof-list">
+            <li>
+              補数が存在する場合、保存済みのインデックスと現在のインデックスは、
+              合計が目標値になる2つの異なる要素を指します。
+            </li>
+            <li>
+              補数が存在しない場合、現在の値を保存して後続の確認に利用できるようにします。
+            </li>
+            <li>
+              保存前に補数を確認することで、現在の要素をそれ自身と組み合わせることを防ぎます。
+              この順序でも、重複する値は正しく処理できます。
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="complexity-heading">
+      <h2 id="complexity-heading">計算量</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">方法</th>
+              <th scope="col">時間計算量</th>
+              <th scope="col">追加領域</th>
+              <th scope="col">意味</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">すべての組を調べる</th>
+              <td><code>O(n²)</code></td>
+              <td><code>O(1)</code></td>
+              <td>処理量は配列長の2乗に比例して増える可能性があります。</td>
+            </tr>
+            <tr>
+              <th scope="row">ハッシュマップ走査</th>
+              <td>平均 <code>O(n)</code></td>
+              <td><code>O(n)</code></td>
+              <td>各要素を1回ずつ調べ、最大 <code>n</code> 個のキーを保存します。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="lede">
+        <strong>Big O 記法</strong>は、入力サイズ <code>n</code> に応じて
+        処理量や追加メモリがどのように増えるかを表します。
+        <code>O(n)</code> は線形増加を意味します。
+        追加領域の <code>O(1)</code> は、入力サイズが増えても必要な追加メモリが増えないことを意味します。
+      </p>
+    </section>
+
+    <footer>
+      基本例: <code>nums = [2, 7, 11, 15]</code>、
+      <code>target = 9</code>。
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const numbers = [2, 7, 11, 15];
+      const states = [
+        {
+          phase: "開始前",
+          currentIndex: null,
+          complement: null,
+          seen: [],
+          pair: [],
+          result: "未発見",
+          message:
+            "空の seen マップから始めます。「次のステップ」を押してインデックス0を確認します。"
+        },
+        {
+          phase: "確認",
+          currentIndex: 0,
+          complement: 7,
+          seen: [],
+          pair: [],
+          result: "未発見",
+          message:
+            "インデックス0の値2に必要な補数は7です。seen マップは空なので、まだ一致する値はありません。"
+        },
+        {
+          phase: "保存",
+          currentIndex: 0,
+          complement: 7,
+          seen: [[2, 0]],
+          pair: [],
+          result: "未発見",
+          message:
+            "値2とインデックス0の対応を保存します。後続の要素からこの値を検索できるようになります。"
+        },
+        {
+          phase: "一致",
+          currentIndex: 1,
+          complement: 2,
+          seen: [[2, 0]],
+          pair: [0, 1],
+          result: "組を発見：[0, 1]",
+          message:
+            "インデックス1の値7に必要な補数は2です。seen マップに値2とインデックス0の対応があるため、組が見つかります。"
+        },
+        {
+          phase: "返却",
+          currentIndex: 1,
+          complement: 2,
+          seen: [[2, 0]],
+          pair: [0, 1],
+          result: "[0, 1] を返す",
+          message:
+            "[0, 1] を返します。値は2と7であり、2 + 7 は目標値9と一致します。"
+        }
+      ];
+
+      const elements = {
+        stepCount: document.getElementById("step-count"),
+        phase: document.getElementById("phase-output"),
+        current: document.getElementById("current-output"),
+        complement: document.getElementById("complement-output"),
+        seen: document.getElementById("seen-output"),
+        result: document.getElementById("result-output"),
+        status: document.getElementById("step-status"),
+        previous: document.getElementById("previous-button"),
+        next: document.getElementById("next-button")
+      };
+      const arrayCells = Array.from(
+        document.querySelectorAll("#array-grid .array-cell")
+      );
+      let activeStep = 0;
+
+      function formatSeen(entries) {
+        if (entries.length === 0) {
+          return "{ }";
+        }
+        return (
+          "{ " +
+          entries
+            .map((entry) => entry[0] + " → インデックス " + entry[1])
+            .join(", ") +
+          " }"
+        );
+      }
+
+      function render() {
+        const state = states[activeStep];
+        elements.stepCount.textContent =
+          "ステップ " + (activeStep + 1) + " / " + states.length;
+        elements.phase.textContent = state.phase;
+        elements.current.textContent =
+          state.currentIndex === null
+            ? "未選択"
+            : "インデックス " +
+              state.currentIndex +
+              " · 値 " +
+              numbers[state.currentIndex];
+        elements.complement.textContent =
+          state.complement === null ? "—" : String(state.complement);
+        elements.seen.textContent = formatSeen(state.seen);
+        elements.result.textContent = state.result;
+        elements.status.textContent =
+          "ステップ " +
+          (activeStep + 1) +
+          " / " +
+          states.length +
+          "。 " +
+          state.message;
+
+        arrayCells.forEach((cell, index) => {
+          const isCurrent = index === state.currentIndex;
+          const isPair = state.pair.includes(index);
+          const marker = cell.querySelector(".cell-marker");
+          let markerText = "";
+
+          cell.classList.toggle("is-current", isCurrent);
+          cell.classList.toggle("is-pair", isPair);
+
+          if (isCurrent && isPair) {
+            markerText = "現在の要素 · 解の組";
+          } else if (isCurrent) {
+            markerText = "現在の要素";
+          } else if (isPair) {
+            markerText = "解の組";
+          }
+
+          marker.textContent = markerText;
+          cell.setAttribute(
+            "aria-label",
+            "インデックス " +
+              index +
+              "、値 " +
+              numbers[index] +
+              (markerText ? "、" + markerText : "、未選択")
+          );
+        });
+
+        elements.previous.disabled = activeStep === 0;
+        elements.next.disabled = activeStep === states.length - 1;
+        elements.next.textContent =
+          activeStep === states.length - 1 ? "走査完了" : "次のステップ";
+      }
+
+      elements.previous.addEventListener("click", () => {
+        if (activeStep > 0) {
+          activeStep -= 1;
+          render();
+        }
+      });
+
+      elements.next.addEventListener("click", () => {
+        if (activeStep < states.length - 1) {
+          activeStep += 1;
+          render();
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

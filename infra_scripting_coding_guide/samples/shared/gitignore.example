@@ -1,0 +1,49 @@
+# infra_scripting_coding_guide 用の .gitignore 推奨例。
+#
+# 第16章 16_git_and_collaboration.md で解説する。
+# プロジェクト直下に .gitignore として配置することを想定している。
+# このファイル自体は拡張子を .example にしてあるため、コピーしてから使うこと。
+#
+#   cp samples/shared/gitignore.example .gitignore
+
+# --- 秘密情報。誤ってコミットしないための最重要区分 ---
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials.json
+**/*_token
+**/*_secret
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- PowerShell ---
+*.ps1xml.bak
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- エディタ ---
+.vscode/
+.idea/
+*.swp
+
+# --- 本書のラボ用ディレクトリ。生成物であり、レポジトリに含めない ---
+work/
+backups/
+*.log
+
+# --- ローカル限定の設定上書き。共有設定は config/opsctl.yaml 側に置く ---
+config/opsctl.local.yaml

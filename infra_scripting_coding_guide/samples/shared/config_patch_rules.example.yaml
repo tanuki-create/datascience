@@ -1,0 +1,23 @@
+# opsctl config-patch 用のルールファイル例。
+#
+# 各ルールは、glob に一致するファイル名の内容へ、pattern（正規表現）に
+# 一致した箇所を replacement で置換する。ルールは上から順に適用される。
+#
+# 使い方:
+#   python3 samples/python/15_config_patch.py \
+#     --target-dir ./work/sample_configs \
+#     --rules-file samples/shared/config_patch_rules.example.yaml \
+#     --backup-dir ./backups/config-patch \
+#     --dry-run
+
+- pattern: 'timeout\s*=\s*\d+'
+  replacement: "timeout = 60"
+  glob: "*.conf"
+
+- pattern: '^#\s*log_level\s*=.*$'
+  replacement: "log_level = INFO"
+  glob: "*.conf"
+
+- pattern: 'http://'
+  replacement: "https://"
+  glob: "*.ini"

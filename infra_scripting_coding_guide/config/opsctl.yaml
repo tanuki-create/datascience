@@ -1,0 +1,92 @@
+defaults:
+  timeout_seconds: 30
+  disk_warn_percent: 80
+  disk_crit_percent: 90
+  log_level: INFO
+  backup_retention_days: 14
+
+logging:
+  format: json
+  include_run_id: true
+
+paths:
+  work_dir: ./work
+  report_dir: ./reports
+  backup_dir: ./backups
+  log_dir: ./logs
+  hosts_file: ./config/hosts.txt
+
+api:
+  base_url: "https://api.example.invalid"
+  # 認証情報はファイルに書かない。環境変数 OPSCTL_API_TOKEN を使う
+
+# 以下は第15章（インフラ自動化の実践）の題材が参照するセクション。
+# 章番号ごとに追記していく方針のため、第1〜14章のサンプルはこれらのキーを
+# 参照しない。
+
+ping_check:
+  hosts_file: ./config/hosts.txt
+  timeout_seconds: 3
+  max_workers: 8
+  deadline_seconds: 60
+  critical_hosts:
+    - db01.example.invalid
+
+log_search:
+  target_dirs:
+    - ./work/logs
+  max_files: 200
+  max_matches: 5000
+
+cleanup:
+  target_dirs:
+    - ./work/tmp
+  max_age_days: 30
+  extensions:
+    - ".tmp"
+    - ".log"
+  quarantine_dir: ./work/quarantine
+
+user_audit:
+  # /etc/passwd 相当の行を対象にする（PowerShellではローカルユーザー一覧）
+  uid_min: 1000
+  allowed_shells:
+    - /bin/bash
+    - /usr/sbin/nologin
+    - /bin/false
+  inactive_days_warn: 90
+
+service_check:
+  services:
+    - sshd
+    - cron
+
+cert_check:
+  targets:
+    - host: web01.example.invalid
+      port: 443
+    - host: web02.example.invalid
+      port: 443
+  warn_days: 30
+  crit_days: 7
+
+api_to_csv:
+  endpoint: /v1/incidents
+  fields:
+    - incident_id
+    - severity
+    - host
+    - opened_at
+
+backup:
+  source_dirs:
+    - ./config
+  retention_days: 14
+
+report:
+  sections:
+    - ping
+    - disk
+    - cert
+  recipients:
+    - ops-team@example.invalid
