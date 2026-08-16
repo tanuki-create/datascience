@@ -86,6 +86,8 @@ Part 0の導入は、章一覧の前にある [00_overview.md](00_overview.md) �
 
 3〜4章ごとの復習には、[16_review_checkpoints.md](16_review_checkpoints.md) を使います。
 
+各章の理解を深めるためのメンタルモデル、代表的な対立軸、診断質問は、[17_expert_viewpoints.md](17_expert_viewpoints.md) から参照できます。
+
 Part 14は一つの理論を深掘りする章ではなく、複数の発展的な話題を既習概念に接続する章です。
 
 ## 推奨学習順序
@@ -93,6 +95,8 @@ Part 14は一つの理論を深掘りする章ではなく、複数の発展的�
 標準ルートは、`00_overview`、Part 1、Part 2、Part 3、Part 4、Part 5、Part 6、Part 7、Part 8、Part 9、Part 10、Part 11、Part 12、Part 13、Part 14、Part 15の順です。
 
 Part 2、Part 4、Part 6、Part 8、Part 10、Part 12、Part 14を終えたら、[16_review_checkpoints.md](16_review_checkpoints.md) の対応する復習を行います。
+
+章間復習の前後に、[17_expert_viewpoints.md](17_expert_viewpoints.md) の対応する章末セクションを読み、用語の再生ではなく条件の比較とモデル化を確認します。
 
 Part 9はPart 5の後に先取りしてもよく、Part 11はPart 1からPart 3を終えた後ならPart 10の前後で学べます。
 
