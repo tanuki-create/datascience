@@ -39,7 +39,7 @@
 | 2026-08-17 | 1025 | Easy | deep | planned | — | — | — | 今日の深掘り問題 |
 | 2026-08-17 | 877 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
 | 2026-08-17 | 1563 | Hard | deep | planned | — | — | — | 今日の深掘り問題 |
-| 2026-08-17 | coverage-2026-08-17 | Mixed | coverage | presented | — | — | — | [カバレッジセット](./2026-08-17_coverage.md) |
+| 2026-08-17 | coverage-2026-08-17 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-17_coverage_problems.md)／[解法セット](./2026-08-17_coverage_solutions.md) |
 
 ## 実行後に追記する項目
 
