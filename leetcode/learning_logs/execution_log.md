@@ -31,6 +31,7 @@
 | 2026-08-15 | — | XOR・ビット演算・二進Trie | 未記録 | presented | unconfirmed | 136、3702、1707の教材を作成 |
 | 2026-08-16 | — | ゲーム理論基礎 | 未記録 | presented | unconfirmed | 292を解説、2029と1406は概要のみ |
 | 2026-08-17 | 1 | ゲーム理論基礎・勝ち状態と負け状態 | 43〜44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
+| 2026-08-18 | 2 | 配列・Hash Table・頻度・欠損値 | 43〜44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 
 ## 問題別ログ
 
@@ -40,6 +41,10 @@
 | 2026-08-17 | 877 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
 | 2026-08-17 | 1563 | Hard | deep | planned | — | — | — | 今日の深掘り問題 |
 | 2026-08-17 | coverage-2026-08-17 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-17_coverage_problems.md)／[解法セット](./2026-08-17_coverage_solutions.md) |
+| 2026-08-18 | 3471 | Easy | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-18 | 347 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-18 | 41 | Hard | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-18 | coverage-2026-08-18 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-18_coverage_problems.md) |
 
 ## 実行後に追記する項目
 
