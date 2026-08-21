@@ -1,0 +1,33 @@
+AIとの開発が終わらない
+レビュー収束の設計と仕組み
+
+後雄大
+
+
+Grill-meの導入　要件と基準(Agents.mdに記載)を固めることができた
+
+厳格レビュー
+thermo nuclear code quality review　の導入
+品質は上がるが、開発が終わらない
+
+調整が必要↑
+
+
+improve codebase architecureの導入
+
+変更箇所起点にコードベースの走査
+リファクタ後方をbefore after 図解レポート提案してくれる
+
+障害一次調査エージェント
+1.ローカル Sentry AWS　通話ログを横断する調査手順のSkill化　
+2.Codex Cloudで実行できるようにした同じSkill
+3.常駐エージェント　Slackアラート、Linearのissuから調査
+
+Sentryでissue
+ECS上でシンフォニーを動かして　AWS read-only cross-accountで借りた
+Codex調査
+原因の切り分けをissueにコメント
+
+最終3になった
+read-only権限で揃える工夫をした
+

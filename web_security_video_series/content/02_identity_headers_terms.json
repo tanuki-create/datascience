@@ -1,0 +1,452 @@
+[
+  {
+    "id": "04-authn",
+    "chapter": 4,
+    "term": "AuthN",
+    "expanded": "Authentication",
+    "origin": "Authenticationを省略してAuthN。語尾のnは、Aとnの間にある文字数を表す略記です。",
+    "lower_layer": "IDと認証",
+    "hook": "ログインは、まだ入場許可ではありません。",
+    "narration": "AuthNは、あなたが誰なのかを確かめる仕組みです。パスワード、ワンタイムコード、生体認証などで、名乗っている本人かを確認します。大事なのは、AuthNは本人確認まで。確認できたあとに何をしてよいかは、別の仕組みで決まります。",
+    "visual_beats": [
+      {
+        "screen_text": "AuthN = 本人確認",
+        "visual_idea": "スマホのログイン画面にIDカードのアイコンが重なる。"
+      },
+      {
+        "screen_text": "パスワード・MFA・生体認証",
+        "visual_idea": "鍵、6桁コード、指紋の3アイコンを順に表示。"
+      },
+      {
+        "screen_text": "確認するのは「誰か」",
+        "visual_idea": "受付で名前を確認される人物のシンプルな図。"
+      },
+      {
+        "screen_text": "権限判断は別",
+        "visual_idea": "本人確認済みスタンプの横に、閉じたドアを残す。"
+      }
+    ],
+    "key_takeaway": "AuthNは、利用者が本人かどうかを確認すること。",
+    "keywords": ["authentication", "認証", "本人確認", "ログイン", "MFA"]
+  },
+  {
+    "id": "04-authz",
+    "chapter": 4,
+    "term": "AuthZ",
+    "expanded": "Authorization",
+    "origin": "Authorizationを省略してAuthZ。Authenticationとの混同を避けるため、末尾のZで表すことが多いです。",
+    "lower_layer": "認可とアクセス制御",
+    "hook": "本人でも、何でもできるわけではありません。",
+    "narration": "AuthZは、その人が何をしてよいかを決める仕組みです。ログイン済みの社員でも、給与データを見られる人と見られない人がいます。つまりAuthNが誰かの確認なら、AuthZはその人に許された操作の確認です。",
+    "visual_beats": [
+      {
+        "screen_text": "AuthZ = 許可の確認",
+        "visual_idea": "認証済みユーザーが複数のドアの前に立つ。"
+      },
+      {
+        "screen_text": "見てよい？変更してよい？",
+        "visual_idea": "閲覧ボタンにチェック、削除ボタンにバツを表示。"
+      },
+      {
+        "screen_text": "同じログインでも権限は違う",
+        "visual_idea": "一般社員と管理者で開ける棚が違う比較図。"
+      },
+      {
+        "screen_text": "AuthNの次にAuthZ",
+        "visual_idea": "本人確認から操作許可へ流れる2段階フロー。"
+      }
+    ],
+    "key_takeaway": "AuthZは、許された操作を判断すること。",
+    "keywords": ["authorization", "認可", "権限", "アクセス制御", "許可"]
+  },
+  {
+    "id": "04-rbac",
+    "chapter": 4,
+    "term": "RBAC",
+    "expanded": "Role-Based Access Control",
+    "origin": "Role-Based Access Controlの略。役割、つまりロールを中心に権限を割り当てる考え方です。",
+    "lower_layer": "認可モデル",
+    "hook": "人ごとではなく、役割ごとに権限を渡します。",
+    "narration": "RBACは、ユーザーに直接権限を積むのではなく、管理者、編集者、閲覧者のようなロールに権限をまとめます。人にはロールを付けるだけなので、組織やサービスで権限を管理しやすくなります。単純で強い反面、細かい例外が増えるとロールが膨らみます。",
+    "visual_beats": [
+      {
+        "screen_text": "RBAC = 役割で管理",
+        "visual_idea": "ユーザーからロール、ロールから権限へつながる図。"
+      },
+      {
+        "screen_text": "管理者 / 編集者 / 閲覧者",
+        "visual_idea": "3つの名札に、それぞれ別の操作アイコンを配置。"
+      },
+      {
+        "screen_text": "人にはロールを付ける",
+        "visual_idea": "新入社員カードに「閲覧者」タグを貼る。"
+      },
+      {
+        "screen_text": "例外が多いと複雑化",
+        "visual_idea": "増えすぎたロール名札が画面に積み上がる。"
+      }
+    ],
+    "key_takeaway": "RBACは、権限をロールで管理する方式。",
+    "keywords": ["RBAC", "role", "ロール", "権限管理", "アクセス制御"]
+  },
+  {
+    "id": "04-abac",
+    "chapter": 4,
+    "term": "ABAC",
+    "expanded": "Attribute-Based Access Control",
+    "origin": "Attribute-Based Access Controlの略。属性を使ってアクセス可否を判断するモデルです。",
+    "lower_layer": "認可モデル",
+    "hook": "同じ人でも、条件しだいで許可は変わります。",
+    "narration": "ABACは、ユーザー、データ、環境の属性を見てアクセスを判断します。たとえば部署が法務で、資料の分類が契約書で、社内ネットワークからのアクセスなら許可、という形です。ロールだけでは表しにくい条件を柔軟に扱えます。",
+    "visual_beats": [
+      {
+        "screen_text": "ABAC = 属性で判断",
+        "visual_idea": "ユーザー属性、資料属性、環境属性の3カードを並べる。"
+      },
+      {
+        "screen_text": "部署・分類・場所・時間",
+        "visual_idea": "部署タグ、機密ラベル、Wi-Fi、時計のアイコン。"
+      },
+      {
+        "screen_text": "条件がそろえば許可",
+        "visual_idea": "3つの条件カードがチェックになり、ドアが開く。"
+      },
+      {
+        "screen_text": "細かいルールに強い",
+        "visual_idea": "ロール表ではなく、条件式のような分岐図を表示。"
+      }
+    ],
+    "key_takeaway": "ABACは、属性を条件に認可する方式。",
+    "keywords": ["ABAC", "attribute", "属性", "条件", "ポリシー"]
+  },
+  {
+    "id": "04-rebac",
+    "chapter": 4,
+    "term": "ReBAC",
+    "expanded": "Relationship-Based Access Control",
+    "origin": "Relationship-Based Access Controlの略。人やリソース同士の関係性を使う認可モデルです。",
+    "lower_layer": "認可モデル",
+    "hook": "権限は、誰と何がつながっているかで決まります。",
+    "narration": "ReBACは、所有者、チームメンバー、共有相手のような関係を見てアクセスを決めます。たとえば、このドキュメントの作成者、同じプロジェクトの参加者、共有リンクを受け取った人は見られる、という考え方です。共同編集サービスやSNSと相性がよいモデルです。",
+    "visual_beats": [
+      {
+        "screen_text": "ReBAC = 関係で判断",
+        "visual_idea": "ユーザー、チーム、文書を線で結ぶネットワーク図。"
+      },
+      {
+        "screen_text": "所有者・メンバー・共有相手",
+        "visual_idea": "文書を中心に3種類の関係ラベルを表示。"
+      },
+      {
+        "screen_text": "つながりがあれば許可",
+        "visual_idea": "線でつながった人だけドキュメントが開く。"
+      },
+      {
+        "screen_text": "共同編集に向く",
+        "visual_idea": "複数人が同じファイルを編集する画面。"
+      }
+    ],
+    "key_takeaway": "ReBACは、関係性でアクセスを判断する方式。",
+    "keywords": ["ReBAC", "relationship", "関係性", "共有", "共同編集"]
+  },
+  {
+    "id": "04-oauth",
+    "chapter": 4,
+    "term": "OAuth",
+    "expanded": "Open Authorization",
+    "origin": "OAuthはOpen Authorizationに由来する名称。第三者アプリに限定的な権限を委任するための標準です。",
+    "lower_layer": "権限委任",
+    "hook": "パスワードを渡さずに、必要な分だけ任せます。",
+    "narration": "OAuthは、別のアプリに限定された権限を渡すための仕組みです。たとえば写真アプリに、クラウド上の画像を読む権限だけを与えるような場面です。アプリにパスワードを教えるのではなく、範囲と期限を持つトークンを渡すのがポイントです。",
+    "visual_beats": [
+      {
+        "screen_text": "OAuth = 権限の委任",
+        "visual_idea": "ユーザーがアプリに小さな鍵を渡す図。"
+      },
+      {
+        "screen_text": "パスワードは渡さない",
+        "visual_idea": "パスワード欄に鍵マーク、アプリ側にはトークンカード。"
+      },
+      {
+        "screen_text": "読むだけ・投稿だけ",
+        "visual_idea": "スコープのチェックリストを表示。"
+      },
+      {
+        "screen_text": "トークンで限定許可",
+        "visual_idea": "期限付き入館証のようなトークンを見せる。"
+      }
+    ],
+    "key_takeaway": "OAuthは、限定的な権限を委任する仕組み。",
+    "keywords": ["OAuth", "authorization", "委任", "アクセストークン", "scope"]
+  },
+  {
+    "id": "04-oidc",
+    "chapter": 4,
+    "term": "OIDC",
+    "expanded": "OpenID Connect",
+    "origin": "OpenID Connectの略。OAuth 2.0の上に本人確認の情報を載せる認証レイヤーです。",
+    "lower_layer": "フェデレーション認証",
+    "hook": "OAuthだけでは、ログインの標準には足りません。",
+    "narration": "OIDCは、OAuth 2.0を土台にして、ユーザーが誰かをアプリへ伝える仕組みです。ログインすると、IDトークンという形でユーザーIDや発行者などの情報が返ります。OAuthが権限委任なら、OIDCはログインに使える本人確認の標準です。",
+    "visual_beats": [
+      {
+        "screen_text": "OIDC = ログイン用の標準",
+        "visual_idea": "OAuthの土台の上にIDカードが乗るレイヤー図。"
+      },
+      {
+        "screen_text": "IDトークンを受け取る",
+        "visual_idea": "認証サーバーからアプリへID Tokenカードが届く。"
+      },
+      {
+        "screen_text": "誰がログインしたか",
+        "visual_idea": "ユーザーID、発行者、有効期限の項目を拡大。"
+      },
+      {
+        "screen_text": "OAuthは委任、OIDCは認証",
+        "visual_idea": "アクセストークンとIDトークンを左右比較。"
+      }
+    ],
+    "key_takeaway": "OIDCは、ログイン用の本人確認標準。",
+    "keywords": ["OIDC", "OpenID Connect", "ID token", "認証", "OAuth 2.0"]
+  },
+  {
+    "id": "04-sso",
+    "chapter": 4,
+    "term": "SSO",
+    "expanded": "Single Sign-On",
+    "origin": "Single Sign-Onの略。一度のサインインで複数サービスを利用できる仕組みです。",
+    "lower_layer": "フェデレーション認証",
+    "hook": "一回ログインして、複数のサービスへ進みます。",
+    "narration": "SSOは、一度のログインで複数のアプリを使えるようにする仕組みです。利用者は何度もパスワードを入れなくてよく、組織側は認証を一か所で管理しやすくなります。ただし入口が重要になるので、MFAや端末チェックと組み合わせることが大切です。",
+    "visual_beats": [
+      {
+        "screen_text": "SSO = 一度でログイン",
+        "visual_idea": "ひとつのログインゲートから複数アプリへ道が分かれる。"
+      },
+      {
+        "screen_text": "何度も入力しない",
+        "visual_idea": "複数のパスワード画面が消えていく。"
+      },
+      {
+        "screen_text": "認証を中央で管理",
+        "visual_idea": "中央のID基盤から各サービスへ線が伸びる。"
+      },
+      {
+        "screen_text": "入口の防御が重要",
+        "visual_idea": "ログインゲートにMFAと端末チェックの盾を置く。"
+      }
+    ],
+    "key_takeaway": "SSOは、一度の認証で複数サービスを使う仕組み。",
+    "keywords": ["SSO", "Single Sign-On", "シングルサインオン", "ID基盤", "MFA"]
+  },
+  {
+    "id": "04-saml",
+    "chapter": 4,
+    "term": "SAML",
+    "expanded": "Security Assertion Markup Language",
+    "origin": "Security Assertion Markup Languageの略。認証や属性の主張をXMLでやり取りする標準です。",
+    "lower_layer": "フェデレーション認証",
+    "hook": "ログイン済みであることを、別サービスへ証明します。",
+    "narration": "SAMLは、企業のSSOでよく使われる認証連携の標準です。IDプロバイダーが、このユーザーは認証済みです、というアサーションをサービスへ渡します。XMLベースで歴史が長く、業務システムやSaaS連携で今も広く使われています。",
+    "visual_beats": [
+      {
+        "screen_text": "SAML = 認証の主張を渡す",
+        "visual_idea": "IDプロバイダーからSaaSへ封筒が送られる。"
+      },
+      {
+        "screen_text": "IdP → SP",
+        "visual_idea": "Identity ProviderとService Providerの2箱を矢印で接続。"
+      },
+      {
+        "screen_text": "アサーションで証明",
+        "visual_idea": "認証済みスタンプ付きのXML書類を表示。"
+      },
+      {
+        "screen_text": "企業SSOでよく使う",
+        "visual_idea": "会社のID基盤から複数SaaSへログインする図。"
+      }
+    ],
+    "key_takeaway": "SAMLは、認証済み情報を渡すSSO標準。",
+    "keywords": ["SAML", "SSO", "IdP", "SP", "アサーション", "XML"]
+  },
+  {
+    "id": "05-csp",
+    "chapter": 5,
+    "term": "CSP",
+    "expanded": "Content Security Policy",
+    "origin": "Content Security Policyの略。ブラウザに読み込み元や実行許可を伝えるHTTPセキュリティヘッダーです。",
+    "lower_layer": "ブラウザ防御ヘッダー",
+    "hook": "ブラウザに、信じてよい読み込み元を教えます。",
+    "narration": "CSPは、ページが読み込んでよいスクリプトや画像の場所をブラウザへ伝えるルールです。もし攻撃者が不正なスクリプトを差し込んでも、許可された元でなければ実行を止められます。XSSの被害を小さくする、重要な防御線です。",
+    "visual_beats": [
+      {
+        "screen_text": "CSP = 読み込み元のルール",
+        "visual_idea": "ブラウザの前に許可リストのゲートを置く。"
+      },
+      {
+        "screen_text": "script-src / img-src",
+        "visual_idea": "スクリプトと画像が、それぞれ許可ドメインへ接続。"
+      },
+      {
+        "screen_text": "不正スクリプトを止める",
+        "visual_idea": "怪しいコード片がブロックされるアニメーション。"
+      },
+      {
+        "screen_text": "XSSの被害を減らす",
+        "visual_idea": "ページ上の警告マークが小さくなる。"
+      }
+    ],
+    "key_takeaway": "CSPは、許可した読み込み元だけ使わせるヘッダー。",
+    "keywords": ["CSP", "Content Security Policy", "XSS", "script-src", "HTTP header"]
+  },
+  {
+    "id": "05-hsts",
+    "chapter": 5,
+    "term": "HSTS",
+    "expanded": "HTTP Strict Transport Security",
+    "origin": "HTTP Strict Transport Securityの略。ブラウザにHTTPSだけを使うよう指示するヘッダーです。",
+    "lower_layer": "ブラウザ防御ヘッダー",
+    "hook": "次からHTTPSだけで行きます。",
+    "narration": "HSTSは、ブラウザにこのサイトはHTTPSでだけ接続して、と覚えさせる仕組みです。ユーザーがhttpで入力しても、ブラウザがhttpsへ切り替えます。通信の盗聴や改ざんを狙うダウングレード攻撃を防ぐために使われます。",
+    "visual_beats": [
+      {
+        "screen_text": "HSTS = HTTPSを強制",
+        "visual_idea": "httpの道が閉じ、httpsの道だけ開く。"
+      },
+      {
+        "screen_text": "ブラウザが覚える",
+        "visual_idea": "ブラウザ内のメモにサイト名とHTTPS鍵マーク。"
+      },
+      {
+        "screen_text": "http入力でもhttpsへ",
+        "visual_idea": "URLがhttpからhttpsへ自動で書き換わる。"
+      },
+      {
+        "screen_text": "盗聴・改ざんを防ぐ",
+        "visual_idea": "通信経路に鍵付きトンネルを描く。"
+      }
+    ],
+    "key_takeaway": "HSTSは、接続をHTTPSに固定するヘッダー。",
+    "keywords": ["HSTS", "HTTPS", "Strict-Transport-Security", "ダウングレード攻撃", "TLS"]
+  },
+  {
+    "id": "05-x-frame-options",
+    "chapter": 5,
+    "term": "X-Frame-Options",
+    "expanded": "X-Frame-Options",
+    "origin": "X-Frame-OptionsはHTTPレスポンスヘッダー名。ページをframeやiframe内に表示してよいかを指定します。",
+    "lower_layer": "ブラウザ防御ヘッダー",
+    "hook": "勝手な埋め込みを防ぎます。",
+    "narration": "X-Frame-Optionsは、ページを他サイトのフレーム内に表示できるかをブラウザへ伝えるヘッダーです。DENYなら埋め込み禁止、SAMEORIGINなら同じサイトだけ許可です。クリックジャッキング対策として使われます。",
+    "visual_beats": [
+      {
+        "screen_text": "XFO = 埋め込み制御",
+        "visual_idea": "iframe枠にページを入れようとしてブロックされる。"
+      },
+      {
+        "screen_text": "DENY / SAMEORIGIN",
+        "visual_idea": "禁止マークと同一サイトチェックの2択カード。"
+      },
+      {
+        "screen_text": "勝手なiframeを防ぐ",
+        "visual_idea": "別サイトの透明な枠をはじくブラウザ。"
+      },
+      {
+        "screen_text": "クリックジャッキング対策",
+        "visual_idea": "偽ボタンの上に重ねられた透明ページを剥がす。"
+      }
+    ],
+    "key_takeaway": "フレーム埋め込みを制限するヘッダー。",
+    "keywords": ["X-Frame-Options", "iframe", "frame", "DENY", "SAMEORIGIN", "クリックジャッキング"]
+  },
+  {
+    "id": "05-clickjacking",
+    "chapter": 5,
+    "term": "Clickjacking",
+    "expanded": "Clickjacking",
+    "origin": "ClickとHijackingを組み合わせた言葉。ユーザーのクリック操作をだまして乗っ取る攻撃です。",
+    "lower_layer": "ブラウザ攻撃",
+    "hook": "そのクリック、別操作かもしれません。",
+    "narration": "クリックジャッキングは、透明なページや見えないフレームを重ねて、ユーザーに意図しないボタンを押させる攻撃です。見た目は再生ボタンでも、裏では送金や設定変更のボタンを押しているかもしれません。フレーム埋め込み制限が代表的な対策です。",
+    "visual_beats": [
+      {
+        "screen_text": "Clickjacking = だましクリック",
+        "visual_idea": "見える再生ボタンの下に別サイトのボタンが重なる。"
+      },
+      {
+        "screen_text": "透明なiframeを重ねる",
+        "visual_idea": "半透明レイヤーをずらして構造を見せる。"
+      },
+      {
+        "screen_text": "意図しない操作が実行",
+        "visual_idea": "ユーザーのクリック矢印が裏の危険ボタンに届く。"
+      },
+      {
+        "screen_text": "埋め込み制限で守る",
+        "visual_idea": "X-Frame-OptionsとCSP frame-ancestorsの盾を表示。"
+      }
+    ],
+    "key_takeaway": "クリックを別操作へ誘導する攻撃。",
+    "keywords": ["Clickjacking", "クリックジャッキング", "iframe", "UI redress", "frame-ancestors"]
+  },
+  {
+    "id": "05-x-content-type-options",
+    "chapter": 5,
+    "term": "X-Content-Type-Options",
+    "expanded": "X-Content-Type-Options",
+    "origin": "X-Content-Type-OptionsはHTTPレスポンスヘッダー名。代表的な値nosniffでMIMEタイプの推測を抑止します。",
+    "lower_layer": "ブラウザ防御ヘッダー",
+    "hook": "ブラウザに、勝手な中身判定をさせません。",
+    "narration": "X-Content-Type-Optionsは、ブラウザがファイルの種類を勝手に推測する動きを抑えるヘッダーです。nosniffを指定すると、本来スクリプトでないものを実行してしまうリスクを減らせます。正しいContent-Typeとセットで使います。",
+    "visual_beats": [
+      {
+        "screen_text": "XCTO = 推測を止める",
+        "visual_idea": "ブラウザの虫眼鏡アイコンにストップマーク。"
+      },
+      {
+        "screen_text": "nosniff",
+        "visual_idea": "レスポンスヘッダー欄にnosniffを大きく表示。"
+      },
+      {
+        "screen_text": "Content-Typeを信じる",
+        "visual_idea": "text/plainやapplication/jsonのラベルを確認する図。"
+      },
+      {
+        "screen_text": "誤実行リスクを減らす",
+        "visual_idea": "スクリプト実行マークがブロックされる。"
+      }
+    ],
+    "key_takeaway": "MIME推測を抑えるヘッダー。",
+    "keywords": ["X-Content-Type-Options", "nosniff", "MIME", "Content-Type", "HTTP header"]
+  },
+  {
+    "id": "05-referrer-policy",
+    "chapter": 5,
+    "term": "Referrer-Policy",
+    "expanded": "Referrer-Policy",
+    "origin": "Referrer-PolicyはHTTPレスポンスヘッダー名。リンク先へ送る参照元情報の量を制御します。",
+    "lower_layer": "ブラウザ防御ヘッダー",
+    "hook": "リンク先に、どこまで元ページ情報を渡しますか。",
+    "narration": "Referrer-Policyは、別ページへ移動するときに送る参照元情報を調整するヘッダーです。URLに検索語、ID、トークンのような情報があると、リンク先へ漏れる可能性があります。詳しいURLを送らない設定で、漏えいを減らします。",
+    "visual_beats": [
+      {
+        "screen_text": "Referrer = 出し方制御",
+        "visual_idea": "ページAからページBへ渡る封筒の中身を調整。"
+      },
+      {
+        "screen_text": "URLを全部送る？一部だけ？",
+        "visual_idea": "フルURLとドメインだけの比較カード。"
+      },
+      {
+        "screen_text": "URL内の情報漏えいに注意",
+        "visual_idea": "URL中のqueryやtoken部分に警告マーク。"
+      },
+      {
+        "screen_text": "必要最小限にする",
+        "visual_idea": "封筒から余計なパラメータを取り除く。"
+      }
+    ],
+    "key_takeaway": "参照元URLの情報量を制御するヘッダー。",
+    "keywords": ["Referrer-Policy", "Referer", "参照元", "URL", "プライバシー", "HTTP header"]
+  }
+]

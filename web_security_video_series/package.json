@@ -1,0 +1,16 @@
+{
+  "name": "web-security-video-series",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "list": "node scripts/list-terms.mjs",
+    "build": "node scripts/build-index.mjs",
+    "build:all-html": "node scripts/build-all-html.mjs",
+    "check": "npx --yes hyperframes@0.6.33 lint && npx --yes hyperframes@0.6.33 validate && npx --yes hyperframes@0.6.33 inspect --samples 12",
+    "render": "npx --yes hyperframes@0.6.33 render --quality draft --fps 30",
+    "render:term": "node scripts/render-term.mjs",
+    "render:all": "node scripts/render-all.mjs",
+    "dev": "npx --yes hyperframes@0.6.33 preview",
+    "validate:content": "node scripts/validate-content.mjs"
+  }
+}

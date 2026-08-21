@@ -1,0 +1,348 @@
+[
+  {
+    "id": "intro_web_security_terms",
+    "chapter": "intro",
+    "term": "シリーズ導入",
+    "expanded": "Web Security Terms Orientation",
+    "origin": "Webセキュリティ用語を、攻撃を防ぐ、弱点を見つける、証跡を見る、の3つに整理して学ぶ導入動画。",
+    "lower_layer": "アプリ、ネットワーク、開発プロセス、運用監視の全体像。",
+    "hook": "用語は役割で覚える",
+    "narration": "Webセキュリティ用語は、名前だけ追うと混乱します。まず、弱点を見つける道具、防御する仕組み、起きたことを見つける運用、という3つの箱に分けて見ると、意味がつながります。",
+    "visual_beats": [
+      {
+        "screen_text": "用語は3つの箱で見る",
+        "visual": "画面中央にWebアプリ、周囲に「見つける」「防ぐ」「気づく」の3箱を配置。"
+      },
+      {
+        "screen_text": "弱点を見つける",
+        "visual": "コード、通信、依存ライブラリに虫眼鏡が当たる図。"
+      },
+      {
+        "screen_text": "攻撃を防ぐ",
+        "visual": "リクエストの流れに盾とゲートを置く図。"
+      },
+      {
+        "screen_text": "起きたことに気づく",
+        "visual": "ログが集まり、監視画面にアラートが出る図。"
+      }
+    ],
+    "key_takeaway": "検査・防御・監視で整理する。",
+    "keywords": ["Webセキュリティ", "用語整理", "検査", "防御", "監視"]
+  },
+  {
+    "id": "ch08_sast",
+    "chapter": "8",
+    "term": "SAST",
+    "expanded": "Static Application Security Testing",
+    "origin": "Staticは静的、Application Security Testingはアプリのセキュリティ検査を意味する。",
+    "lower_layer": "ソースコード、設定ファイル、ビルド前の静的解析。",
+    "hook": "動かす前にコードを見る",
+    "narration": "SASTは、アプリを実行せずにソースコードを調べるセキュリティ検査です。危ない関数の使い方や入力チェック漏れを、開発中の早い段階で見つけるために使います。",
+    "visual_beats": [
+      {
+        "screen_text": "動かす前に見る",
+        "visual": "コード画面に虫眼鏡が重なり、実行ボタンはまだ押されていない。"
+      },
+      {
+        "screen_text": "コードの危ない形",
+        "visual": "入力値がそのままSQLへ流れる線を赤く強調。"
+      },
+      {
+        "screen_text": "開発中に直す",
+        "visual": "Pull Request上に警告マークと修正チェックが付く。"
+      }
+    ],
+    "key_takeaway": "SASTはコードの事前検査。",
+    "keywords": ["SAST", "静的解析", "ソースコード", "脆弱性検査", "開発"]
+  },
+  {
+    "id": "ch08_dast",
+    "chapter": "8",
+    "term": "DAST",
+    "expanded": "Dynamic Application Security Testing",
+    "origin": "Dynamicは動的、Application Security Testingはアプリのセキュリティ検査を意味する。",
+    "lower_layer": "実行中のWebアプリ、HTTPリクエスト、レスポンス、画面遷移。",
+    "hook": "外から触って弱点を探す",
+    "narration": "DASTは、動いているWebアプリにリクエストを送り、外部から見える弱点を探す検査です。コードの中身より、実際の画面やAPIがどう反応するかを見ます。",
+    "visual_beats": [
+      {
+        "screen_text": "動いているアプリを検査",
+        "visual": "ブラウザからWebアプリへ検査リクエストが飛ぶ図。"
+      },
+      {
+        "screen_text": "外から見える弱点",
+        "visual": "ログイン画面、検索欄、API入口にスキャン光が当たる。"
+      },
+      {
+        "screen_text": "反応を見て判断",
+        "visual": "レスポンスのエラー表示や異常な結果が赤枠で示される。"
+      }
+    ],
+    "key_takeaway": "DASTは動くアプリの外部検査。",
+    "keywords": ["DAST", "動的解析", "Webアプリ検査", "HTTP", "脆弱性診断"]
+  },
+  {
+    "id": "ch08_sca",
+    "chapter": "8",
+    "term": "SCA",
+    "expanded": "Software Composition Analysis",
+    "origin": "Software Compositionはソフトウェアの構成要素、Analysisは分析を意味する。",
+    "lower_layer": "OSSライブラリ、パッケージマネージャ、依存関係、既知脆弱性データ。",
+    "hook": "依存部品の危険を見る",
+    "narration": "SCAは、アプリが使っているライブラリやパッケージを調べる検査です。古い依存関係や、既知の脆弱性がある部品を見つけ、更新や差し替えの判断に使います。",
+    "visual_beats": [
+      {
+        "screen_text": "依存部品を一覧化",
+        "visual": "アプリ本体の周りに複数のライブラリ箱がつながる図。"
+      },
+      {
+        "screen_text": "古い部品に注意",
+        "visual": "バージョン番号の古い箱に警告アイコンを表示。"
+      },
+      {
+        "screen_text": "更新判断に使う",
+        "visual": "危険な部品から新しい部品へ矢印で差し替える。"
+      }
+    ],
+    "key_takeaway": "SCAは依存部品の安全確認。",
+    "keywords": ["SCA", "依存関係", "OSS", "ライブラリ", "既知脆弱性"]
+  },
+  {
+    "id": "ch08_sbom",
+    "chapter": "8",
+    "term": "SBOM",
+    "expanded": "Software Bill of Materials",
+    "origin": "Bill of Materialsは部品表を意味し、ソフトウェア版の部品一覧を指す。",
+    "lower_layer": "アプリを構成するライブラリ、バージョン、ライセンス、依存関係の記録。",
+    "hook": "ソフトの成分表示",
+    "narration": "SBOMは、ソフトウェアに何の部品が入っているかを示す一覧です。問題のあるライブラリが見つかったとき、自分たちの製品に含まれるかを素早く確認するために役立ちます。",
+    "visual_beats": [
+      {
+        "screen_text": "ソフトウェアの部品表",
+        "visual": "製品箱の横に成分表示ラベルのような一覧を出す。"
+      },
+      {
+        "screen_text": "名前とバージョン",
+        "visual": "ライブラリ名、バージョン、ライセンスの列を見せる。"
+      },
+      {
+        "screen_text": "影響範囲を探す",
+        "visual": "脆弱な部品名で一覧を検索し、該当箇所が光る。"
+      }
+    ],
+    "key_takeaway": "SBOMは部品を追える一覧。",
+    "keywords": ["SBOM", "部品表", "依存関係", "ライブラリ", "影響調査"]
+  },
+  {
+    "id": "ch09_waf",
+    "chapter": "9",
+    "term": "WAF",
+    "expanded": "Web Application Firewall",
+    "origin": "Web Applicationを守るFirewallという意味の略語。",
+    "lower_layer": "HTTP通信、リクエスト検査、アプリケーション層の防御ルール。",
+    "hook": "Webアプリ前の警備員",
+    "narration": "WAFは、Webアプリに届くリクエストを手前で検査する防御の仕組みです。攻撃らしい入力や異常なパターンを見つけ、アプリに届く前に止める役割があります。",
+    "visual_beats": [
+      {
+        "screen_text": "アプリの前で検査",
+        "visual": "利用者とWebアプリの間にゲートを置く。"
+      },
+      {
+        "screen_text": "怪しい入力を止める",
+        "visual": "正常リクエストは通過、攻撃文字列つきリクエストはブロック。"
+      },
+      {
+        "screen_text": "防御ルールで判断",
+        "visual": "ルール表と照合して赤いバツが出る。"
+      }
+    ],
+    "key_takeaway": "WAFはHTTP攻撃を手前で止める。",
+    "keywords": ["WAF", "Web Application Firewall", "HTTP", "防御", "リクエスト検査"]
+  },
+  {
+    "id": "ch09_dos",
+    "chapter": "9",
+    "term": "DoS",
+    "expanded": "Denial of Service",
+    "origin": "Denialは拒否、Serviceはサービスで、サービスを使えない状態にする攻撃を指す。",
+    "lower_layer": "サーバー資源、CPU、メモリ、ネットワーク帯域、同時接続数。",
+    "hook": "サービス停止が目的",
+    "narration": "DoSは、大量のアクセスや重い処理をぶつけて、サービスを使えない状態にする攻撃です。情報を盗むのではなく、利用者がアクセスできない状態を作る点が特徴です。",
+    "visual_beats": [
+      {
+        "screen_text": "サービスを使えなくする",
+        "visual": "Webサイトの入口にアクセスが詰まり、利用者が入れない。"
+      },
+      {
+        "screen_text": "資源を使い切る",
+        "visual": "CPU、メモリ、帯域のメーターが赤く振り切れる。"
+      },
+      {
+        "screen_text": "目的は停止",
+        "visual": "サイト画面に503エラー風の表示を重ねる。"
+      }
+    ],
+    "key_takeaway": "DoSは資源を圧迫する攻撃。",
+    "keywords": ["DoS", "Denial of Service", "サービス停止", "可用性", "サーバー負荷"]
+  },
+  {
+    "id": "ch09_ddos",
+    "chapter": "9",
+    "term": "DDoS",
+    "expanded": "Distributed Denial of Service",
+    "origin": "Distributedは分散型を意味し、複数の発信元から行うDoS攻撃を指す。",
+    "lower_layer": "多数の端末、複数ネットワーク、トラフィック集中、可用性対策。",
+    "hook": "分散して来るDoS",
+    "narration": "DDoSは、多数の端末やネットワークから一斉にアクセスを送り、サービスを使えなくする攻撃です。発信元が分散しているため、単純に一か所を止めるだけでは防ぎにくくなります。",
+    "visual_beats": [
+      {
+        "screen_text": "分散したDoS",
+        "visual": "世界地図の複数地点からサーバーへ矢印が集まる。"
+      },
+      {
+        "screen_text": "一斉に押し寄せる",
+        "visual": "リクエストの波が入口を埋める。"
+      },
+      {
+        "screen_text": "発信元が多い",
+        "visual": "ブロックリストが増えても別の矢印が残る図。"
+      }
+    ],
+    "key_takeaway": "DDoSは分散型の停止攻撃。",
+    "keywords": ["DDoS", "分散型DoS", "可用性", "大量アクセス", "トラフィック"]
+  },
+  {
+    "id": "ch09_rate_limiting",
+    "chapter": "9",
+    "term": "Rate Limiting",
+    "expanded": "Rate Limiting",
+    "origin": "Rateは頻度や量、Limitingは制限を意味し、アクセス回数を制御する考え方。",
+    "lower_layer": "API Gateway、Webサーバー、ユーザー単位、IP単位、時間窓ごとのリクエスト数。",
+    "hook": "アクセスの速度制限",
+    "narration": "Rate Limitingは、一定時間に受け付けるリクエスト数を制限する仕組みです。APIの使いすぎ、総当たり、過剰アクセスを抑え、サービス全体を守るために使います。",
+    "visual_beats": [
+      {
+        "screen_text": "回数に上限を置く",
+        "visual": "1分あたり100回まで、というカウンターを表示。"
+      },
+      {
+        "screen_text": "超えたら待たせる",
+        "visual": "上限超過のリクエストに一時停止アイコンを付ける。"
+      },
+      {
+        "screen_text": "APIを守る",
+        "visual": "APIサーバー前の流量メーターが安定する。"
+      }
+    ],
+    "key_takeaway": "Rate Limitingは回数を制限する。",
+    "keywords": ["Rate Limiting", "アクセス制限", "API", "総当たり対策", "流量制御"]
+  },
+  {
+    "id": "ch10_audit_log",
+    "chapter": "10",
+    "term": "Audit Log",
+    "expanded": "Audit Log",
+    "origin": "Auditは監査、Logは記録で、後から確認するための操作記録を指す。",
+    "lower_layer": "認証、権限変更、管理操作、データアクセス、時刻と実行者の記録。",
+    "hook": "あとで追える操作記録",
+    "narration": "Audit Logは、誰が、いつ、何をしたかを後から確認するための記録です。問題が起きたとき、原因調査や不正操作の確認、説明責任を果たすために重要になります。",
+    "visual_beats": [
+      {
+        "screen_text": "誰が いつ 何を",
+        "visual": "ログ表にユーザー、時刻、操作の3列を大きく見せる。"
+      },
+      {
+        "screen_text": "管理操作を記録",
+        "visual": "権限変更ボタンを押す場面とログ追加を並べる。"
+      },
+      {
+        "screen_text": "後から追える",
+        "visual": "タイムラインをさかのぼり、原因地点にピンを立てる。"
+      }
+    ],
+    "key_takeaway": "Audit Logは重要操作の記録。",
+    "keywords": ["Audit Log", "監査ログ", "操作記録", "追跡", "説明責任"]
+  },
+  {
+    "id": "ch10_siem",
+    "chapter": "10",
+    "term": "SIEM",
+    "expanded": "Security Information and Event Management",
+    "origin": "Security InformationとEventを集めて管理する仕組みを意味する略語。",
+    "lower_layer": "ログ収集、イベント相関、アラート、ダッシュボード、検知ルール。",
+    "hook": "ログを集めて異常検知",
+    "narration": "SIEMは、サーバー、アプリ、ネットワーク機器などのログを集め、関連づけて監視する仕組みです。単体では小さな出来事でも、組み合わせて攻撃の兆候として見つけます。",
+    "visual_beats": [
+      {
+        "screen_text": "ログを一か所へ",
+        "visual": "複数システムからSIEMの箱へログ線が集まる。"
+      },
+      {
+        "screen_text": "出来事を関連づける",
+        "visual": "失敗ログイン、権限変更、外部通信が線でつながる。"
+      },
+      {
+        "screen_text": "異常をアラート",
+        "visual": "監視画面に赤い通知が出て担当者へ届く。"
+      }
+    ],
+    "key_takeaway": "SIEMはログから兆候を見つける。",
+    "keywords": ["SIEM", "ログ収集", "イベント管理", "相関分析", "アラート"]
+  },
+  {
+    "id": "ch10_soc",
+    "chapter": "10",
+    "term": "SOC",
+    "expanded": "Security Operations Center",
+    "origin": "Security Operationsを担うCenter、つまりセキュリティ運用の拠点を意味する。",
+    "lower_layer": "監視体制、アナリスト、インシデント対応、SIEMアラート、運用手順。",
+    "hook": "見張りと初動のチーム",
+    "narration": "SOCは、システムを監視し、怪しいアラートを確認して対応につなげる組織や機能です。SIEMなどの道具を使い、誤検知か本当の攻撃かを見極めます。",
+    "visual_beats": [
+      {
+        "screen_text": "監視するチーム",
+        "visual": "複数モニターを見る担当者とアラート画面。"
+      },
+      {
+        "screen_text": "アラートを判断",
+        "visual": "通知を確認し、誤検知と要対応に振り分ける。"
+      },
+      {
+        "screen_text": "対応へつなぐ",
+        "visual": "インシデント対応チケットへ矢印が伸びる。"
+      }
+    ],
+    "key_takeaway": "SOCは監視を対応につなげる。",
+    "keywords": ["SOC", "Security Operations Center", "監視", "アナリスト", "インシデント対応"]
+  },
+  {
+    "id": "summary_learning_order",
+    "chapter": "summary",
+    "term": "まず覚えるべき順番",
+    "expanded": "Recommended Learning Order",
+    "origin": "章8から10の用語を、理解しやすい順に並べるまとめ動画。",
+    "lower_layer": "開発時の検査、実行時の防御、運用時の監視という学習導線。",
+    "hook": "覚える順番を整理",
+    "narration": "まずSAST、DAST、SCA、SBOMで弱点と部品を理解します。次にWAF、Rate Limiting、DoS、DDoSで防御と可用性を見ます。最後にAudit Log、SIEM、SOCで運用監視につなげましょう。",
+    "visual_beats": [
+      {
+        "screen_text": "1 検査を覚える",
+        "visual": "SAST、DAST、SCA、SBOMを横並びのステップにする。"
+      },
+      {
+        "screen_text": "2 防御を覚える",
+        "visual": "WAFとRate Limitingをゲートとして表示し、DoSとDDoSを外側に置く。"
+      },
+      {
+        "screen_text": "3 監視を覚える",
+        "visual": "Audit LogからSIEMへログが流れ、SOCが判断する図。"
+      },
+      {
+        "screen_text": "開発から運用まで",
+        "visual": "コード、公開アプリ、監視画面へ一本の矢印でつなぐ。"
+      }
+    ],
+    "key_takeaway": "検査、防御、監視の順で覚える。",
+    "keywords": ["学習順", "SAST", "WAF", "Audit Log", "SOC"]
+  }
+]

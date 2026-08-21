@@ -1,0 +1,380 @@
+[
+  {
+    "id": "ch01_origin",
+    "term": "Origin",
+    "chapter": 1,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch01_origin.mp4"
+  },
+  {
+    "id": "ch01_sop",
+    "term": "SOP / Same-Origin Policy",
+    "chapter": 1,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch01_sop.mp4"
+  },
+  {
+    "id": "ch01_cors",
+    "term": "CORS",
+    "chapter": 1,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch01_cors.mp4"
+  },
+  {
+    "id": "ch01_preflight_request",
+    "term": "Preflight Request",
+    "chapter": 1,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch01_preflight_request.mp4"
+  },
+  {
+    "id": "ch02_xss",
+    "term": "XSS",
+    "chapter": 2,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch02_xss.mp4"
+  },
+  {
+    "id": "ch02_dom_xss",
+    "term": "DOM XSS",
+    "chapter": 2,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch02_dom_xss.mp4"
+  },
+  {
+    "id": "ch02_csrf",
+    "term": "CSRF",
+    "chapter": 2,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch02_csrf.mp4"
+  },
+  {
+    "id": "ch03_cookie",
+    "term": "Cookie",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_cookie.mp4"
+  },
+  {
+    "id": "ch03_httponly",
+    "term": "HttpOnly",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_httponly.mp4"
+  },
+  {
+    "id": "ch03_secure",
+    "term": "Secure",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_secure.mp4"
+  },
+  {
+    "id": "ch03_samesite",
+    "term": "SameSite",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_samesite.mp4"
+  },
+  {
+    "id": "ch03_session",
+    "term": "Session",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_session.mp4"
+  },
+  {
+    "id": "ch03_jwt",
+    "term": "JWT",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_jwt.mp4"
+  },
+  {
+    "id": "ch03_jws",
+    "term": "JWS",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_jws.mp4"
+  },
+  {
+    "id": "ch03_jwe",
+    "term": "JWE",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_jwe.mp4"
+  },
+  {
+    "id": "ch03_bearer_token",
+    "term": "Bearer Token",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_bearer_token.mp4"
+  },
+  {
+    "id": "ch03_access_token",
+    "term": "Access Token",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_access_token.mp4"
+  },
+  {
+    "id": "ch03_refresh_token",
+    "term": "Refresh Token",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch03_refresh_token.mp4"
+  },
+  {
+    "id": "04-authn",
+    "term": "AuthN",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-authn.mp4"
+  },
+  {
+    "id": "04-authz",
+    "term": "AuthZ",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-authz.mp4"
+  },
+  {
+    "id": "04-rbac",
+    "term": "RBAC",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-rbac.mp4"
+  },
+  {
+    "id": "04-abac",
+    "term": "ABAC",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-abac.mp4"
+  },
+  {
+    "id": "04-rebac",
+    "term": "ReBAC",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-rebac.mp4"
+  },
+  {
+    "id": "04-oauth",
+    "term": "OAuth",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-oauth.mp4"
+  },
+  {
+    "id": "04-oidc",
+    "term": "OIDC",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-oidc.mp4"
+  },
+  {
+    "id": "04-sso",
+    "term": "SSO",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-sso.mp4"
+  },
+  {
+    "id": "04-saml",
+    "term": "SAML",
+    "chapter": 4,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/04-saml.mp4"
+  },
+  {
+    "id": "05-csp",
+    "term": "CSP",
+    "chapter": 5,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/05-csp.mp4"
+  },
+  {
+    "id": "05-hsts",
+    "term": "HSTS",
+    "chapter": 5,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/05-hsts.mp4"
+  },
+  {
+    "id": "05-x-frame-options",
+    "term": "X-Frame-Options",
+    "chapter": 5,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/05-x-frame-options.mp4"
+  },
+  {
+    "id": "05-clickjacking",
+    "term": "Clickjacking",
+    "chapter": 5,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/05-clickjacking.mp4"
+  },
+  {
+    "id": "05-x-content-type-options",
+    "term": "X-Content-Type-Options",
+    "chapter": 5,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/05-x-content-type-options.mp4"
+  },
+  {
+    "id": "05-referrer-policy",
+    "term": "Referrer-Policy",
+    "chapter": 5,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/05-referrer-policy.mp4"
+  },
+  {
+    "id": "ch06_injection",
+    "term": "Injection",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_injection.mp4"
+  },
+  {
+    "id": "ch06_sqli",
+    "term": "SQLi / SQL Injection",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_sqli.mp4"
+  },
+  {
+    "id": "ch06_rce",
+    "term": "RCE",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_rce.mp4"
+  },
+  {
+    "id": "ch06_command_injection",
+    "term": "Command Injection",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_command_injection.mp4"
+  },
+  {
+    "id": "ch06_ssrf",
+    "term": "SSRF",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_ssrf.mp4"
+  },
+  {
+    "id": "ch06_path_traversal",
+    "term": "Path Traversal",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_path_traversal.mp4"
+  },
+  {
+    "id": "ch06_open_redirect",
+    "term": "Open Redirect",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_open_redirect.mp4"
+  },
+  {
+    "id": "ch06_idor",
+    "term": "IDOR",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_idor.mp4"
+  },
+  {
+    "id": "ch06_bola",
+    "term": "BOLA",
+    "chapter": 6,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch06_bola.mp4"
+  },
+  {
+    "id": "ch07_https",
+    "term": "HTTPS",
+    "chapter": 7,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch07_https.mp4"
+  },
+  {
+    "id": "ch07_tls",
+    "term": "TLS",
+    "chapter": 7,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch07_tls.mp4"
+  },
+  {
+    "id": "ch07_ssl",
+    "term": "SSL",
+    "chapter": 7,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch07_ssl.mp4"
+  },
+  {
+    "id": "ch07_hash",
+    "term": "Hash",
+    "chapter": 7,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch07_hash.mp4"
+  },
+  {
+    "id": "ch07_salt",
+    "term": "Salt",
+    "chapter": 7,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch07_salt.mp4"
+  },
+  {
+    "id": "ch07_pepper",
+    "term": "Pepper",
+    "chapter": 7,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch07_pepper.mp4"
+  },
+  {
+    "id": "ch07_hmac",
+    "term": "HMAC",
+    "chapter": 7,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch07_hmac.mp4"
+  },
+  {
+    "id": "ch07_kms",
+    "term": "KMS",
+    "chapter": 7,
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch07_kms.mp4"
+  },
+  {
+    "id": "intro_web_security_terms",
+    "term": "シリーズ導入",
+    "chapter": "intro",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/intro_web_security_terms.mp4"
+  },
+  {
+    "id": "ch08_sast",
+    "term": "SAST",
+    "chapter": "8",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch08_sast.mp4"
+  },
+  {
+    "id": "ch08_dast",
+    "term": "DAST",
+    "chapter": "8",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch08_dast.mp4"
+  },
+  {
+    "id": "ch08_sca",
+    "term": "SCA",
+    "chapter": "8",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch08_sca.mp4"
+  },
+  {
+    "id": "ch08_sbom",
+    "term": "SBOM",
+    "chapter": "8",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch08_sbom.mp4"
+  },
+  {
+    "id": "ch09_waf",
+    "term": "WAF",
+    "chapter": "9",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch09_waf.mp4"
+  },
+  {
+    "id": "ch09_dos",
+    "term": "DoS",
+    "chapter": "9",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch09_dos.mp4"
+  },
+  {
+    "id": "ch09_ddos",
+    "term": "DDoS",
+    "chapter": "9",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch09_ddos.mp4"
+  },
+  {
+    "id": "ch09_rate_limiting",
+    "term": "Rate Limiting",
+    "chapter": "9",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch09_rate_limiting.mp4"
+  },
+  {
+    "id": "ch10_audit_log",
+    "term": "Audit Log",
+    "chapter": "10",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch10_audit_log.mp4"
+  },
+  {
+    "id": "ch10_siem",
+    "term": "SIEM",
+    "chapter": "10",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch10_siem.mp4"
+  },
+  {
+    "id": "ch10_soc",
+    "term": "SOC",
+    "chapter": "10",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/ch10_soc.mp4"
+  },
+  {
+    "id": "summary_learning_order",
+    "term": "まず覚えるべき順番",
+    "chapter": "summary",
+    "output": "/Users/hm/datascience/web_security_video_series/renders/summary_learning_order.mp4"
+  }
+]

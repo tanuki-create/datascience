@@ -1,0 +1,542 @@
+[
+  {
+    "id": "ch01_origin",
+    "chapter": 1,
+    "term": "Origin",
+    "expanded": "Origin",
+    "origin": "ブラウザの同一性判定",
+    "lower_layer": "URLのscheme、host、port",
+    "hook": "同じサイトに見えても別人扱い？",
+    "narration": "Originは、ブラウザが「同じ相手か」を判断する住所です。見るのはプロトコル、ホスト名、ポート番号。この3つが全部そろって、はじめて同じOriginです。",
+    "visual_beats": [
+      {
+        "screen_text": "Origin = 3点セット",
+        "diagram": "URLをscheme、host、portの3色ラベルに分解する"
+      },
+      {
+        "screen_text": "https/httpは別",
+        "diagram": "同じexample.comでも鍵アイコン付きと無しを別カードにする"
+      },
+      {
+        "screen_text": "ポート違いも別",
+        "diagram": ":443と:3000の入口ゲートを分ける"
+      },
+      {
+        "screen_text": "全部一致で同じOrigin",
+        "diagram": "3つのチェックがそろって同一判定のスタンプ"
+      }
+    ],
+    "key_takeaway": "Originは3点一致で決まる。",
+    "keywords": ["scheme", "host", "port", "URL", "browser"]
+  },
+  {
+    "id": "ch01_sop",
+    "chapter": 1,
+    "term": "SOP / Same-Origin Policy",
+    "expanded": "Same-Origin Policy",
+    "origin": "ブラウザの基本防御",
+    "lower_layer": "Origin判定とJavaScript実行環境",
+    "hook": "別サイトを勝手に読めたら危険。",
+    "narration": "SOPは、別OriginのデータをJavaScriptが勝手に読めないようにするブラウザのルールです。送れる場合があっても、読ませないのが大事なポイントです。",
+    "visual_beats": [
+      {
+        "screen_text": "SOP = 読む制限",
+        "diagram": "ブラウザ内のJSから別Originのレスポンスへ赤い壁を置く"
+      },
+      {
+        "screen_text": "同じOriginなら読める",
+        "diagram": "同じ色のサイトとAPIの間だけドアが開く"
+      },
+      {
+        "screen_text": "別Originは壁",
+        "diagram": "違う色のAPIレスポンスにロックを表示する"
+      },
+      {
+        "screen_text": "ユーザーを守る基礎",
+        "diagram": "Cookie付きブラウザを盾で囲む"
+      }
+    ],
+    "key_takeaway": "SOPは別Originを読ませない。",
+    "keywords": ["Same-Origin Policy", "SOP", "browser", "JavaScript", "read restriction"]
+  },
+  {
+    "id": "ch01_cors",
+    "chapter": 1,
+    "term": "CORS",
+    "expanded": "Cross-Origin Resource Sharing",
+    "origin": "ブラウザとサーバーの許可ルール",
+    "lower_layer": "HTTPヘッダーとSame-Origin Policy",
+    "hook": "CORSはエラー名ではない。",
+    "narration": "CORSは、サーバーが「このOriginなら読んでいい」とブラウザへ伝える仕組みです。許可ヘッダーが合えば、SOPの壁に安全な通路ができます。",
+    "visual_beats": [
+      {
+        "screen_text": "CORS = 例外の許可",
+        "diagram": "SOPの壁に許可証付きゲートを描く"
+      },
+      {
+        "screen_text": "サーバーが決める",
+        "diagram": "APIサーバーがAccess-Control-Allow-Originカードを返す"
+      },
+      {
+        "screen_text": "ブラウザが確認する",
+        "diagram": "ブラウザが許可証とアクセス元Originを照合する"
+      },
+      {
+        "screen_text": "合えばJSが読める",
+        "diagram": "レスポンスがJS画面へ流れる矢印"
+      }
+    ],
+    "key_takeaway": "CORSは別Origin読み取りの許可。",
+    "keywords": ["CORS", "Access-Control-Allow-Origin", "HTTP header", "SOP", "cross-origin"]
+  },
+  {
+    "id": "ch01_preflight_request",
+    "chapter": 1,
+    "term": "Preflight Request",
+    "expanded": "CORS Preflight Request",
+    "origin": "CORSの事前確認",
+    "lower_layer": "HTTP OPTIONSメソッドとCORSヘッダー",
+    "hook": "本番前にブラウザが確認する。",
+    "narration": "Preflight Requestは、危険度が少し高いCORS通信の前に送られる事前確認です。ブラウザがOPTIONSで、メソッドやヘッダーを使ってよいか聞きます。",
+    "visual_beats": [
+      {
+        "screen_text": "先にOPTIONS",
+        "diagram": "本リクエストの前に小さな確認メッセージを飛ばす"
+      },
+      {
+        "screen_text": "メソッドを確認",
+        "diagram": "PUTやDELETEの札をサーバー受付に見せる"
+      },
+      {
+        "screen_text": "ヘッダーも確認",
+        "diagram": "Authorizationヘッダーの札をチェックリストに載せる"
+      },
+      {
+        "screen_text": "許可後に本番送信",
+        "diagram": "青信号になってから本リクエストが進む"
+      }
+    ],
+    "key_takeaway": "PreflightはCORS前の確認。",
+    "keywords": ["preflight", "OPTIONS", "CORS", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+  },
+  {
+    "id": "ch02_xss",
+    "chapter": 2,
+    "term": "XSS",
+    "expanded": "Cross-Site Scripting",
+    "origin": "入力値の扱いとブラウザ実行",
+    "lower_layer": "HTML、JavaScript、DOM",
+    "hook": "文字がコードとして動く？",
+    "narration": "XSSは、攻撃者のスクリプトが他人のブラウザで実行される問題です。原因は、文字として扱うべき入力を、HTMLやJavaScriptとして混ぜてしまうことです。",
+    "visual_beats": [
+      {
+        "screen_text": "文字がコードになる",
+        "diagram": "コメント欄の文字列がscriptタグへ変形する"
+      },
+      {
+        "screen_text": "被害者のブラウザで実行",
+        "diagram": "攻撃者入力から別ユーザーの画面へ稲妻を飛ばす"
+      },
+      {
+        "screen_text": "Cookieも狙われる",
+        "diagram": "ブラウザ内のセッション情報に警告マーク"
+      },
+      {
+        "screen_text": "出力時の無害化が基本",
+        "diagram": "危険文字をエスケープフィルターに通す"
+      }
+    ],
+    "key_takeaway": "XSSは他人のブラウザで動く攻撃。",
+    "keywords": ["XSS", "Cross-Site Scripting", "escape", "HTML", "JavaScript"]
+  },
+  {
+    "id": "ch02_dom_xss",
+    "chapter": 2,
+    "term": "DOM XSS",
+    "expanded": "DOM-based Cross-Site Scripting",
+    "origin": "フロントエンドJavaScriptのDOM操作",
+    "lower_layer": "DOM API、URL、クライアント側レンダリング",
+    "hook": "ブラウザ内だけでXSSは起きる。",
+    "narration": "DOM XSSは、フロントのJavaScriptがURLなどの値を取り出し、危険なDOM操作に流し込むことで起きます。サーバーの保存がなくても成立します。",
+    "visual_beats": [
+      {
+        "screen_text": "ブラウザ内で完結",
+        "diagram": "URLバーからJS、DOMへ矢印をつなぐ"
+      },
+      {
+        "screen_text": "危険な流し込み",
+        "diagram": "innerHTMLの箱に未検証文字列が入る"
+      },
+      {
+        "screen_text": "保存なしでも発生",
+        "diagram": "サーバーを迂回してブラウザ内で警告が出る"
+      },
+      {
+        "screen_text": "安全なDOM APIへ",
+        "diagram": "textContentの安全ルートへ切り替える"
+      }
+    ],
+    "key_takeaway": "DOM XSSは危険なDOM流し込み。",
+    "keywords": ["DOM XSS", "DOM", "innerHTML", "textContent", "client-side"]
+  },
+  {
+    "id": "ch02_csrf",
+    "chapter": 2,
+    "term": "CSRF",
+    "expanded": "Cross-Site Request Forgery",
+    "origin": "ブラウザの自動Cookie送信",
+    "lower_layer": "Cookie、HTMLフォーム、HTTPリクエスト",
+    "hook": "だまされると本人として送信。",
+    "narration": "CSRFは、別サイトからユーザーのブラウザにリクエストを送らせる攻撃です。Cookieが自動で付くため、サーバーには本人操作のように見えます。",
+    "visual_beats": [
+      {
+        "screen_text": "別サイトから送信",
+        "diagram": "攻撃サイトのボタンから銀行サイトへ矢印"
+      },
+      {
+        "screen_text": "Cookieは自動で付く",
+        "diagram": "ブラウザがCookie封筒を勝手に添付する"
+      },
+      {
+        "screen_text": "本人操作に見える",
+        "diagram": "サーバーがログイン済みユーザーとして受け付ける"
+      },
+      {
+        "screen_text": "Tokenで防ぐ",
+        "diagram": "CSRFトークン照合とSameSiteの盾"
+      }
+    ],
+    "key_takeaway": "CSRFは本人のブラウザを悪用する。",
+    "keywords": ["CSRF", "Cookie", "SameSite", "CSRF token", "request forgery"]
+  },
+  {
+    "id": "ch03_cookie",
+    "chapter": 3,
+    "term": "Cookie",
+    "expanded": "HTTP Cookie",
+    "origin": "HTTPの状態管理",
+    "lower_layer": "Set-CookieヘッダーとCookieヘッダー",
+    "hook": "HTTPの記憶メモがCookie。",
+    "narration": "Cookieは、サーバーがブラウザに保存させる小さなデータです。次回以降のリクエストに自動で付くので、ログイン状態の判定などに使われます。",
+    "visual_beats": [
+      {
+        "screen_text": "保存を指示",
+        "diagram": "Set-Cookieヘッダーがブラウザの保存箱へ入る"
+      },
+      {
+        "screen_text": "次回から自動送信",
+        "diagram": "ブラウザから同じサイトへCookie封筒が付く"
+      },
+      {
+        "screen_text": "ログイン状態に使う",
+        "diagram": "セッションID入りCookieでユーザー判定"
+      },
+      {
+        "screen_text": "属性で守る",
+        "diagram": "HttpOnly、Secure、SameSiteの3つの鍵を並べる"
+      }
+    ],
+    "key_takeaway": "Cookieは保存され自動送信される。",
+    "keywords": ["Cookie", "Set-Cookie", "Cookie header", "state", "browser storage"]
+  },
+  {
+    "id": "ch03_httponly",
+    "chapter": 3,
+    "term": "HttpOnly",
+    "expanded": "HttpOnly Cookie Attribute",
+    "origin": "Cookieの防御属性",
+    "lower_layer": "Set-Cookie属性とJavaScriptアクセス制御",
+    "hook": "CookieをJSから隠せる。",
+    "narration": "HttpOnlyは、CookieをJavaScriptから読めなくする属性です。通信には使えますが、document.cookieでは見えないので、XSS時の盗難リスクを下げられます。",
+    "visual_beats": [
+      {
+        "screen_text": "JSから読めない",
+        "diagram": "document.cookieからCookieへの矢印をブロックする"
+      },
+      {
+        "screen_text": "HTTP通信には付く",
+        "diagram": "リクエスト封筒にはCookieが入っている"
+      },
+      {
+        "screen_text": "XSS盗難を減らす",
+        "diagram": "悪意あるscriptの手からCookieを隠す"
+      },
+      {
+        "screen_text": "認証Cookieの基本",
+        "diagram": "Set-CookieにHttpOnlyのチェックを付ける"
+      }
+    ],
+    "key_takeaway": "HttpOnlyはJSからCookieを隠す。",
+    "keywords": ["HttpOnly", "Cookie", "document.cookie", "XSS", "Set-Cookie"]
+  },
+  {
+    "id": "ch03_secure",
+    "chapter": 3,
+    "term": "Secure",
+    "expanded": "Secure Cookie Attribute",
+    "origin": "Cookieの通信経路保護",
+    "lower_layer": "HTTPSとSet-Cookie属性",
+    "hook": "CookieをHTTPに出さない印。",
+    "narration": "Secureは、CookieをHTTPS通信のときだけ送る属性です。HTTPには送られないので、認証に関わるCookieではほぼ必須の安全設定です。",
+    "visual_beats": [
+      {
+        "screen_text": "HTTPSだけ送信",
+        "diagram": "鍵付きの道だけCookie封筒が通れる"
+      },
+      {
+        "screen_text": "HTTPには出さない",
+        "diagram": "鍵なし道路の入口でCookieが止まる"
+      },
+      {
+        "screen_text": "盗聴リスクを下げる",
+        "diagram": "通信経路ののぞき見アイコンを遮断する"
+      },
+      {
+        "screen_text": "認証Cookieに必須",
+        "diagram": "Secureチェック付きのSet-Cookie設定画面"
+      }
+    ],
+    "key_takeaway": "SecureはHTTPSだけCookie送信。",
+    "keywords": ["Secure", "Cookie", "HTTPS", "Set-Cookie", "transport security"]
+  },
+  {
+    "id": "ch03_samesite",
+    "chapter": 3,
+    "term": "SameSite",
+    "expanded": "SameSite Cookie Attribute",
+    "origin": "Cookieのクロスサイト送信制御",
+    "lower_layer": "Cookie属性、site判定、リクエスト文脈",
+    "hook": "Cookieの自動送信を絞る。",
+    "narration": "SameSiteは、別サイトからのリクエストにCookieを送るかを制御する属性です。StrictやLaxで送信を絞ると、CSRFのリスクを下げられます。",
+    "visual_beats": [
+      {
+        "screen_text": "別サイト送信を制限",
+        "diagram": "外部サイトからの矢印にCookieゲートを置く"
+      },
+      {
+        "screen_text": "Strictは厳しい",
+        "diagram": "同じサイト内の移動だけCookieを許可する"
+      },
+      {
+        "screen_text": "Laxは実用寄り",
+        "diagram": "通常のリンク遷移は通し、危険な送信は止める"
+      },
+      {
+        "screen_text": "CSRF対策の土台",
+        "diagram": "Cookie自動送信の矢印を細くする"
+      }
+    ],
+    "key_takeaway": "SameSiteはCSRFを抑える。",
+    "keywords": ["SameSite", "Cookie", "CSRF", "Strict", "Lax"]
+  },
+  {
+    "id": "ch03_session",
+    "chapter": 3,
+    "term": "Session",
+    "expanded": "Session",
+    "origin": "ログイン状態の管理",
+    "lower_layer": "Cookie、サーバー側ストア、セッションID",
+    "hook": "ログイン状態をどう覚える？",
+    "narration": "Sessionは、ユーザーのログイン状態を一定期間覚える仕組みです。多くの場合、ブラウザにはセッションIDだけを持たせ、実体はサーバー側で管理します。",
+    "visual_beats": [
+      {
+        "screen_text": "ログイン状態を覚える",
+        "diagram": "ユーザーとサーバーの間に有効期限付きカード"
+      },
+      {
+        "screen_text": "CookieにはIDだけ",
+        "diagram": "Cookie封筒にsession_idだけ入れる"
+      },
+      {
+        "screen_text": "実体はサーバー側",
+        "diagram": "サーバーの保管庫にユーザー情報を置く"
+      },
+      {
+        "screen_text": "失効できる",
+        "diagram": "サーバー側のセッション行に削除スタンプ"
+      }
+    ],
+    "key_takeaway": "Sessionはログイン状態の管理。",
+    "keywords": ["Session", "session ID", "Cookie", "server-side", "login state"]
+  },
+  {
+    "id": "ch03_jwt",
+    "chapter": 3,
+    "term": "JWT",
+    "expanded": "JSON Web Token",
+    "origin": "JSONベースのトークン形式",
+    "lower_layer": "Base64URL、JSON、署名または暗号化",
+    "hook": "JWTはログイン魔法ではない。",
+    "narration": "JWTは、JSONの情報を安全に受け渡すためのトークン形式です。ヘッダー、ペイロード、署名などで構成され、JWSやJWEとして使われます。",
+    "visual_beats": [
+      {
+        "screen_text": "JWT = トークン形式",
+        "diagram": "長い文字列を3つのブロックに分解する"
+      },
+      {
+        "screen_text": "中身はJSON",
+        "diagram": "payload部分からsubやexpのラベルを表示する"
+      },
+      {
+        "screen_text": "署名/暗号化と使う",
+        "diagram": "JWSの印鑑とJWEの金庫を分岐表示する"
+      },
+      {
+        "screen_text": "ただの入れ物と理解",
+        "diagram": "JWT箱の中にclaimsカードを入れる"
+      }
+    ],
+    "key_takeaway": "JWTはJSONを運ぶトークン形式。",
+    "keywords": ["JWT", "JSON Web Token", "claims", "Base64URL", "token"]
+  },
+  {
+    "id": "ch03_jws",
+    "chapter": 3,
+    "term": "JWS",
+    "expanded": "JSON Web Signature",
+    "origin": "署名付きトークン",
+    "lower_layer": "JWT、デジタル署名、メッセージ認証",
+    "hook": "JWSは隠すより改ざん検知。",
+    "narration": "JWSは、JSONデータに署名を付ける形式です。中身は読めることがありますが、署名を検証すれば、発行者と改ざんの有無を確認できます。",
+    "visual_beats": [
+      {
+        "screen_text": "JWS = 署名で守る",
+        "diagram": "payloadカードに署名スタンプを押す"
+      },
+      {
+        "screen_text": "中身は隠さない",
+        "diagram": "透明な封筒にJSONカードが見えている"
+      },
+      {
+        "screen_text": "改ざん検知",
+        "diagram": "1文字変更で署名チェックが赤になる"
+      },
+      {
+        "screen_text": "発行者を確認",
+        "diagram": "検証鍵で署名スタンプを照合する"
+      }
+    ],
+    "key_takeaway": "JWSは署名で改ざんを検知。",
+    "keywords": ["JWS", "JSON Web Signature", "signature", "integrity", "JWT"]
+  },
+  {
+    "id": "ch03_jwe",
+    "chapter": 3,
+    "term": "JWE",
+    "expanded": "JSON Web Encryption",
+    "origin": "暗号化されたトークン",
+    "lower_layer": "JWT、暗号化、鍵管理",
+    "hook": "中身を隠すならJWE。",
+    "narration": "JWEは、JSONデータを暗号化して運ぶ形式です。受け取った側が復号できるまで中身は見えません。秘密にしたい情報を入れるときの選択肢です。",
+    "visual_beats": [
+      {
+        "screen_text": "JWE = 暗号化",
+        "diagram": "JSONカードを金庫に入れて鍵をかける"
+      },
+      {
+        "screen_text": "中身を読ませない",
+        "diagram": "外からはランダムな文字列だけが見える"
+      },
+      {
+        "screen_text": "復号できる相手だけ",
+        "diagram": "正しい鍵を持つAPIだけ金庫を開ける"
+      },
+      {
+        "screen_text": "鍵管理が重要",
+        "diagram": "鍵束にローテーションの矢印を付ける"
+      }
+    ],
+    "key_takeaway": "JWEは暗号化で中身を隠す。",
+    "keywords": ["JWE", "JSON Web Encryption", "encryption", "confidentiality", "JWT"]
+  },
+  {
+    "id": "ch03_bearer_token",
+    "chapter": 3,
+    "term": "Bearer Token",
+    "expanded": "Bearer Token",
+    "origin": "HTTP認証のトークン利用",
+    "lower_layer": "AuthorizationヘッダーとTLS",
+    "hook": "持っている人が通れる券。",
+    "narration": "Bearer Tokenは、そのトークンを持つ人を認証済みとして扱う方式です。通常はAuthorizationヘッダーに入れます。盗まれると使われるので保護が重要です。",
+    "visual_beats": [
+      {
+        "screen_text": "持参人トークン",
+        "diagram": "入場券を持つ人がゲートを通る"
+      },
+      {
+        "screen_text": "Authorizationへ",
+        "diagram": "HTTPヘッダーのAuthorization: Bearer欄を強調"
+      },
+      {
+        "screen_text": "盗まれると危険",
+        "diagram": "コピーされた入場券で別人が通ろうとする"
+      },
+      {
+        "screen_text": "短命化とHTTPS",
+        "diagram": "時計アイコンと鍵付き通信路を並べる"
+      }
+    ],
+    "key_takeaway": "Bearerは持つだけで使える。",
+    "keywords": ["Bearer Token", "Authorization", "OAuth", "HTTPS", "token theft"]
+  },
+  {
+    "id": "ch03_access_token",
+    "chapter": 3,
+    "term": "Access Token",
+    "expanded": "Access Token",
+    "origin": "APIアクセス権の表現",
+    "lower_layer": "Bearer Token、OAuth、認可サーバー",
+    "hook": "API用の権限つき通行証。",
+    "narration": "Access Tokenは、APIへアクセスする権限を表すトークンです。誰が、何に、いつまでアクセスできるかを示し、短い有効期限で使うのが基本です。",
+    "visual_beats": [
+      {
+        "screen_text": "APIの通行証",
+        "diagram": "クライアントがAPIゲートにトークンを提示する"
+      },
+      {
+        "screen_text": "権限を表す",
+        "diagram": "read、writeなどのscope札を表示する"
+      },
+      {
+        "screen_text": "期限つき",
+        "diagram": "expの時計がカウントダウンする"
+      },
+      {
+        "screen_text": "パスワードとは別物",
+        "diagram": "パスワード鍵とアクセストークン通行証を分ける"
+      }
+    ],
+    "key_takeaway": "Access Tokenは短命なAPI権限。",
+    "keywords": ["Access Token", "API", "scope", "expiration", "OAuth"]
+  },
+  {
+    "id": "ch03_refresh_token",
+    "chapter": 3,
+    "term": "Refresh Token",
+    "expanded": "Refresh Token",
+    "origin": "アクセストークン更新",
+    "lower_layer": "認可サーバー、Access Token、有効期限管理",
+    "hook": "Access Tokenを更新する券。",
+    "narration": "Refresh Tokenは、新しいAccess Tokenを発行してもらうためのトークンです。長く使われやすいので、保存場所や失効、ローテーションを慎重に設計します。",
+    "visual_beats": [
+      {
+        "screen_text": "更新用トークン",
+        "diagram": "期限切れAccess Tokenから更新窓口へ向かう"
+      },
+      {
+        "screen_text": "新しいTokenを得る",
+        "diagram": "認可サーバーが新しい通行証を発行する"
+      },
+      {
+        "screen_text": "長命なので厳重管理",
+        "diagram": "Refresh Tokenを金庫に入れる"
+      },
+      {
+        "screen_text": "失効とローテーション",
+        "diagram": "古いトークンに無効スタンプ、新しいトークンに交換"
+      }
+    ],
+    "key_takeaway": "Refresh Tokenは更新用の長命券。",
+    "keywords": ["Refresh Token", "Access Token", "rotation", "revocation", "OAuth"]
+  }
+]

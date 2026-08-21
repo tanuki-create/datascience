@@ -1,0 +1,444 @@
+[
+  {
+    "id": "ch06_injection",
+    "chapter": 6,
+    "term": "Injection",
+    "expanded": "Injection attack",
+    "origin": "英語の inject は「注入する」。本来データとして扱う文字列を、命令として混ぜ込む発想から。",
+    "lower_layer": "アプリが入力値を文字列連結で命令文に組み込むと、データとコードの境界が崩れる。",
+    "hook": "入力が命令に化ける",
+    "narration": "Injection は、ユーザー入力を命令の一部として実行させる攻撃です。攻撃者が特別な権限を持つのではなく、アプリが入力と命令を混ぜるのが原因。対策は、命令とデータを分けて扱うことです。",
+    "visual_beats": [
+      {
+        "text": "入力が命令に混ざる",
+        "diagram": "検索ボックスの文字が、サーバー内の命令文へ差し込まれる図"
+      },
+      {
+        "text": "境界が崩れる",
+        "diagram": "「データ」と「コード」の仕切り線が割れるアニメーション"
+      },
+      {
+        "text": "分けて渡す",
+        "diagram": "パラメータ化された入力が安全な専用レーンを通る図"
+      }
+    ],
+    "key_takeaway": "入力と命令を混ぜると危険。",
+    "keywords": ["injection", "input", "code execution", "validation", "parameterization"]
+  },
+  {
+    "id": "ch06_sqli",
+    "chapter": 6,
+    "term": "SQLi / SQL Injection",
+    "expanded": "SQL Injection",
+    "origin": "SQL はデータベースに問い合わせる言語。そこへ攻撃用のSQL片を注入するため SQL Injection と呼ぶ。",
+    "lower_layer": "Webアプリの入力値がSQL文に直結し、WHERE句や条件式を書き換えられる。",
+    "hook": "ログイン欄がDBの裏口に",
+    "narration": "SQL Injection は、入力値でデータベースへの問い合わせを改ざんする攻撃です。名前やIDのつもりの文字が SQL として解釈されると、見せてはいけない行まで取れます。SQL は文字列連結せず、値として渡します。",
+    "visual_beats": [
+      {
+        "text": "入力欄からDBへ",
+        "diagram": "ログインフォームからSQL文、さらにデータベースへ矢印が伸びる"
+      },
+      {
+        "text": "条件が書き換わる",
+        "diagram": "WHERE 条件の一部が赤く差し替わる"
+      },
+      {
+        "text": "値として渡す",
+        "diagram": "SQL本文と入力値が別々の箱に入ってDBへ届く"
+      }
+    ],
+    "key_takeaway": "SQLの意味を入力で変える攻撃。",
+    "keywords": ["SQLi", "SQL Injection", "database", "prepared statement", "placeholder"]
+  },
+  {
+    "id": "ch06_rce",
+    "chapter": 6,
+    "term": "RCE",
+    "expanded": "Remote Code Execution",
+    "origin": "Remote は遠隔、Code Execution はコード実行。離れた場所からサーバー上でコードを動かす意味。",
+    "lower_layer": "アプリやミドルウェアの処理が、外部入力をプログラムとして評価・実行してしまう。",
+    "hook": "遠隔からサーバーで実行",
+    "narration": "RCE は Remote Code Execution、遠隔コード実行です。攻撃者がネットワーク越しにサーバー上でコードを動かせるため、被害は大きくなります。危険な評価関数や未更新の部品が入口になります。",
+    "visual_beats": [
+      {
+        "text": "遠隔からコード実行",
+        "diagram": "外部PCからサーバー内の実行ボタンへ赤い矢印"
+      },
+      {
+        "text": "被害が広がる",
+        "diagram": "サーバーからファイル、DB、内部ネットワークへ警告アイコンが波及"
+      },
+      {
+        "text": "入口を減らす",
+        "diagram": "eval や古いライブラリの扉が閉じられる"
+      }
+    ],
+    "key_takeaway": "外部からサーバーでコード実行。",
+    "keywords": ["RCE", "Remote Code Execution", "server takeover", "eval", "patching"]
+  },
+  {
+    "id": "ch06_command_injection",
+    "chapter": 6,
+    "term": "Command Injection",
+    "expanded": "OS Command Injection",
+    "origin": "Command はOSに渡す命令。入力がシェルコマンドへ注入されるためこう呼ばれる。",
+    "lower_layer": "アプリがユーザー入力を含めてシェルコマンドを組み立て、OSに渡してしまう。",
+    "hook": "ファイル名がOS命令に",
+    "narration": "Command Injection は、アプリの入力で OS コマンドを実行させる攻撃です。画像変換や圧縮で、ファイル名をコマンドに連結していると危険です。シェルを避け、APIと許可した値だけを使います。",
+    "visual_beats": [
+      {
+        "text": "入力がOS命令へ",
+        "diagram": "アップロードされたファイル名がターミナル画面へ入る"
+      },
+      {
+        "text": "アプリ権限で実行",
+        "diagram": "アプリの名札を付けたコマンドがOSで実行される"
+      },
+      {
+        "text": "シェルを避ける",
+        "diagram": "シェル経由の赤い道を閉じ、API経由の青い道を通す"
+      }
+    ],
+    "key_takeaway": "入力でOS命令を追加実行。",
+    "keywords": ["Command Injection", "OS command", "shell", "allowlist", "escaping"]
+  },
+  {
+    "id": "ch06_ssrf",
+    "chapter": 6,
+    "term": "SSRF",
+    "expanded": "Server-Side Request Forgery",
+    "origin": "Server-Side はサーバー側、Request Forgery はリクエスト偽造。サーバーに偽のリクエストを送らせる意味。",
+    "lower_layer": "URL取得機能などで、サーバー自身が内部ネットワークやメタデータサービスへアクセスしてしまう。",
+    "hook": "サーバーをリモコン化",
+    "narration": "SSRF は、サーバーに攻撃者指定のURLへアクセスさせる攻撃です。外から見えない社内APIやクラウドのメタデータも、サーバーからなら届くことがあります。接続先を許可リストで絞ります。",
+    "visual_beats": [
+      {
+        "text": "サーバーを使う",
+        "diagram": "攻撃者がURLを渡し、サーバーが代わりに通信する"
+      },
+      {
+        "text": "内部だけ見える場所",
+        "diagram": "外部からは壁、サーバーからは内部APIへ通路がある図"
+      },
+      {
+        "text": "接続先を制限",
+        "diagram": "許可リストの門で外部URLだけを通す"
+      }
+    ],
+    "key_takeaway": "サーバー経由で内部へ届く攻撃。",
+    "keywords": ["SSRF", "server-side request", "metadata", "allowlist", "internal network"]
+  },
+  {
+    "id": "ch06_path_traversal",
+    "chapter": 6,
+    "term": "Path Traversal",
+    "expanded": "Directory Traversal",
+    "origin": "Traversal は横断。パス指定をたどって、本来のディレクトリ外へ移動する意味。",
+    "lower_layer": "ファイル名やパス入力を正規化せず使うと、親ディレクトリ参照で別の場所を読める。",
+    "hook": "フォルダ外のファイルを読む",
+    "narration": "Path Traversal は、ファイルパスを悪用して許可フォルダの外へ出る攻撃です。画像名のつもりでも、パスとして解釈されると別ファイルに届きます。基準ディレクトリ内か確認し、直接パスを渡さない設計にします。",
+    "visual_beats": [
+      {
+        "text": "フォルダの外へ出る",
+        "diagram": "公開フォルダから上の階層へ戻る矢印"
+      },
+      {
+        "text": "別ファイルに届く",
+        "diagram": "画像アイコンではなく設定ファイルに赤い矢印が向く"
+      },
+      {
+        "text": "基準内に固定",
+        "diagram": "安全なフォルダの周囲にフェンスを置く"
+      }
+    ],
+    "key_takeaway": "パス操作で許可外ファイルへ届く。",
+    "keywords": ["Path Traversal", "Directory Traversal", "file path", "canonicalization", "base directory"]
+  },
+  {
+    "id": "ch06_open_redirect",
+    "chapter": 6,
+    "term": "Open Redirect",
+    "expanded": "Open Redirect vulnerability",
+    "origin": "Redirect は転送。Open は転送先が外部に開かれていて、誰でも指定できる状態を指す。",
+    "lower_layer": "ログイン後遷移などのURLパラメータを検証せず、そのままリダイレクト先に使う。",
+    "hook": "本物リンクで偽サイトへ",
+    "narration": "Open Redirect は、転送先URLを攻撃者が指定できる脆弱性です。リンクのドメインは本物に見えるため、フィッシングに使われやすくなります。転送先は相対パスか許可リストに限定します。",
+    "visual_beats": [
+      {
+        "text": "本物リンクに見える",
+        "diagram": "正規ドメインのURLが表示され、先に偽サイトが隠れる"
+      },
+      {
+        "text": "外部へ転送",
+        "diagram": "正規サイトを経由して偽ログイン画面へ矢印"
+      },
+      {
+        "text": "転送先を固定",
+        "diagram": "許可されたページだけに分岐する案内板"
+      }
+    ],
+    "key_takeaway": "正規サイトを踏み台に誘導する。",
+    "keywords": ["Open Redirect", "redirect", "phishing", "allowlist", "relative URL"]
+  },
+  {
+    "id": "ch06_idor",
+    "chapter": 6,
+    "term": "IDOR",
+    "expanded": "Insecure Direct Object Reference",
+    "origin": "Direct Object Reference はIDなどで対象オブジェクトを直接参照すること。Insecure はその参照が安全でない状態。",
+    "lower_layer": "URLやAPIのIDを変えたとき、所有者確認なしに別ユーザーのデータへアクセスできる。",
+    "hook": "ID変更で他人のデータへ",
+    "narration": "IDOR は、IDで指定されたデータへの権限確認が足りない状態です。請求書IDを変えるだけで他人の請求書を読めるようなケースです。ログイン済みかではなく、そのデータを見てよいかを毎回確認します。",
+    "visual_beats": [
+      {
+        "text": "IDを変えるだけ",
+        "diagram": "URL末尾の数字が 101 から 102 に切り替わる"
+      },
+      {
+        "text": "本人確認では足りない",
+        "diagram": "ログイン済みチェックの先に、所有者チェックのゲートを追加"
+      },
+      {
+        "text": "対象ごとに認可",
+        "diagram": "ユーザーと請求書が線で結ばれ、一致したものだけ開く"
+      }
+    ],
+    "key_takeaway": "IDごとの認可抜けが原因。",
+    "keywords": ["IDOR", "object reference", "authorization", "ownership check", "access control"]
+  },
+  {
+    "id": "ch06_bola",
+    "chapter": 6,
+    "term": "BOLA",
+    "expanded": "Broken Object Level Authorization",
+    "origin": "Object Level Authorization はオブジェクト単位の認可。Broken はその仕組みが壊れている、または抜けている状態。",
+    "lower_layer": "APIがリソースIDを受け取るたびに、その利用者が対象オブジェクトへアクセス可能か検証する必要がある。",
+    "hook": "APIで権限確認が抜ける",
+    "narration": "BOLA は、オブジェクト単位の認可が壊れている状態です。APIで注文IDやファイルIDを受け取るたびに、その人が対象を扱えるか確認しないと起きます。リソースごとの認可を共通化して守ります。",
+    "visual_beats": [
+      {
+        "text": "APIのID指定",
+        "diagram": "スマホアプリから API /orders/123 へリクエスト"
+      },
+      {
+        "text": "対象ごとの認可",
+        "diagram": "注文、ファイル、プロフィールそれぞれに鍵アイコン"
+      },
+      {
+        "text": "共通チェックにする",
+        "diagram": "全APIの前に認可フィルターを配置"
+      }
+    ],
+    "key_takeaway": "APIリソース単位の認可抜け。",
+    "keywords": ["BOLA", "API security", "object authorization", "IDOR", "resource access"]
+  },
+  {
+    "id": "ch07_https",
+    "chapter": 7,
+    "term": "HTTPS",
+    "expanded": "Hypertext Transfer Protocol Secure",
+    "origin": "HTTP に Secure の S が付いた名前。TLSでHTTP通信を保護する仕組み。",
+    "lower_layer": "ブラウザとサーバー間のHTTPをTLSの暗号化トンネル内で送受信する。",
+    "hook": "通信を守るURLのS",
+    "narration": "HTTPS は、HTTP の通信を TLS で守る仕組みです。ブラウザとサーバーの間で、盗み見や途中の書き換えを防ぎます。証明書で接続先が本物かも確認します。",
+    "visual_beats": [
+      {
+        "text": "TLSで包む",
+        "diagram": "手紙のHTTPが透明な保護カプセルに入る"
+      },
+      {
+        "text": "盗み見と改ざんを防ぐ",
+        "diagram": "通信経路上の覗き見アイコンと編集アイコンがブロックされる"
+      },
+      {
+        "text": "証明書で相手確認",
+        "diagram": "サーバー証明書にチェックマークが付く"
+      }
+    ],
+    "key_takeaway": "HTTPをTLSで守る仕組み。",
+    "keywords": ["HTTPS", "HTTP", "TLS", "certificate", "encryption"]
+  },
+  {
+    "id": "ch07_tls",
+    "chapter": 7,
+    "term": "TLS",
+    "expanded": "Transport Layer Security",
+    "origin": "Transport Layer は通信の運搬層、Security は安全性。通信路を保護する標準プロトコル。",
+    "lower_layer": "鍵交換、証明書検証、共通鍵暗号、メッセージ認証を組み合わせて安全な通信路を作る。",
+    "hook": "HTTPSの中身を守る",
+    "narration": "TLS は、通信相手を確認し、暗号鍵を安全に決め、その後の通信を暗号化するプロトコルです。HTTPS の S の正体です。最初のハンドシェイクで相手と鍵を確認し、共通鍵でデータを送ります。",
+    "visual_beats": [
+      {
+        "text": "安全なトンネル",
+        "diagram": "ブラウザとサーバーの間に青いトンネルが伸びる"
+      },
+      {
+        "text": "ハンドシェイク",
+        "diagram": "証明書確認と鍵交換が握手アイコンで進む"
+      },
+      {
+        "text": "共通鍵で通信",
+        "diagram": "同じ鍵アイコンを持った両端が暗号化データを送る"
+      }
+    ],
+    "key_takeaway": "暗号化通信路を作るプロトコル。",
+    "keywords": ["TLS", "handshake", "certificate", "key exchange", "secure channel"]
+  },
+  {
+    "id": "ch07_ssl",
+    "chapter": 7,
+    "term": "SSL",
+    "expanded": "Secure Sockets Layer",
+    "origin": "TLSの前身となった古い通信保護プロトコル名。現在も慣用的にSSLと呼ばれることがある。",
+    "lower_layer": "歴史的にはSSLが先に使われ、その後より安全なTLSへ置き換わった。",
+    "hook": "SSLは昔の呼び名",
+    "narration": "SSL は、TLS の前身にあたる古い通信保護の仕組みです。今の安全なWeb通信では、基本的に TLS を使います。ただし SSL証明書やSSL化という言葉は慣用表現として残っています。",
+    "visual_beats": [
+      {
+        "text": "SSLは古い名前",
+        "diagram": "古いラベル SSL から新しいラベル TLS へ置き換わる"
+      },
+      {
+        "text": "言葉だけ残る",
+        "diagram": "看板はSSL、機械の中身はTLSと表示"
+      },
+      {
+        "text": "今はTLSを確認",
+        "diagram": "設定画面で TLS version にチェックが入る"
+      }
+    ],
+    "key_takeaway": "古い呼び名。今の実体はTLS。",
+    "keywords": ["SSL", "TLS", "certificate", "legacy protocol", "secure communication"]
+  },
+  {
+    "id": "ch07_hash",
+    "chapter": 7,
+    "term": "Hash",
+    "expanded": "Cryptographic hash function",
+    "origin": "Hash は細かく刻んで混ぜるイメージの言葉。任意のデータを固定長の値に変換する。",
+    "lower_layer": "一方向関数として、入力から固定長のダイジェストを作り、元データの復元は現実的に難しい。",
+    "hook": "Hashは復元しない指紋",
+    "narration": "Hash は、入力データから固定長の指紋のような値を作る仕組みです。暗号化と違い、元に戻す目的ではありません。同じ入力なら同じ値になり、少し変わると結果が大きく変わります。",
+    "visual_beats": [
+      {
+        "text": "データの指紋",
+        "diagram": "ファイルから短いハッシュ値ラベルが生成される"
+      },
+      {
+        "text": "元に戻さない",
+        "diagram": "ハッシュ値から元データへ戻る矢印がバツ印"
+      },
+      {
+        "text": "少し変えると別物",
+        "diagram": "1文字違いの入力から全く違う値が出る"
+      }
+    ],
+    "key_takeaway": "復元しない固定長の指紋。",
+    "keywords": ["Hash", "digest", "one-way", "password storage", "integrity"]
+  },
+  {
+    "id": "ch07_salt",
+    "chapter": 7,
+    "term": "Salt",
+    "expanded": "Cryptographic salt",
+    "origin": "料理の塩のように、元の材料へ少量加える比喩。パスワードにランダム値を足してハッシュする。",
+    "lower_layer": "ユーザーごとに異なるランダム値をパスワードへ加え、同じパスワードでも異なるハッシュにする。",
+    "hook": "同じパスワードを別物に",
+    "narration": "Salt は、パスワードをハッシュする前に加えるランダム値です。同じパスワードでも、保存されるハッシュをユーザーごとに変えます。Salt は秘密ではなく、重要なのは十分ランダムで使い回さないことです。",
+    "visual_beats": [
+      {
+        "text": "ランダム値を足す",
+        "diagram": "パスワード文字列に小さな Salt ブロックを連結"
+      },
+      {
+        "text": "別ハッシュになる",
+        "diagram": "同じ password から、Salt違いで別の出力が2本出る"
+      },
+      {
+        "text": "秘密ではない",
+        "diagram": "DBに salt と hash が並んで保存される"
+      }
+    ],
+    "key_takeaway": "同じパスワードのハッシュを変える。",
+    "keywords": ["Salt", "password hashing", "random value", "unique", "rainbow table"]
+  },
+  {
+    "id": "ch07_pepper",
+    "chapter": 7,
+    "term": "Pepper",
+    "expanded": "Secret pepper",
+    "origin": "Salt に対する比喩で Pepper と呼ぶ。パスワード処理に加える秘密の共通値。",
+    "lower_layer": "アプリ側の秘密値をパスワードハッシュ処理に加え、DB漏えいだけでは検証しにくくする。",
+    "hook": "DB外で守る秘密",
+    "narration": "Pepper は、パスワードのハッシュ処理に加える秘密値です。Salt と違い、データベースには保存せず、設定やKMSなど別の場所で守ります。DBだけが漏れたとき、ハッシュを試す難度を上げます。",
+    "visual_beats": [
+      {
+        "text": "DBに置かない秘密",
+        "diagram": "DBの外側に Pepper の鍵付きボックスを配置"
+      },
+      {
+        "text": "Saltとは違う",
+        "diagram": "Salt は公開保存、Pepper は秘密保管の対比"
+      },
+      {
+        "text": "管理が重要",
+        "diagram": "秘密値にバックアップとローテーションのアイコン"
+      }
+    ],
+    "key_takeaway": "DB外の秘密値で防御を足す。",
+    "keywords": ["Pepper", "secret", "password hashing", "KMS", "rotation"]
+  },
+  {
+    "id": "ch07_hmac",
+    "chapter": 7,
+    "term": "HMAC",
+    "expanded": "Hash-based Message Authentication Code",
+    "origin": "Hash を使った Message Authentication Code。メッセージが正しい送信者から来て改ざんされていないか確認する値。",
+    "lower_layer": "共有秘密鍵とハッシュ関数を組み合わせ、メッセージに対する認証タグを生成・検証する。",
+    "hook": "秘密鍵つきの確認印",
+    "narration": "HMAC は、メッセージと秘密鍵から作る認証用の値です。普通のハッシュは誰でも作れますが、HMAC は鍵を知る人だけが正しい値を作れます。改ざん検知やWebhook検証に使います。",
+    "visual_beats": [
+      {
+        "text": "秘密鍵つきハッシュ",
+        "diagram": "メッセージと鍵がハッシュ機械に入り、タグが出る"
+      },
+      {
+        "text": "改ざんを検出",
+        "diagram": "本文が少し変わるとHMAC不一致の警告"
+      },
+      {
+        "text": "Webhook検証",
+        "diagram": "受信側が同じ鍵で計算し、署名と照合する"
+      }
+    ],
+    "key_takeaway": "秘密鍵でメッセージを確認。",
+    "keywords": ["HMAC", "MAC", "hash", "secret key", "webhook signature"]
+  },
+  {
+    "id": "ch07_kms",
+    "chapter": 7,
+    "term": "KMS",
+    "expanded": "Key Management Service",
+    "origin": "Key Management は鍵管理。暗号鍵を作成、保管、利用、ローテーションするサービス。",
+    "lower_layer": "アプリが暗号鍵そのものを直接持たず、鍵操作を専用サービスへ委譲する。",
+    "hook": "暗号鍵を預ける金庫",
+    "narration": "KMS は Key Management Service、暗号鍵を管理するサービスです。鍵を設定ファイルに置くと、漏えい時の被害が大きくなります。KMSなら作成、権限、監査ログ、ローテーションをまとめて管理できます。",
+    "visual_beats": [
+      {
+        "text": "鍵専用の金庫",
+        "diagram": "アプリの外にKMS金庫があり、鍵が中に保管される"
+      },
+      {
+        "text": "鍵を直接持たない",
+        "diagram": "アプリから鍵そのものではなく暗号化依頼だけが送られる"
+      },
+      {
+        "text": "権限と監査",
+        "diagram": "アクセス制御リストと監査ログがKMSに紐づく"
+      }
+    ],
+    "key_takeaway": "暗号鍵を集中管理するサービス。",
+    "keywords": ["KMS", "key management", "encryption key", "rotation", "audit log"]
+  }
+]

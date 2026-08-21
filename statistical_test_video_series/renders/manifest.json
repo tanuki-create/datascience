@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ch01_one_sample_t_mean",
+    "term": "１標本の母平均のt検定",
+    "chapter": 1,
+    "output": "/Users/hm/datascience/statistical_test_video_series/renders/ch01_one_sample_t_mean.mp4"
+  },
+  {
+    "id": "ch01_independent_two_sample_t_mean_diff",
+    "term": "対応のない２標本の母平均の差のt検定",
+    "chapter": 1,
+    "output": "/Users/hm/datascience/statistical_test_video_series/renders/ch01_independent_two_sample_t_mean_diff.mp4"
+  },
+  {
+    "id": "ch01_paired_two_sample_t_mean_diff",
+    "term": "対応のある２標本の母平均の差のt検定",
+    "chapter": 1,
+    "output": "/Users/hm/datascience/statistical_test_video_series/renders/ch01_paired_two_sample_t_mean_diff.mp4"
+  },
+  {
+    "id": "rank_distribution_01",
+    "term": "マン－ホイットニーのU検定",
+    "chapter": "ノンパラ・分布比較",
+    "output": "/Users/hm/datascience/statistical_test_video_series/renders/rank_distribution_01.mp4"
+  },
+  {
+    "id": "rank_distribution_02",
+    "term": "コルモゴロフ－スミルノフ検定",
+    "chapter": "ノンパラ・分布比較",
+    "output": "/Users/hm/datascience/statistical_test_video_series/renders/rank_distribution_02.mp4"
+  },
+  {
+    "id": "03_anova",
+    "term": "一元配置分散分析",
+    "chapter": 3,
+    "output": "/Users/hm/datascience/statistical_test_video_series/renders/03_anova.mp4"
+  }
+]

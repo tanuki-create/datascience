@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f7f9f6;
+        color: #17211a;
+        font-family: sans-serif;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(23, 33, 26, 0.045) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(23, 33, 26, 0.045) 1px, transparent 1px),
+          #f7f9f6;
+        background-size: 72px 72px;
+      }
+      .chrome {
+        position: absolute;
+        inset: 0;
+        padding: 78px 76px 220px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        pointer-events: none;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 54px;
+        font-size: 24px;
+        letter-spacing: 0;
+        color: #414a42;
+      }
+      .series-mark {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-weight: 800;
+      }
+      .series-dot {
+        width: 22px;
+        height: 22px;
+        background: #e6462e;
+        border: 4px solid #17211a;
+      }
+      .chapter {
+        font-family: monospace;
+        font-size: 22px;
+      }
+      .scene {
+        position: absolute;
+        inset: 156px 72px 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 34px;
+      }
+      .scene-title {
+        font-size: 44px;
+        font-weight: 900;
+        color: #a92f20;
+      }
+      .term {
+        font-size: 142px;
+        line-height: 0.9;
+        font-weight: 950;
+        letter-spacing: 0;
+      }
+      .hook {
+        font-size: 52px;
+        line-height: 1.23;
+        font-weight: 850;
+        max-width: 900px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+      .chip {
+        border: 3px solid #17211a;
+        background: #ffffff;
+        padding: 12px 18px;
+        font-family: monospace;
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .definition-box {
+        border: 5px solid #17211a;
+        background: #ffffff;
+        padding: 34px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        box-shadow: 12px 12px 0 #f2b84b;
+      }
+      .label {
+        font-family: monospace;
+        font-size: 22px;
+        font-weight: 900;
+        color: #414a42;
+        text-transform: uppercase;
+      }
+      .definition-main {
+        font-size: 46px;
+        line-height: 1.22;
+        font-weight: 900;
+      }
+      .definition-sub {
+        font-size: 34px;
+        line-height: 1.35;
+        color: #273128;
+        font-weight: 750;
+      }
+      .layer-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .layer-row {
+        height: 96px;
+        border: 4px solid #17211a;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+        font-size: 31px;
+        font-weight: 850;
+      }
+      .layer-row.active {
+        background: #0b6f78;
+        color: #ffffff;
+        box-shadow: 10px 10px 0 #17211a;
+        transform: translateX(18px);
+      }
+      .lower-note {
+        font-size: 42px;
+        line-height: 1.24;
+        font-weight: 900;
+      }
+      .beat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 22px;
+      }
+      .beat-card {
+        min-height: 240px;
+        border: 4px solid #17211a;
+        background: #ffffff;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .beat-card:nth-child(2) {
+        background: #effbf8;
+      }
+      .beat-card:nth-child(3) {
+        background: #fff7df;
+      }
+      .beat-card:nth-child(4) {
+        background: #fff0ec;
+      }
+      .beat-num {
+        font-family: monospace;
+        font-size: 24px;
+        font-weight: 900;
+        color: #a92f20;
+      }
+      .beat-text {
+        font-size: 31px;
+        line-height: 1.2;
+        font-weight: 900;
+      }
+      .beat-visual {
+        font-size: 23px;
+        line-height: 1.25;
+        color: #414a42;
+        font-weight: 750;
+      }
+      .takeaway {
+        border-left: 18px solid #1e9f70;
+        background: #ffffff;
+        padding: 30px 34px;
+        font-size: 45px;
+        line-height: 1.18;
+        font-weight: 950;
+        box-shadow: 10px 10px 0 #17211a;
+      }
+      .caption-wrap {
+        position: absolute;
+        left: 76px;
+        right: 76px;
+        bottom: 82px;
+        min-height: 132px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 34px;
+        background: #17211a;
+        color: #ffffff;
+        border: 5px solid #17211a;
+      }
+      .caption {
+        font-size: 34px;
+        line-height: 1.28;
+        font-weight: 850;
+        text-align: center;
+      }
+      .progress {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 18px;
+        width: 100%;
+        background: #dfe7df;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 100%;
+        transform-origin: left center;
+        transform: scaleX(0);
+        background: linear-gradient(90deg, #e6462e, #f2b84b, #1e9f70, #0b6f78);
+      }
+      .diagram-line {
+        height: 6px;
+        background: #17211a;
+        width: 100%;
+      }
+      .term-mini {
+        font-family: monospace;
+        font-size: 28px;
+        color: #414a42;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="22"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="chrome">
+        <div class="topbar">
+          <div class="series-mark"><span class="series-dot"></span><span>WEB SECURITY TERMS</span></div>
+          <div class="chapter">6</div>
+        </div>
+      </div>
+
+      <section class="scene scene-1" data-layout-allow-overflow>
+        <div class="scene-title">まず、出どころを見る</div>
+        <h1 class="term">Path Traversal</h1>
+        <p class="hook">フォルダ外のファイルを読む</p>
+        <div class="chips">
+          <span class="chip">Path Traversal</span><span class="chip">Directory Traversal</span><span class="chip">file path</span><span class="chip">canonicalization</span><span class="chip">base directory</span>
+        </div>
+      </section>
+
+      <section class="scene scene-2" data-layout-allow-overflow>
+        <div class="definition-box">
+          <div class="label">ABBREVIATION / NAME</div>
+          <div class="definition-main">Directory Traversal</div>
+          <div class="diagram-line"></div>
+          <div class="label">WORD ORIGIN</div>
+          <div class="definition-sub">Traversal は横断。パス指定をたどって、本来のディレクトリ外へ移動する意味。</div>
+        </div>
+      </section>
+
+      <section class="scene scene-3" data-layout-allow-overflow>
+        <div class="scene-title">一個下のレイヤー</div>
+        <div class="layer-stack"><div class="layer-row"><span>ユーザー / 攻撃者</span></div><div class="layer-row"><span>ブラウザ</span></div><div class="layer-row"><span>HTTP</span></div><div class="layer-row"><span>Cookie / Header / URL / Origin</span></div><div class="layer-row"><span>アプリケーションコード</span></div><div class="layer-row active"><span>DB / ファイル / 外部API / クラウド</span></div></div>
+        <div class="lower-note">ファイル名やパス入力を正規化せず使うと、親ディレクトリ参照で別の場所を読める。</div>
+      </section>
+
+      <section class="scene scene-4" data-layout-allow-overflow>
+        <div class="scene-title">画面ではこう見せる</div>
+        <div class="beat-grid">
+        <div class="beat-card beat-1">
+          <div class="beat-num">01</div>
+          <div class="beat-text">フォルダの外へ出る</div>
+          <div class="beat-visual">公開フォルダから上の階層へ戻る矢印</div>
+        </div>
+        <div class="beat-card beat-2">
+          <div class="beat-num">02</div>
+          <div class="beat-text">別ファイルに届く</div>
+          <div class="beat-visual">画像アイコンではなく設定ファイルに赤い矢印が向く</div>
+        </div>
+        <div class="beat-card beat-3">
+          <div class="beat-num">03</div>
+          <div class="beat-text">基準内に固定</div>
+          <div class="beat-visual">安全なフォルダの周囲にフェンスを置く</div>
+        </div></div>
+      </section>
+
+      <section class="scene scene-5" data-layout-allow-overflow>
+        <div class="term-mini">Path Traversal</div>
+        <div class="takeaway">パス操作で許可外ファイルへ届く。</div>
+      </section>
+
+      <div class="caption-wrap">
+        <div class="caption" id="caption">Path Traversal は、ファイルパスを悪用して許可フォルダの外へ出る攻撃です。</div>
+      </div>
+      <div class="progress"><div class="progress-fill"></div></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const cues = [{"start":1,"end":7.67,"text":"Path Traversal は、ファイルパスを悪用して許可フォルダの外へ出る攻撃です。"},{"start":7.67,"end":14.33,"text":"画像名のつもりでも、パスとして解釈されると別ファイルに届きます。"},{"start":14.33,"end":21,"text":"基準ディレクトリ内か確認し、直接パスを渡さない設計にします。"}];
+      const tl = gsap.timeline({ paused: true });
+      tl.set(".scene", { x: 1180, y: 0 });
+      tl.set(".scene-1", { x: 0, y: 0 });
+      tl.to(".progress-fill", { scaleX: 1, duration: 22, ease: "none" }, 0);
+
+      function showScene(selector, at, hold) {
+        tl.to(".scene", { x: -1180, y: 0, duration: 0.32, ease: "power2.in" }, at);
+        tl.fromTo(selector, { x: 1180, y: 0 }, { x: 0, y: 0, duration: 0.46, ease: "power3.out" }, at + 0.25);
+        tl.to(selector, { x: 0, y: 0, duration: hold }, at + 0.72);
+      }
+
+      tl.from(".term", { y: 70, duration: 0.55, ease: "power3.out" }, 0.1);
+      tl.from(".hook", { y: 42, duration: 0.45, ease: "power3.out" }, 0.45);
+      tl.from(".chip", { y: 22, duration: 0.3, stagger: 0.06, ease: "power2.out" }, 0.82);
+      showScene(".scene-2", 3.4, 2.6);
+      tl.from(".definition-box", { scale: 0.96, duration: 0.38, ease: "power2.out" }, 3.65);
+      showScene(".scene-3", 7.3, 3.1);
+      tl.from(".layer-row", { x: -36, duration: 0.28, stagger: 0.06, ease: "power2.out" }, 7.6);
+      showScene(".scene-4", 12.0, 3.6);
+      tl.from(".beat-card", { y: 36, duration: 0.34, stagger: 0.08, ease: "power2.out" }, 12.28);
+      showScene(".scene-5", 17.2, 3.80);
+      tl.from(".takeaway", { x: -42, duration: 0.44, ease: "power3.out" }, 17.48);
+
+      for (const cue of cues) {
+        tl.call(() => {
+          document.getElementById("caption").textContent = "" + cue.text;
+        }, [], cue.start);
+      }
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

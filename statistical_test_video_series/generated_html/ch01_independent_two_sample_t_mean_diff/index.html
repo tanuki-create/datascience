@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f8faf7;
+        color: #18201a;
+        font-family: sans-serif;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(24, 32, 26, 0.045) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(24, 32, 26, 0.045) 1px, transparent 1px),
+          #f8faf7;
+        background-size: 72px 72px;
+      }
+      .chrome {
+        position: absolute;
+        inset: 0;
+        padding: 72px 72px 220px;
+        pointer-events: none;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 54px;
+        color: #435047;
+        font-size: 24px;
+        font-weight: 850;
+      }
+      .series-mark { display: flex; align-items: center; gap: 14px; }
+      .series-dot { width: 22px; height: 22px; background: #2166ac; border: 4px solid #18201a; }
+      .chapter { font-family: monospace; }
+      .scene {
+        position: absolute;
+        inset: 152px 72px 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 30px;
+      }
+      .scene-title {
+        color: #8a285b;
+        font-size: 42px;
+        font-weight: 950;
+      }
+      .term {
+        font-size: 104px;
+        line-height: 1.02;
+        font-weight: 950;
+        letter-spacing: 0;
+      }
+      .short-name {
+        font-family: monospace;
+        font-size: 34px;
+        color: #435047;
+      }
+      .hook {
+        max-width: 900px;
+        font-size: 50px;
+        line-height: 1.18;
+        font-weight: 900;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .chip {
+        border: 3px solid #18201a;
+        background: #ffffff;
+        padding: 12px 16px;
+        font-family: monospace;
+        font-size: 22px;
+        font-weight: 850;
+      }
+      .plot-card {
+        position: relative;
+        height: 590px;
+        border: 5px solid #18201a;
+        background: #ffffff;
+        box-shadow: 12px 12px 0 #c78318;
+        overflow: hidden;
+      }
+      .axis-x, .axis-y {
+        position: absolute;
+        background: #18201a;
+      }
+      .axis-x { left: 80px; right: 70px; bottom: 112px; height: 5px; }
+      .axis-y { left: 80px; top: 76px; bottom: 112px; width: 5px; }
+      .dot {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        border: 4px solid #18201a;
+      }
+      .dot.b { background: #2166ac; }
+      .dot.m { background: #b7357a; }
+      .dot.a { background: #c78318; }
+      .target-line {
+        position: absolute;
+        left: 520px;
+        top: 78px;
+        bottom: 112px;
+        border-left: 7px dashed #b83a2d;
+      }
+      .target-label {
+        position: absolute;
+        left: 452px;
+        top: 44px;
+        color: #8a2b22;
+        font-family: monospace;
+        font-size: 24px;
+        font-weight: 900;
+      }
+      .mean-bars span {
+        position: absolute;
+        bottom: 104px;
+        width: 164px;
+        border-top: 10px solid #168a5a;
+      }
+      .mean-bars span:first-child { left: 136px; }
+      .mean-bars span:nth-child(2) { left: 576px; }
+      .pair-lines span {
+        position: absolute;
+        top: 330px;
+        height: 62px;
+        border-left: 5px solid rgba(24, 32, 26, 0.45);
+      }
+      .rank-axis {
+        position: absolute;
+        left: 122px;
+        bottom: 54px;
+        font-family: monospace;
+        font-size: 28px;
+        color: #6b430b;
+        font-weight: 900;
+      }
+      .ecdf {
+        position: absolute;
+        left: 120px;
+        right: 110px;
+        height: 210px;
+        border-left: 8px solid currentColor;
+        border-bottom: 8px solid currentColor;
+        transform: skewX(-12deg);
+      }
+      .ecdf.blue { top: 220px; color: #2166ac; }
+      .ecdf.magenta { top: 150px; color: #b7357a; }
+      .ks-gap {
+        position: absolute;
+        right: 160px;
+        top: 228px;
+        padding: 10px 14px;
+        background: #fff3d8;
+        border: 3px solid #18201a;
+        font-size: 30px;
+        font-weight: 950;
+      }
+      .group-labels {
+        position: absolute;
+        left: 108px;
+        right: 150px;
+        bottom: 52px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 28px;
+        font-weight: 950;
+      }
+      .hypothesis-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .hypo-card, .formula-card, .lower-card, .takeaway {
+        border: 5px solid #18201a;
+        background: #ffffff;
+        padding: 28px 30px;
+      }
+      .hypo-card {
+        min-height: 150px;
+        box-shadow: 10px 10px 0 #2166ac;
+      }
+      .label {
+        font-family: monospace;
+        font-size: 22px;
+        color: #435047;
+        font-weight: 950;
+        margin-bottom: 12px;
+      }
+      .hypo-text {
+        font-size: 38px;
+        line-height: 1.22;
+        font-weight: 900;
+      }
+      .formula-card {
+        box-shadow: 10px 10px 0 #b7357a;
+      }
+      .formula {
+        font-family: monospace;
+        font-size: 34px;
+        line-height: 1.25;
+        font-weight: 950;
+        overflow-wrap: anywhere;
+      }
+      .lower-card {
+        box-shadow: 10px 10px 0 #168a5a;
+      }
+      .lower-text {
+        font-size: 38px;
+        line-height: 1.25;
+        font-weight: 900;
+      }
+      .assumptions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+      }
+      .assumptions span {
+        background: #eef5ff;
+        border: 3px solid #18201a;
+        padding: 10px 14px;
+        font-size: 24px;
+        font-weight: 850;
+      }
+      .beat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .beat-card {
+        min-height: 226px;
+        border: 4px solid #18201a;
+        background: #ffffff;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .beat-card:nth-child(2) { background: #f2f7ff; }
+      .beat-card:nth-child(3) { background: #fff5df; }
+      .beat-card:nth-child(4) { background: #f1fbf5; }
+      .beat-num {
+        font-family: monospace;
+        font-size: 24px;
+        font-weight: 950;
+        color: #8a285b;
+      }
+      .beat-text {
+        font-size: 31px;
+        line-height: 1.18;
+        font-weight: 950;
+      }
+      .beat-visual {
+        color: #435047;
+        font-size: 23px;
+        line-height: 1.25;
+        font-weight: 800;
+      }
+      .takeaway {
+        border-left: 18px solid #168a5a;
+        font-size: 46px;
+        line-height: 1.18;
+        font-weight: 950;
+        box-shadow: 10px 10px 0 #18201a;
+      }
+      .caption-wrap {
+        position: absolute;
+        left: 76px;
+        right: 76px;
+        bottom: 82px;
+        min-height: 132px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 34px;
+        background: #18201a;
+        color: #ffffff;
+        border: 5px solid #18201a;
+      }
+      .caption {
+        font-size: 34px;
+        line-height: 1.28;
+        font-weight: 850;
+        text-align: center;
+      }
+      .progress {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 18px;
+        background: #dfe7df;
+      }
+      .progress-fill {
+        width: 100%;
+        height: 100%;
+        transform-origin: left center;
+        transform: scaleX(0);
+        background: linear-gradient(90deg, #2166ac, #b7357a, #c78318, #168a5a);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="24" data-width="1080" data-height="1920">
+      <div class="chrome">
+        <div class="topbar">
+          <div class="series-mark"><span class="series-dot"></span><span>STATISTICAL TESTS</span></div>
+          <div class="chapter">1</div>
+        </div>
+      </div>
+
+      <section class="scene scene-1" data-layout-allow-overflow>
+        <div class="scene-title">どの検定を選ぶ？</div>
+        <h1 class="term">対応のない２標本の母平均の差のt検定</h1>
+        <div class="short-name">対応なし2標本t検定</div>
+        <p class="hook">A群とB群、平均の差は本物？</p>
+        <div class="chips"><span class="chip">対応なし2標本t検定</span><span class="chip">独立2群</span><span class="chip">母平均の差</span><span class="chip">Welchのt検定</span><span class="chip">標準誤差</span></div>
+      </section>
+
+      <section class="scene scene-2" data-layout-allow-overflow>
+        <div class="scene-title">データの形を見る</div>
+        <div class="plot-card">
+          <div class="axis-x"></div><div class="axis-y"></div>
+          <div class="mean-bars"><span></span><span></span></div>
+          <span class="dot b" style="left:120px; top:392px" data-dot="1"></span><span class="dot b" style="left:168px; top:370px" data-dot="2"></span><span class="dot b" style="left:216px; top:404px" data-dot="3"></span><span class="dot b" style="left:264px; top:354px" data-dot="4"></span><span class="dot b" style="left:312px; top:384px" data-dot="5"></span><span class="dot b" style="left:360px; top:364px" data-dot="6"></span><span class="dot m" style="left:520px; top:310px" data-dot="7"></span><span class="dot m" style="left:568px; top:292px" data-dot="8"></span><span class="dot m" style="left:616px; top:326px" data-dot="9"></span><span class="dot m" style="left:664px; top:280px" data-dot="10"></span><span class="dot m" style="left:712px; top:304px" data-dot="11"></span><span class="dot m" style="left:760px; top:286px" data-dot="12"></span>
+        </div>
+        <div class="lower-text">別々の人や個体で作られた2群の平均を比べたいとき。例としてAクラスとBクラス、処置群と対照群。</div>
+      </section>
+
+      <section class="scene scene-3" data-layout-allow-overflow>
+        <div class="scene-title">帰無仮説と統計量</div>
+        <div class="hypothesis-grid">
+          <div class="hypo-card">
+            <div class="label">H0</div>
+            <div class="hypo-text">2つの母平均の差は0である。</div>
+          </div>
+          <div class="formula-card">
+            <div class="label">TEST STATISTIC</div>
+            <div class="formula">t = (xbar1 - xbar2) / sqrt(s1^2 / n1 + s2^2 / n2)</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene scene-4" data-layout-allow-overflow>
+        <div class="scene-title">一個下のレイヤー</div>
+        <div class="lower-card">
+          <div class="lower-text">2群の標本平均の差を、各群のばらつきと標本サイズから作る差の標準誤差で割ったt値。</div>
+          <div class="assumptions"><span>2群の観測値は互いに独立している。</span><span>各群の母集団が正規分布に近い、または標本サイズが十分大きい。</span><span>分散が等しいと置く場合は等分散性を確認する。等しくない場合はWelchのt検定を使う。</span></div>
+        </div>
+      </section>
+
+      <section class="scene scene-5" data-layout-allow-overflow>
+        <div class="scene-title">画面ではこう見る</div>
+        <div class="beat-grid">
+        <div class="beat-card">
+          <div class="beat-num">01</div>
+          <div class="beat-text">別々の2群</div>
+          <div class="beat-visual">A群とB群を離れた2つの点群として表示する</div>
+        </div>
+        <div class="beat-card">
+          <div class="beat-num">02</div>
+          <div class="beat-text">平均A - 平均B</div>
+          <div class="beat-visual">2本の平均バーの高さの差を矢印で示す</div>
+        </div>
+        <div class="beat-card">
+          <div class="beat-num">03</div>
+          <div class="beat-text">各群のばらつき</div>
+          <div class="beat-visual">A群とB群それぞれの散らばり幅を別々に囲む</div>
+        </div>
+        <div class="beat-card">
+          <div class="beat-num">04</div>
+          <div class="beat-text">独立2群で判断</div>
+          <div class="beat-visual">差の標準誤差からt分布へつなぎ、平均差の位置を示す</div>
+        </div></div>
+      </section>
+
+      <section class="scene scene-6" data-layout-allow-overflow>
+        <div class="short-name">対応なし2標本t検定</div>
+        <div class="takeaway">対応なし2標本t検定は、独立した2群の平均差を比べる。</div>
+      </section>
+
+      <div class="caption-wrap"><div class="caption" id="caption">対応なし2標本t検定は、別々の2群の平均差を見る検定です。</div></div>
+      <div class="progress"><div class="progress-fill"></div></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const cues = [{"start":1,"text":"対応なし2標本t検定は、別々の2群の平均差を見る検定です。"},{"start":8.33,"text":"比べるのはA群平均とB群平均。"},{"start":15.67,"text":"同じ人の前後ではなく、混ざらない独立した集団同士の差を、標準誤差でt値にして最後に判断します。"}];
+      const tl = gsap.timeline({ paused: true });
+      tl.set(".scene", { x: 1180, y: 0 });
+      tl.set(".scene-1", { x: 0, y: 0 });
+      tl.set(".dot", { xPercent: -50, yPercent: -50 });
+      tl.to(".progress-fill", { scaleX: 1, duration: 24, ease: "none" }, 0);
+
+      function showScene(selector, at, hold) {
+        tl.to(".scene", { x: -1180, y: 0, duration: 0.3, ease: "power2.in" }, at);
+        tl.fromTo(selector, { x: 1180, y: 0 }, { x: 0, y: 0, duration: 0.45, ease: "power3.out" }, at + 0.22);
+        tl.to(selector, { x: 0, y: 0, duration: hold }, at + 0.68);
+      }
+
+      tl.from(".term", { y: 60, duration: 0.55, ease: "power3.out" }, 0.1);
+      tl.from(".hook", { y: 34, duration: 0.4, ease: "power3.out" }, 0.44);
+      tl.from(".chip", { y: 20, duration: 0.28, stagger: 0.05, ease: "power2.out" }, 0.82);
+      showScene(".scene-2", 3.3, 2.4);
+      tl.from(".dot", { y: 80, scale: 0.2, duration: 0.34, stagger: 0.025, ease: "back.out(1.5)" }, 3.62);
+      showScene(".scene-3", 7.0, 2.5);
+      tl.from(".hypo-card, .formula-card", { y: 32, duration: 0.34, stagger: 0.08, ease: "power2.out" }, 7.28);
+      showScene(".scene-4", 10.8, 2.6);
+      tl.from(".assumptions span", { y: 18, duration: 0.25, stagger: 0.05, ease: "power2.out" }, 11.25);
+      showScene(".scene-5", 14.8, 3.0);
+      tl.from(".beat-card", { y: 34, duration: 0.32, stagger: 0.06, ease: "power2.out" }, 15.08);
+      showScene(".scene-6", 19.6, 3.70);
+      tl.from(".takeaway", { x: -42, duration: 0.42, ease: "power3.out" }, 19.9);
+
+      for (const cue of cues) {
+        tl.call(() => {
+          document.getElementById("caption").textContent = cue.text;
+        }, [], cue.start);
+      }
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
