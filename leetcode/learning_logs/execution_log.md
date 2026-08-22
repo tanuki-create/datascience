@@ -34,6 +34,7 @@
 | 2026-08-18 | 2 | 配列・Hash Table・頻度・欠損値 | 43〜44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 | 2026-08-19 | 3 | Hash Table・頻度カウント | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 | 2026-08-20 | 4 | 配列・シミュレーション・分割・Prefix／Two Pointers | 43〜44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
+| 2026-08-22 | 6 | Sliding Window | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 
 ## 問題別ログ
 
@@ -55,6 +56,10 @@
 | 2026-08-20 | 915 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
 | 2026-08-20 | 410 | Hard | deep | planned | — | — | — | 今日の深掘り問題 |
 | 2026-08-20 | coverage-2026-08-20 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-20_coverage_problems.md) |
+| 2026-08-22 | 643 | Easy | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-22 | 209 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-22 | 3116 | Hard | deep | planned | — | — | — | 今日の深掘り問題（UTC 2026-08-21枠の公式Daily） |
+| 2026-08-22 | coverage-2026-08-22 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-22_coverage_problems.md) |
 
 ## 実行後に追記する項目
 
