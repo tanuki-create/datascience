@@ -35,6 +35,8 @@
 | 2026-08-19 | 3 | Hash Table・頻度カウント | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 | 2026-08-20 | 4 | 配列・シミュレーション・分割・Prefix／Two Pointers | 43〜44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 | 2026-08-22 | 6 | Sliding Window | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
+| 2026-08-27 | 11 | Binary Search・境界探索 | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
+| 2026-08-28 | 12 | Binary Search on Answer | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 
 ## 問題別ログ
 
@@ -60,6 +62,14 @@
 | 2026-08-22 | 209 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
 | 2026-08-22 | 3116 | Hard | deep | planned | — | — | — | 今日の深掘り問題（UTC 2026-08-21枠の公式Daily） |
 | 2026-08-22 | coverage-2026-08-22 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-22_coverage_problems.md) |
+| 2026-08-27 | 35 | Easy | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-27 | 2904 | Medium | deep | planned | — | — | — | 今日の深掘り問題（UTC 2026-08-26枠の公式Daily・テーマ外） |
+| 2026-08-27 | 154 | Hard | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-27 | coverage-2026-08-27 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-27_coverage_problems.md) |
+| 2026-08-28 | 1608 | Easy | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-28 | 875 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-08-28 | 3734 | Hard | deep | planned | — | — | — | 今日の深掘り問題（UTC 2026-08-28枠の公式Daily・テーマ外） |
+| 2026-08-28 | coverage-2026-08-28 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-28_coverage_problems.md) |
 
 ## 実行後に追記する項目
 
