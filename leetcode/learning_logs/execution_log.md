@@ -37,6 +37,7 @@
 | 2026-08-22 | 6 | Sliding Window | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 | 2026-08-27 | 11 | Binary Search・境界探索 | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
 | 2026-08-28 | 12 | Binary Search on Answer | 44 | presented | unconfirmed | 深掘り3問とカバレッジ41問を提示 |
+| 2026-10-15 | 60 | House Robber・State Machine DP | 44 | presented | unconfirmed | 公式Daily 2913、深掘り3問とカバレッジ41問を提示 |
 
 ## 問題別ログ
 
@@ -70,6 +71,10 @@
 | 2026-08-28 | 875 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
 | 2026-08-28 | 3734 | Hard | deep | planned | — | — | — | 今日の深掘り問題（UTC 2026-08-28枠の公式Daily・テーマ外） |
 | 2026-08-28 | coverage-2026-08-28 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-08-28_coverage_problems.md) |
+| 2026-10-15 | 2913 | Easy | deep | planned | — | — | — | 公式Daily・今日の深掘り問題 |
+| 2026-10-15 | 309 | Medium | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-10-15 | 552 | Hard | deep | planned | — | — | — | 今日の深掘り問題 |
+| 2026-10-15 | coverage-2026-10-15 | Mixed | coverage | presented | — | — | — | [問題文セット](./2026-10-15_coverage_problems.md) |
 
 ## 実行後に追記する項目
 
